@@ -1,5 +1,4 @@
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
-import { contentUsageLookup } from "../infrastructure/content-usage-lookup";
 import { prismaMediaRepository } from "../infrastructure/prisma-media-repository";
 import { s3ObjectStorage } from "../infrastructure/s3-object-storage";
 import { createDeleteMedia } from "./use-cases/delete-media";
@@ -13,10 +12,14 @@ import { createUploadMedia } from "./use-cases/upload-media";
 /**
  * Composition root for the `media` module. Wires this module's own
  * infrastructure adapters into its use cases. Cross-module ports (the audit
- * writer) are injected — the wiring itself lives in the framework layer
- * (`src/app/_lib/modules.ts`).
+ * writer and the content-side media-usage lookup) are injected — the wiring
+ * itself lives in the framework layer (`src/app/_lib/modules.ts`).
  */
-export function createMediaApplication(auditEventWriter: AuditEventWriter) {
+export function createMediaApplication(deps: {
+  auditEventWriter: AuditEventWriter;
+  contentUsageLookup: import("../domain/types").MediaUsageLookup;
+}) {
+  const { auditEventWriter, contentUsageLookup } = deps;
   return {
     uploadMedia: createUploadMedia(s3ObjectStorage, prismaMediaRepository, auditEventWriter),
     listMedia: createListMedia(prismaMediaRepository),

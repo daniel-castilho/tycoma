@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "../../../../shared/kernel/result.ts";
+import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "../../../audit/domain/types";
 import type { MediaRepository, MediaUsageLookup, ObjectStorage } from "../../domain/types";
 

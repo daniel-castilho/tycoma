@@ -34,6 +34,9 @@ export const s3ObjectStorage: ObjectStorage = {
   async delete(key) {
     const { endpoint, bucket } = config();
     const url = `${endpoint.replace(/\/$/, "")}/${bucket}/${key}`;
-    await fetch(url, { method: "DELETE" });
+    const res = await fetch(url, { method: "DELETE" });
+    if (!res.ok) {
+      throw new Error(`S3 delete failed: ${res.status} ${await res.text()}`);
+    }
   },
 };

@@ -1,9 +1,7 @@
-import { randomUUID } from "node:crypto";
-import { err, ok, type Result } from "../../../../shared/kernel/result.ts";
+import { err, ok, type Result } from "@/shared/kernel/result";
+import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "../../../audit/domain/types";
 import type { MediaAsset, MediaRepository, ObjectStorage } from "../../domain/types";
-
-const oid = () => randomUUID().replace(/-/g, "").slice(0, 24);
 
 const EXT_BY_MIME: Record<string, string> = {
   "image/png": "png",
@@ -18,9 +16,11 @@ const EXT_BY_MIME: Record<string, string> = {
   "application/pdf": "pdf",
 };
 
+const SAFE_EXT_PATTERN = /^[a-z0-9]{1,8}$/;
+
 function safeExt(filename: string, mimeType: string): string {
   const fromName = filename.split(".").pop()?.toLowerCase();
-  if (fromName && /^[a-z0-9]{1,8}$/.test(fromName)) return fromName;
+  if (fromName && SAFE_EXT_PATTERN.test(fromName)) return fromName;
   return EXT_BY_MIME[mimeType] ?? "bin";
 }
 
@@ -38,7 +38,7 @@ export function createUploadMedia(
     if (!input.mimeType) return err("A MIME type is required.");
     if (input.size <= 0) return err("The file appears to be empty.");
 
-    const storageKey = `media/${oid()}.${safeExt(filename, input.mimeType)}`;
+    const storageKey = `media/${newObjectId()}.${safeExt(filename, input.mimeType)}`;
     const { url } = await storage.put(storageKey, input.body, input.mimeType);
     const asset = await repo.create({
       filename,

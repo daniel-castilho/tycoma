@@ -1,4 +1,5 @@
 import { prisma } from "@/shared/db/prisma";
+import { isObjectId } from "@/shared/db/object-id";
 import type { MediaAsset, MediaRepository } from "../domain/types";
 
 export const prismaMediaRepository: MediaRepository = {
@@ -12,6 +13,7 @@ export const prismaMediaRepository: MediaRepository = {
     }) as Promise<MediaAsset[]>;
   },
   async findById(id) {
+    if (!isObjectId(id)) return null;
     return prisma.mediaAsset.findUnique({ where: { id } });
   },
   async create(data) {
