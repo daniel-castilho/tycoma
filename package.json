@@ -12,7 +12,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/modules/**/*.test.ts",
+    "test": "node --import ./scripts/test-register.mjs --experimental-strip-types --test src/**/*.test.ts",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "postinstall": "prisma generate",

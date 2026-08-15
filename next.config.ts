@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
       },
     ],
     dangerouslyAllowSVG: true,
+    // The S3 origin runs on localhost (LocalStack) in the dev environment; the
+    // default SSRF guard would block image optimization for it. Production uses
+    // a public S3 origin, so this flag is a no-op there.
+    dangerouslyAllowLocalIP: true,
   },
 };
 

@@ -16,14 +16,17 @@ the release notes first.
 
 ## Node test runner cannot resolve the `@/` alias
 
-`npm test` runs `node --experimental-strip-types --test src/modules/**/*.test.ts`. Node has no
-knowledge of the `@/` TypeScript path alias, so any **runtime** import of `@/...` inside a use-case
-under test fails with `ERR_MODULE_NOT_FOUND`. (`import type` is stripped by `--experimental-strip-types`,
-so only value imports matter.)
+`npm test` runs
+`node --import ./scripts/test-register.mjs --experimental-strip-types --test src/**/*.test.ts`.
+Node has no native knowledge of the `@/` TypeScript path alias declared in `tsconfig.json`, so any
+**runtime** import of `@/...` inside a file under test fails with `ERR_MODULE_NOT_FOUND`. (`import type`
+is stripped by `--experimental-strip-types`, so only value imports matter.)
 
-Rule: use-case files that are exercised by unit tests must import shared modules with relative
-paths and the explicit `.ts` extension (e.g. `../../../../shared/kernel/result.ts`) — following
-`auth/application/use-cases/create-first-admin.ts`. Files not under test may keep using `@/`.
+Rule: keep all `import` paths — including under `application/use-cases/` — clean with the `@/`
+alias. `scripts/test-resolver.mjs` is registered via `--import` before the test runner starts and
+rewrites `@/...` to the matching file under `src/`. A small relative-path fallback also fills in
+missing `.ts` extensions so use cases can stay alias-first without `.ts` suffixes. Adding new test
+files or moving them around does not require touching the resolver.
 
 ## Cross-module ports are wired by a framework composition root
 
@@ -31,12 +34,15 @@ Cross-module access must go through `domain/` ports only — including at compos
 that needs another module's port (e.g. `auth`/`content`/`media` writing audit events) must not
 import that module's `application` or `infrastructure`, not even from its own `application/index.ts`.
 
-Rule: each module's `application/index.ts` exposes a wiring factory that receives cross-module
-ports as parameters (`createContentApplication(auditEventWriter)`), and the framework wires them
-once in `src/app/_lib/modules.ts`, which exports the wired module objects (`content`, `auth`,
-`media`, `audit`). Server actions, pages and route handlers import from there. Adding a use-case to
-a module only means exporting it from that module's wiring factory; a new cross-module dependency
-adds a port parameter to the factory and a wire-up line in `modules.ts`.
+Rule: every module's composition entrypoint (`application/index.ts` and, if present,
+`application/edge.ts`) exposes a wiring factory that receives cross-module ports as parameters
+(`createContentApplication(auditEventWriter)`, `createAuditApplication({ store, reader })`,
+`createEdgeAuthApplication({ verifier })`). The framework wires them once in
+`src/app/_lib/modules.ts` — which exports the wired module objects (`content`, `auth`, `media`,
+`audit`) — and in edge consumers (`src/proxy.ts`, `src/app/admin/_lib/session.ts`,
+`src/app/admin/(authed)/layout.tsx`). Server actions, pages and route handlers import from there.
+Adding a use-case to a module only means exporting it from that module's wiring factory; a new
+cross-module dependency adds a port parameter to the factory and a wire-up line in `modules.ts`.
 
 ## Hierarchical menu items: flatten the tree in the application layer
 
