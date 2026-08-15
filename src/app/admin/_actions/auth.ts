@@ -13,8 +13,6 @@ import { appUrl, clientIp, SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from "../_li
 
 export type AuthActionState = { error: string | null; message: string | null };
 
-const empty: AuthActionState = { error: null, message: null };
-
 async function setSessionCookie(token: string) {
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, SESSION_COOKIE_OPTIONS);
@@ -108,5 +106,3 @@ export async function logoutAction() {
   await clearSessionCookie();
   redirect("/admin/login");
 }
-
-export { empty as emptyAuthState };

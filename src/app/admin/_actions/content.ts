@@ -16,9 +16,7 @@ import {
   updatePost,
 } from "@/modules/content/application";
 import type { ContentStatus, PageWrite, PostWrite } from "@/modules/content/domain/types";
-
-export type PostActionState = { error: string | null; message: string | null };
-export const emptyPostState: PostActionState = { error: null, message: null };
+import type { PostActionState } from "../_lib/action-state";
 
 function readForm(formData: FormData, name: string): string {
   return String(formData.get(name) ?? "");

@@ -53,6 +53,8 @@ Re-read the relevant parts before starting any task.
 > locally) before building or testing.
 > MongoDB runs as a **replica set** (`rs0` in `docker-compose.yml`) because Prisma transactions
 > require it — always use `npm run docker:up`, never a bare `mongo` container.
+> Prisma is pinned to **6.x** — Prisma ORM 7 does not support MongoDB. Do not bump to 7 until
+> MongoDB support ships (see `docs/lessons.md`).
 
 ## Architecture
 
@@ -95,6 +97,9 @@ infrastructure/  Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers 
   Keep schemas next to the adapter/action that consumes the data.
 - **UI**: thin Server Components / Server Actions. Business rules never live in `.tsx` or Server
   Actions — compose application services only.
+- Follow the [Twelve-Factor App](docs/twelve-factor.md) methodology: env-driven config (never
+  hardcode environment-specific values), reproducible builds from the lockfile, backing services as
+  attached resources, and schema changes shipped with the release.
 
 ## Testing
 

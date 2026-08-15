@@ -11,7 +11,7 @@ import type { Page } from "@/modules/content/domain/types";
 import {
   emptyPostState,
   type PostActionState,
-} from "@/app/admin/_actions/content";
+} from "@/app/admin/_lib/action-state";
 
 type Props = {
   action: (prev: PostActionState, formData: FormData) => Promise<PostActionState>;

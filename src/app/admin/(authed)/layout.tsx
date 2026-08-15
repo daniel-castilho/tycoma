@@ -1,4 +1,4 @@
-import "./admin-shell.css";
+import "./_components/admin-shell.css";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE } from "@/app/admin/_lib/session-cookie";

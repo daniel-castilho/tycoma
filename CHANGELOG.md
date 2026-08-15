@@ -23,6 +23,24 @@ Access Control phase).
   `tycoma-admin-dashboard-implementation-sequence.md`, `tycoma-admin-dashboard-module-spec.md`,
   `tycoma-ai-software-engineer-prompt-admin-dashboard.md`)
 
+### Changed
+
+- **Downgraded Prisma to `6.19.3`** (`prisma` + `@prisma/client`). Prisma ORM 7 dropped MongoDB
+  support, so the pinned v7 stack could not generate a client. See `docs/lessons.md`.
+- Added `postinstall: prisma generate` so a clean `npm ci` produces a working `@prisma/client`
+  (Twelve-Factor: reproducible builds).
+- Removed unused Tailwind references (`@import "tailwindcss"` in `globals.css`, postcss plugin) —
+  no component uses Tailwind classes; the package was never installed.
+- Fixed first-ever `npm run build`:
+  - `admin-shell.css` import path in the authed layout.
+  - `"use server"` action files exported non-function values (`emptyAuthState`, `emptyPostState`);
+    moved initial action state to `src/app/admin/_lib/action-state.ts`.
+  - Auth pages (`/admin/setup`, `/admin/login`, `/admin/forgot-password`) are now
+    `force-dynamic` so the build does not need a running database.
+- Enabled `allowImportingTsExtensions` in `tsconfig.json` (Node `strip-types` import style).
+- Added `.github/workflows/ci.yml` (lint, typecheck, tests, build on push/PR) and
+  `docs/twelve-factor.md` (reference & compliance matrix).
+
 ---
 
 _Add a high-level entry here before every tag, per the **Releases** section of `AGENTS.md`._

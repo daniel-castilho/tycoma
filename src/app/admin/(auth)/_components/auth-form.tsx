@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import type { AuthActionState } from "../../_actions/auth";
-import { emptyAuthState } from "../../_actions/auth";
+
+const emptyAuthState: AuthActionState = { error: null, message: null };
 
 type Field = {
   name: string;

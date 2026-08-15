@@ -7,7 +7,8 @@ into a service later with minimal impact.
 ## Tech stack
 
 - **Next.js 16** (App Router) + **React 19** + **TypeScript** (strict)
-- **Prisma 7** + **MongoDB** (replica set — required for transactions)
+- **Prisma 6** + **MongoDB** (replica set — required for transactions). Pinned to 6.x because Prisma
+  ORM 7 dropped MongoDB support (no `@prisma/adapter-mongodb` exists yet).
 - **Redis** (`ioredis`) — rate limiting, cache
 - **jose** — JWT sessions (httpOnly cookie)
 - **bcryptjs** — password hashing
@@ -115,6 +116,7 @@ history, automated backup/export scheduling, multi-user roles.
 | [AGENTS.md](AGENTS.md)                                                       | Rules for AI agents and human contributors                    |
 | [docs/lessons.md](docs/lessons.md)                                           | Durable lessons learned                                       |
 | [docs/coding-standards.md](docs/coding-standards.md)                         | Day-to-day coding standards (TypeScript/Next.js/Prisma)       |
+| [docs/twelve-factor.md](docs/twelve-factor.md)                               | Twelve-Factor App reference & compliance matrix               |
 | [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
 | [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
 | [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |

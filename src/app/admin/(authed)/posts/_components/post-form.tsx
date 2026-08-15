@@ -8,7 +8,10 @@ import {
 } from "@/app/admin/(authed)/_components/form-field";
 import { SubmitButton } from "@/app/admin/(authed)/_components/submit-button";
 import type { ContentStatus, Post } from "@/modules/content/domain/types";
-import { emptyPostState, type PostActionState } from "@/app/admin/_actions/content";
+import {
+  emptyPostState,
+  type PostActionState,
+} from "@/app/admin/_lib/action-state";
 
 type Props = {
   action: (prev: PostActionState, formData: FormData) => Promise<PostActionState>;

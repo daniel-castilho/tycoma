@@ -3,6 +3,8 @@ import { countUsers } from "@/modules/auth/application";
 import { setupAction } from "../../_actions/auth";
 import { AuthForm } from "../_components/auth-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function SetupPage() {
   const users = await countUsers();
   if (users > 0) {
