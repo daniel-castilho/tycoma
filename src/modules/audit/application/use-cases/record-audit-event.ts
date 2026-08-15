@@ -1,12 +1,10 @@
-import { randomUUID } from "node:crypto";
-import type { AuditEventWriter, AuditRepository } from "../../domain/types";
+import { newObjectId } from "@/shared/db/object-id";
+import type { AuditEventStore, AuditEventWriter } from "../../domain/types";
 
-const oid = () => randomUUID().replace(/-/g, "").slice(0, 24);
-
-export function createAuditEventWriter(repo: AuditRepository): AuditEventWriter {
+export function createAuditEventWriter(store: AuditEventStore): AuditEventWriter {
   return {
     async record(event) {
-      await repo.create({ ...event, id: oid(), createdAt: new Date() });
+      await store.create({ ...event, id: newObjectId(), createdAt: new Date() });
     },
   };
 }

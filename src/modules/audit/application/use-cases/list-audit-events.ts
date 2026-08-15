@@ -1,4 +1,4 @@
-import type { AuditEvent, AuditRepository } from "../../domain/types";
+import type { AuditEvent, AuditEventReader } from "../../domain/types";
 
 export type ListAuditEventsQuery = {
   eventType?: string;
@@ -9,11 +9,11 @@ export type ListAuditEventsQuery = {
   limit?: number;
 };
 
-export function createListAuditEvents(repo: AuditRepository) {
+export function createListAuditEvents(reader: AuditEventReader) {
   return async function listAuditEvents(query: ListAuditEventsQuery = {}): Promise<AuditEvent[]> {
     const from = query.from ? new Date(query.from) : undefined;
     const to = query.to ? new Date(query.to) : undefined;
-    return repo.list({
+    return reader.list({
       eventType: query.eventType || undefined,
       entityType: query.entityType || undefined,
       from: from && !Number.isNaN(from.getTime()) ? from : undefined,
