@@ -51,7 +51,8 @@ describe("updateSettings", () => {
   it("persists only the provided fields", async () => {
     const { repo, rows } = memorySettings({ title: "Old" });
     const { writer } = memoryAudit();
-    const updateSettings = createUpdateSettings(repo, writer);
+    const getSettings = createGetSettings(repo);
+    const updateSettings = createUpdateSettings(repo, writer, getSettings);
     await updateSettings({ description: "New description" });
     assert.equal(rows.title, "Old");
     assert.equal(rows.description, "New description");
@@ -60,7 +61,8 @@ describe("updateSettings", () => {
   it("returns the merged settings and audits content.settings_updated", async () => {
     const { repo } = memorySettings({ title: "Old" });
     const { writer, events } = memoryAudit();
-    const updateSettings = createUpdateSettings(repo, writer);
+    const getSettings = createGetSettings(repo);
+    const updateSettings = createUpdateSettings(repo, writer, getSettings);
     const result = await updateSettings({ title: "New" }, "user-1");
     assert.equal(result.title, "New");
     assert.equal(events[0]!.eventType, "content.settings_updated");
@@ -71,7 +73,8 @@ describe("updateSettings", () => {
   it("stores null values as empty strings", async () => {
     const { repo, rows } = memorySettings({ title: "Old", logoMediaId: "media-1" });
     const { writer } = memoryAudit();
-    const updateSettings = createUpdateSettings(repo, writer);
+    const getSettings = createGetSettings(repo);
+    const updateSettings = createUpdateSettings(repo, writer, getSettings);
     await updateSettings({ logoMediaId: null });
     assert.equal(rows.logoMediaId, "");
   });

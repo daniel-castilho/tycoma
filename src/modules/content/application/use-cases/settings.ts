@@ -30,7 +30,11 @@ export function createGetSettings(settings: SettingsRepository) {
   };
 }
 
-export function createUpdateSettings(settings: SettingsRepository, audit: AuditEventWriter) {
+export function createUpdateSettings(
+  settings: SettingsRepository,
+  audit: AuditEventWriter,
+  getSettings: () => Promise<SiteSettings>,
+) {
   return async function updateSettings(
     input: Partial<SiteSettings>,
     actorId?: string | null,
@@ -40,7 +44,7 @@ export function createUpdateSettings(settings: SettingsRepository, audit: AuditE
       entries[key] = value === null ? "" : String(value);
     }
     await settings.setMany(entries);
-    const current = await createGetSettings(settings)();
+    const current = await getSettings();
     await audit.record({
       actorId: actorId ?? null,
       eventType: "content.settings_updated",

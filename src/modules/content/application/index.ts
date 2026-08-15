@@ -69,7 +69,9 @@ export function createContentApplication(auditEventWriter: AuditEventWriter) {
     deleteTag: createDeleteTag(prismaTagRepository, prismaPostRepository, auditEventWriter),
 
     getSettings: createGetSettings(prismaSettingsRepository),
-    updateSettings: createUpdateSettings(prismaSettingsRepository, auditEventWriter),
+    updateSettings: createUpdateSettings(prismaSettingsRepository, auditEventWriter, () =>
+      createGetSettings(prismaSettingsRepository)(),
+    ),
     touchSitemap: createTouchSitemap(prismaSettingsRepository, auditEventWriter),
 
     listMenus: createListMenus(prismaMenuRepository),
