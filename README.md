@@ -86,19 +86,19 @@ smoke-test against `npm run docker:up`.
 
 ## Current state
 
-No tagged release yet. Implementation is in progress against
-`tasks/tycoma-admin-dashboard-implementation-sequence.md`:
+**`v0.1.0` is the first tagged release** and covers the full Admin Dashboard epic — all five
+milestones of `tasks/tycoma-admin-dashboard-implementation-sequence.md` were delivered together:
 
-- **Phase 1 — Foundation & access control:** implemented. Setup, login, session guard
-  (`src/proxy.ts`), password recovery, rate limiting, profile/change-password.
-- **Phase 2 — Core content management:** implemented. Dashboard KPIs (content + media storage),
-  posts, pages, taxonomy (categories/tags with parent cycle guard and descriptions). Settings &
-  menu use cases exist with admin screens.
-- **Phase 3 — Media:** implemented. Multi-file upload via `POST /api/media`, media grid with
-  search/filter, metadata editing, usage guard on delete.
-- **Phase 4 — Site structure/SEO:** implemented. Site settings, navigation menus (nested items,
-  post/page/category/custom URL), SEO defaults with Google preview, and `/sitemap.xml`.
-- **Phase 5 — Monitoring:** audit module implemented. `AuditEventWriter` threaded through the
+- **Phase 1 — Foundation & access control:** setup, login, session guard (`src/proxy.ts`), password
+  recovery, rate limiting, profile/change-password.
+- **Phase 2 — Core content management:** dashboard KPIs (content + media storage), posts, pages,
+  taxonomy (categories/tags with parent cycle guard and descriptions). Settings & menu use cases
+  exist with admin screens.
+- **Phase 3 — Media:** multi-file upload via `POST /api/media`, media grid with search/filter,
+  metadata editing, usage guard on delete.
+- **Phase 4 — Site structure/SEO:** site settings, navigation menus (nested items, post/page/
+  category/custom URL), SEO defaults with Google preview, and `/sitemap.xml`.
+- **Phase 5 — Monitoring:** audit module with `AuditEventWriter` threaded through the
   `content`/`auth`/`media` use cases; read-only audit log viewer with filters at `/admin/audit-log`.
 
 > **Known technical debt:** none — both items that were backlogged before the `v0.1.0` tag
@@ -109,10 +109,10 @@ No tagged release yet. Implementation is in progress against
 
 ## Roadmap
 
-Per the implementation sequence: `v0.1.0` (Phase 1) → `v0.2.0` (Phase 2) → `v0.3.0` (Media) →
-`v0.4.0` (Site structure & SEO) → `v0.5.0` (Monitoring). Deliberately deferred: custom content
-types, block-based editor, public headless API, webhooks, comments, 301 redirects, revision
-history, automated backup/export scheduling, multi-user roles.
+The original implementation sequence planned `v0.1.0` (Phase 1) → `v0.5.0` (Monitoring) as separate
+milestones; in practice all five phases shipped together as **`v0.1.0`**. Deliberately deferred:
+custom content types, block-based editor, public headless API, webhooks, comments, 301 redirects,
+revision history, automated backup/export scheduling, multi-user roles.
 
 ## Documentation
 

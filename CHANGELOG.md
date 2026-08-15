@@ -5,23 +5,32 @@ All notable changes to Tycoma will be documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
 project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
 
-## [Unreleased]
+## [v0.1.0] — 2026-08-14
 
-Nothing has shipped yet — the project is in the planning/scaffolding stage. See
-`tycoma-admin-dashboard-backlog.md` and `tycoma-admin-dashboard-implementation-sequence.md` for
-what's planned for the first tagged release (target: `v0.1.0`, at the end of the Foundation &
-Access Control phase).
+First tagged release: the complete Admin Dashboard epic (all five milestones shipped together) plus
+resolution of the recorded technical debt. See `docs/releases/v0.1.0.md` for details.
 
 ### Added
 
 - Project scaffold: directory structure (`setup-tycoma.sh`), `package.json` with pinned versions
-  (Node 24 LTS, Next.js 16.3, Prisma 7.9.1)
+  (Node 24 LTS, Next.js 16.3, Prisma 6.19.3)
 - Decision: password hashing via Argon2id (`@node-rs/argon2`)
-- Decision: testing stack — Jest (unit) + Playwright (e2e)
-- Decision: hexagonal boundary enforcement via dependency-cruiser
+- Decision: testing stack — Node.js built-in test runner (`node --experimental-strip-types
+  --test`), fast unit tests with no Docker; domain tests use no mocks
+- Decision: hexagonal boundary enforcement via the rule-1 purity greps + module wiring factories
+  (documented in `AGENTS.md`)
 - Planning docs for the Admin Dashboard epic (`tycoma-admin-dashboard-backlog.md`,
   `tycoma-admin-dashboard-implementation-sequence.md`, `tycoma-admin-dashboard-module-spec.md`,
   `tycoma-ai-software-engineer-prompt-admin-dashboard.md`)
+- **Admin dashboard epic** — all five milestones:
+  - Foundation & access control: setup, login, session guard, password recovery, rate limiting,
+    profile/change-password.
+  - Core content: dashboard KPIs, posts, pages, taxonomy (categories/tags with parent cycle guard).
+  - Media: multi-file upload API, S3-compatible storage, grid, metadata, usage-guarded delete.
+  - Site structure & SEO: site settings, nested navigation menus, SEO defaults, `/sitemap.xml`.
+  - Monitoring: `audit` module with `AuditEventWriter` port threaded through `auth`/`content`/
+    `media`, plus a filterable audit log viewer.
+- Application-layer tests for the audit, menus and settings use cases (30 tests total).
 
 ### Changed
 
@@ -40,6 +49,10 @@ Access Control phase).
 - Enabled `allowImportingTsExtensions` in `tsconfig.json` (Node `strip-types` import style).
 - Added `.github/workflows/ci.yml` (lint, typecheck, tests, build on push/PR) and
   `docs/twelve-factor.md` (reference & compliance matrix).
+- Wired cross-module ports through a framework composition root (`src/app/_lib/modules.ts`); each
+  module's `application/index.ts` exposes a wiring factory that receives cross-module ports.
+- Enabled flat ESLint config (`eslint-config-next`, zero warnings) and `next/image` for the S3
+  remote host.
 - **Migrated password hashing from `bcryptjs` to Argon2id** (`@node-rs/argon2`), fulfilling the
   original decision recorded above. Added a `PasswordHasher` port in `auth/domain/`, an Argon2id
   adapter in `auth/infrastructure/` (OWASP-recommended parameters: 64 MiB, 3 passes, 1 lane;
