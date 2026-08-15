@@ -10,16 +10,16 @@ Re-read the relevant parts before starting any task.
 ## Critical rules (never violate)
 
 1. `domain/` and `application/` have **zero framework / infrastructure imports** (`next/*`,
-   `@prisma/client`, `ioredis`, `jose`, `bcryptjs`, React, persistence Zod schemas, etc.).
+   `@prisma/client`, `ioredis`, `jose`, React, persistence Zod schemas, etc.).
    Verify before finishing:
-   `grep -rEn "^(import|export) .*\b(next/|@prisma|ioredis|jose|bcryptjs|react)" src/modules/*/domain src/modules/*/application`
+   `grep -rEn "^(import|export) .*\b(next/|@prisma|ioredis|jose|react)" src/modules/*/domain src/modules/*/application`
    must return nothing (matches real imports only, not comments). The only exceptions are a module's composition entrypoints
    (`application/index.ts`, `application/edge.ts`), which wire up its own adapters.
 2. Cross-module dependencies only through `domain/` port interfaces. **Never** import another
    module's `application` or `infrastructure`.
-3. **Zero direct Prisma / Redis / JWT / bcrypt usage outside `infrastructure/`.** Every operation
+3. **Zero direct Prisma / Redis / JWT / Argon2 usage outside `infrastructure/`.** Every operation
    goes through a domain port implemented by an adapter, injected into a use-case factory.
-4. Passwords only as **bcryptjs** hashes (cost ≥ 12). Password-reset tokens are stored hashed,
+4. Passwords only as **Argon2id** hashes (via the auth module's `PasswordHasher` port). Password-reset tokens are stored hashed,
    never in plaintext. Never commit secrets, `.env` files, or real credentials.
 5. Do **not** add a new npm dependency without explicit human approval.
 6. **English only.** All identifiers, comments, JSDoc/TSDoc, commit messages, documentation and
@@ -131,18 +131,11 @@ infrastructure/  Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers 
 Items that currently violate the rules above. Do **not** silently "fix" them, and do **not** add
 new violations — flag them to the human instead.
 
-1. **`bcryptjs` imported directly in `application/use-cases/` and should be migrated to
-   Argon2id** (violates rules 1 & 3; diverges from the documented decision in `CHANGELOG.md`):
-   `src/modules/auth/application/use-cases/login.ts`, `create-first-admin.ts`,
-   `reset-password.ts`, `change-password.ts`. The `grep` check under rule 1 will fail until this is
-   resolved. Planned fix: introduce a `PasswordHasher` port in `auth/domain/`, implement it with
-   **Argon2id (`@node-rs/argon2`)** in `auth/infrastructure/` — per the original decision — and
-   inject it through the use-case factories. Adding the dependency needs explicit human approval
-   (rule 5).
-2. **Zod is not used everywhere yet.** Server actions now validate every form/API input with Zod
-   (see `src/app/admin/_actions/*` and `src/app/api/media/route.ts`). Remaining gaps: `searchParams`
-   in pages and env validation. Migrate opportunistically; keep every *new* external input
-   Zod-validated.
+None at the moment — the previously recorded items were resolved in `v0.1.0`:
+
+- `bcryptjs` direct imports in `auth` use-cases migrated to an Argon2id `PasswordHasher` port.
+- Zod adoption completed: server actions, `searchParams` and environment configuration are all
+  validated (`src/shared/env.ts`). Keep every *new* external input Zod-validated.
 
 ## Notes
 

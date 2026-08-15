@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import bcrypt from "bcryptjs";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import type { PasswordHasher } from "../../domain/password-hasher";
 import type { PasswordResetTokenRepository } from "../../domain/password-reset-token";
 import type { UserRepository } from "../../domain/user";
 
@@ -9,6 +9,7 @@ export function createResetPassword(
   users: UserRepository,
   tokens: PasswordResetTokenRepository,
   audit: AuditEventWriter,
+  hasher: PasswordHasher,
 ) {
   return async function resetPassword(input: {
     token: string;
@@ -22,7 +23,7 @@ export function createResetPassword(
     if (!record) {
       return err("This reset link is invalid or has expired.");
     }
-    const passwordHash = await bcrypt.hash(input.password, 12);
+    const passwordHash = await hasher.hash(input.password);
     await users.update(record.userId, { passwordHash });
     await tokens.markUsed(record.id, new Date());
     await audit.record({

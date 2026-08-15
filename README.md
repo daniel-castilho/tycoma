@@ -11,7 +11,7 @@ into a service later with minimal impact.
   ORM 7 dropped MongoDB support (no `@prisma/adapter-mongodb` exists yet).
 - **Redis** (`ioredis`) — rate limiting, cache
 - **jose** — JWT sessions (httpOnly cookie)
-- **bcryptjs** — password hashing
+- **@node-rs/argon2** — Argon2id password hashing
 - **zod** — input validation
 - **Node.js 24.x**
 
@@ -26,7 +26,7 @@ src/modules/<feature>/
 │   ├── use-cases/    create<UseCase>(ports) factories returning closures
 │   ├── index.ts      Composition root: wires infrastructure adapters into the use cases
 │   └── edge.ts       Optional edge-safe entrypoint (no Prisma/ioredis) for the Next.js proxy
-└── infrastructure/   Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers + mappers
+└── infrastructure/   Adapters: Prisma repositories, Redis, JWT, Argon2id, S3, mailers + mappers
 ```
 
 | Area      | Responsibility                                                                   |
@@ -41,7 +41,7 @@ src/modules/<feature>/
 
 - `domain/` and `application/` never import framework or infrastructure code.
 - Modules depend on each other **only** through `domain/` port interfaces.
-- No direct Prisma / Redis / JWT / bcrypt usage outside `infrastructure/`.
+- No direct Prisma / Redis / JWT / Argon2 usage outside `infrastructure/`.
 
 ## Requirements
 
@@ -101,10 +101,11 @@ No tagged release yet. Implementation is in progress against
 - **Phase 5 — Monitoring:** audit module implemented. `AuditEventWriter` threaded through the
   `content`/`auth`/`media` use cases; read-only audit log viewer with filters at `/admin/audit-log`.
 
-> **Known technical debt:** `auth` use-cases import `bcryptjs` directly and should be migrated to
-> Argon2id (via a `PasswordHasher` port), and Zod is only partially adopted for input validation.
-> See "Known technical debt" in `AGENTS.md`. Both are backlogged and must be resolved before the
-> `v0.1.0` tag.
+> **Known technical debt:** none — both items that were backlogged before the `v0.1.0` tag
+> (direct `bcryptjs` imports in `auth` use-cases, partial Zod adoption) are resolved. Passwords are
+> hashed with Argon2id via the `PasswordHasher` port, and every external input — server actions,
+> `searchParams`, environment config (`src/shared/env.ts`) — is Zod-validated. See "Known technical
+> debt" in `AGENTS.md`.
 
 ## Roadmap
 

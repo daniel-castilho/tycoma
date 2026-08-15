@@ -1,10 +1,11 @@
+import { env } from "@/shared/env";
 import type { ObjectStorage } from "../domain/types";
 
 function config() {
   return {
-    endpoint: process.env.S3_ENDPOINT ?? "http://localhost:4566",
-    bucket: process.env.S3_BUCKET ?? "tycoma-media",
-    publicBase: process.env.S3_PUBLIC_BASE_URL ?? "http://localhost:4566/tycoma-media",
+    endpoint: env.S3_ENDPOINT,
+    bucket: env.S3_BUCKET,
+    publicBase: env.S3_PUBLIC_BASE_URL,
   };
 }
 

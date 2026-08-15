@@ -1,8 +1,10 @@
+import { env } from "@/shared/env";
+
 export const SESSION_COOKIE = "tycoma_session";
 
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: env.NODE_ENV === "production",
   sameSite: "lax" as const,
   path: "/",
   maxAge: 60 * 60 * 24 * 7,
@@ -18,5 +20,5 @@ export function clientIp(headers: Headers): string {
 }
 
 export function appUrl(): string {
-  return process.env.APP_URL ?? "http://localhost:3000";
+  return env.APP_URL;
 }

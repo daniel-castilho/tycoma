@@ -40,6 +40,15 @@ Access Control phase).
 - Enabled `allowImportingTsExtensions` in `tsconfig.json` (Node `strip-types` import style).
 - Added `.github/workflows/ci.yml` (lint, typecheck, tests, build on push/PR) and
   `docs/twelve-factor.md` (reference & compliance matrix).
+- **Migrated password hashing from `bcryptjs` to Argon2id** (`@node-rs/argon2`), fulfilling the
+  original decision recorded above. Added a `PasswordHasher` port in `auth/domain/`, an Argon2id
+  adapter in `auth/infrastructure/` (OWASP-recommended parameters: 64 MiB, 3 passes, 1 lane;
+  version 0x13), and injected it through the auth use-case factories. `verify` treats a malformed
+  stored hash as a mismatch instead of throwing.
+- **Completed Zod adoption**: `searchParams` on the posts, media and audit-log pages are validated
+  with Zod schemas, and all environment configuration is validated at `src/shared/env.ts`
+  (`NODE_ENV`, `AUTH_SECRET`, `APP_URL`, `DATABASE_URL`, `REDIS_URL`, `S3_*`). Infrastructure
+  adapters read config from the validated `env` object instead of `process.env` directly.
 
 ---
 

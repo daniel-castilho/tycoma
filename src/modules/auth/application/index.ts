@@ -1,4 +1,5 @@
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import { argon2PasswordHasher } from "../infrastructure/argon2-password-hasher";
 import { consoleMailer } from "../infrastructure/console-mailer";
 import { jwtSessionIssuer } from "../infrastructure/jwt-session-issuer";
 import { prismaPasswordResetTokenRepository } from "../infrastructure/prisma-password-reset-token-repository";
@@ -22,8 +23,8 @@ import { createUpdateProfile } from "./use-cases/update-profile";
 export function createAuthApplication(auditEventWriter: AuditEventWriter) {
   return {
     countUsers: createCountUsers(prismaUserRepository),
-    createFirstAdmin: createCreateFirstAdmin(prismaUserRepository, auditEventWriter),
-    login: createLogin(prismaUserRepository, jwtSessionIssuer, redisRateLimiter, auditEventWriter),
+    createFirstAdmin: createCreateFirstAdmin(prismaUserRepository, auditEventWriter, argon2PasswordHasher),
+    login: createLogin(prismaUserRepository, jwtSessionIssuer, redisRateLimiter, auditEventWriter, argon2PasswordHasher),
     requestPasswordReset: createRequestPasswordReset(
       prismaUserRepository,
       prismaPasswordResetTokenRepository,
@@ -35,10 +36,11 @@ export function createAuthApplication(auditEventWriter: AuditEventWriter) {
       prismaUserRepository,
       prismaPasswordResetTokenRepository,
       auditEventWriter,
+      argon2PasswordHasher,
     ),
     getProfile: createGetProfile(prismaUserRepository),
     updateProfile: createUpdateProfile(prismaUserRepository),
-    changePassword: createChangePassword(prismaUserRepository, auditEventWriter),
+    changePassword: createChangePassword(prismaUserRepository, auditEventWriter, argon2PasswordHasher),
   };
 }
 

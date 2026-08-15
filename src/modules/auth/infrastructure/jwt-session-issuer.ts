@@ -1,12 +1,9 @@
 import { SignJWT, jwtVerify } from "jose";
+import { env } from "@/shared/env";
 import type { SessionIssuer } from "../domain/session";
 
 function secret() {
-  const raw = process.env.AUTH_SECRET;
-  if (!raw) {
-    throw new Error("AUTH_SECRET is not set");
-  }
-  return new TextEncoder().encode(raw);
+  return new TextEncoder().encode(env.AUTH_SECRET);
 }
 
 export const jwtSessionIssuer: SessionIssuer = {

@@ -1,4 +1,13 @@
+import { z } from "zod";
 import { audit } from "@/app/_lib/modules";
+
+const filtersSchema = z.object({
+  eventType: z.string().trim().optional(),
+  entityType: z.string().trim().optional(),
+  search: z.string().trim().optional(),
+  from: z.string().trim().optional(),
+  to: z.string().trim().optional(),
+});
 
 const EVENT_LABELS: Record<string, string> = {
   "auth.login": "Sign in",
@@ -54,14 +63,8 @@ export default async function AuditLogPage({
 }: {
   searchParams: Promise<{ eventType?: string; entityType?: string; search?: string; from?: string; to?: string }>;
 }) {
-  const params = await searchParams;
-  const events = await audit.listAuditEvents({
-    eventType: params.eventType || undefined,
-    entityType: params.entityType || undefined,
-    search: params.search || undefined,
-    from: params.from || undefined,
-    to: params.to || undefined,
-  });
+  const filters = filtersSchema.parse(await searchParams);
+  const events = await audit.listAuditEvents(filters);
 
   const knownEventTypes = Object.keys(EVENT_LABELS);
 
@@ -71,8 +74,8 @@ export default async function AuditLogPage({
       <p className="lead">A read-only trail of actions performed in the CMS.</p>
 
       <form method="get" className="admin-toolbar" style={{ flexWrap: "wrap" }}>
-        <input className="btn-secondary" type="search" name="search" defaultValue={params.search} placeholder="Search details…" />
-        <select className="btn-secondary" name="eventType" defaultValue={params.eventType ?? ""}>
+        <input className="btn-secondary" type="search" name="search" defaultValue={filters.search} placeholder="Search details…" />
+        <select className="btn-secondary" name="eventType" defaultValue={filters.eventType ?? ""}>
           <option value="">All events</option>
           {knownEventTypes.map((t) => (
             <option key={t} value={t}>
@@ -80,8 +83,8 @@ export default async function AuditLogPage({
             </option>
           ))}
         </select>
-        <input className="btn-secondary" type="date" name="from" defaultValue={params.from} />
-        <input className="btn-secondary" type="date" name="to" defaultValue={params.to} />
+        <input className="btn-secondary" type="date" name="from" defaultValue={filters.from} />
+        <input className="btn-secondary" type="date" name="to" defaultValue={filters.to} />
         <button type="submit" className="btn-secondary">
           Filter
         </button>

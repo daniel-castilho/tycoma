@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { z } from "zod";
 import { content } from "@/app/_lib/modules";
 import { bulkPostsAction } from "@/app/admin/_actions/content";
 import { DataTable } from "@/app/admin/(authed)/_components/data-table";
@@ -8,12 +9,16 @@ import type { ContentStatus, Post } from "@/modules/content/domain/types";
 
 const STATUSES: ContentStatus[] = ["draft", "scheduled", "published"];
 
+const filtersSchema = z.object({
+  status: z.enum(["draft", "scheduled", "published"]).optional().catch(undefined),
+  q: z.string().trim().optional(),
+  category: z.string().trim().optional(),
+  sort: z.enum(["updatedAt", "title", "publishedAt"]).default("updatedAt").catch("updatedAt"),
+  order: z.enum(["asc", "desc"]).default("desc").catch("desc"),
+});
+
 function formatDate(value: Date): string {
   return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(value);
-}
-
-function isStatus(value: string | undefined): value is ContentStatus {
-  return value === "draft" || value === "scheduled" || value === "published";
 }
 
 export default async function PostsListPage({
@@ -27,20 +32,21 @@ export default async function PostsListPage({
     order?: string;
   }>;
 }) {
-  const sp = await searchParams;
-  const status = isStatus(sp.status) ? sp.status : undefined;
-  const search = sp.q?.trim() || undefined;
-  const categoryId = sp.category?.trim() || undefined;
-  const sort = sp.sort === "title" || sp.sort === "publishedAt" ? sp.sort : "updatedAt";
-  const order = sp.order === "asc" ? "asc" : "desc";
+  const filters = filtersSchema.parse(await searchParams);
 
   const [posts, categories] = await Promise.all([
-    content.listPosts({ status, search, categoryId, sort, order }),
+    content.listPosts({
+      status: filters.status,
+      search: filters.q,
+      categoryId: filters.category,
+      sort: filters.sort,
+      order: filters.order,
+    }),
     content.listCategories(),
   ]);
 
-  const categoryName = categoryId
-    ? categories.find((c) => c.id === categoryId)?.name ?? ""
+  const categoryName = filters.category
+    ? categories.find((c) => c.id === filters.category)?.name ?? ""
     : "";
 
   return (
@@ -50,7 +56,7 @@ export default async function PostsListPage({
 
       <form className="admin-toolbar" method="get">
         <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <select name="status" defaultValue={status ?? ""} className="btn-secondary">
+          <select name="status" defaultValue={filters.status ?? ""} className="btn-secondary">
             <option value="">All statuses</option>
             {STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -58,7 +64,7 @@ export default async function PostsListPage({
               </option>
             ))}
           </select>
-          <select name="category" defaultValue={categoryId ?? ""} className="btn-secondary">
+          <select name="category" defaultValue={filters.category ?? ""} className="btn-secondary">
             <option value="">All categories</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -69,17 +75,17 @@ export default async function PostsListPage({
           <input
             type="search"
             name="q"
-            defaultValue={search ?? ""}
+            defaultValue={filters.q ?? ""}
             placeholder="Search titles…"
             className="btn-secondary"
             style={{ minWidth: "12rem" }}
           />
-          <select name="sort" defaultValue={sort} className="btn-secondary">
+          <select name="sort" defaultValue={filters.sort} className="btn-secondary">
             <option value="updatedAt">Updated</option>
             <option value="publishedAt">Published</option>
             <option value="title">Title</option>
           </select>
-          <select name="order" defaultValue={order} className="btn-secondary">
+          <select name="order" defaultValue={filters.order} className="btn-secondary">
             <option value="desc">Desc</option>
             <option value="asc">Asc</option>
           </select>

@@ -1,9 +1,13 @@
-import bcrypt from "bcryptjs";
 import { err, ok, type Result } from "../../../../shared/kernel/result.ts";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import type { PasswordHasher } from "../../domain/password-hasher";
 import type { UserRepository } from "../../domain/user";
 
-export function createCreateFirstAdmin(users: UserRepository, audit: AuditEventWriter) {
+export function createCreateFirstAdmin(
+  users: UserRepository,
+  audit: AuditEventWriter,
+  hasher: PasswordHasher,
+) {
   return async function createFirstAdmin(input: {
     email: string;
     name: string;
@@ -24,7 +28,7 @@ export function createCreateFirstAdmin(users: UserRepository, audit: AuditEventW
     if (!email.includes("@")) {
       return err("A valid email is required.");
     }
-    const passwordHash = await bcrypt.hash(input.password, 12);
+    const passwordHash = await hasher.hash(input.password);
     const user = await users.create({
       email,
       name,

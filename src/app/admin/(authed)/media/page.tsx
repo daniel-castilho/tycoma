@@ -1,7 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { z } from "zod";
 import { media } from "@/app/_lib/modules";
 import { UploadDropzone } from "./_components/upload-dropzone";
+
+const filtersSchema = z.object({
+  q: z.string().trim().optional(),
+  type: z.enum(["image", "video", "audio", "application"]).optional().catch(undefined),
+});
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -18,10 +24,10 @@ export default async function MediaPage({
 }: {
   searchParams: Promise<{ q?: string; type?: string }>;
 }) {
-  const params = await searchParams;
+  const filters = filtersSchema.parse(await searchParams);
   const assets = await media.listMedia({
-    search: params.q || undefined,
-    mimePrefix: params.type || undefined,
+    search: filters.q,
+    mimePrefix: filters.type,
   });
 
   return (
@@ -31,8 +37,8 @@ export default async function MediaPage({
 
       <section className="admin-toolbar" style={{ flexWrap: "wrap" }}>
         <form method="get" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <input className="btn-secondary" type="search" name="q" defaultValue={params.q} placeholder="Search…" />
-          <select className="btn-secondary" name="type" defaultValue={params.type ?? ""}>
+          <input className="btn-secondary" type="search" name="q" defaultValue={filters.q} placeholder="Search…" />
+          <select className="btn-secondary" name="type" defaultValue={filters.type ?? ""}>
             <option value="">All types</option>
             <option value="image">Images</option>
             <option value="video">Videos</option>

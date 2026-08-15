@@ -48,3 +48,18 @@ Rule: accept a nested `MenuItemDraft[]` (children arrays) in the use case and fl
 flat `MenuItem[]` inside the application layer — that is where the parent/child id assignment
 belongs, not in the UI. The client editor only manages a tree of drafts; drag-and-drop can be
 layered onto it later without touching the use case.
+## `@node-rs/argon2` ships ambient `const enum`s that do not exist at runtime
+
+`@node-rs/argon2` declares its `Algorithm`/`Version` types as **ambient `const enum`s**. Two traps
+follow:
+
+1. Under `isolatedModules` (the default in modern Next/TS setups), referencing
+   `argon2.Algorithm.Argon2id` is a compile error (`TS2748: Cannot access ambient const enums`).
+2. Even if it compiled, the runtime module exports **empty objects** for those enums — the const
+   enum values are erased at compile time, so the reference would be `undefined.Argon2id`.
+
+Rule: pass the documented member values as numeric literals typed against the library's `Options`
+interface (`algorithm: 2 /* Argon2id */`, `version: 1 /* 0x13 */`). Add the values in a comment.
+Use the OWASP-recommended Argon2id baseline (64 MiB memory, 3 passes, 1 lane) and remember that
+`verify()` throws on a malformed encoded hash — wrap it so a corrupt stored hash degrades to a
+failed login instead of a 500.

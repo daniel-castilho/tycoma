@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import type { PasswordHasher } from "../../domain/password-hasher.ts";
 import type { User, UserRepository } from "../../domain/user.ts";
 import { createCreateFirstAdmin } from "./create-first-admin.ts";
 
 const noopAudit = { record: async () => {} };
+
+const fakeHasher: PasswordHasher = {
+  async hash(password) {
+    return `hashed:${password}`;
+  },
+  async verify(password, hash) {
+    return hash === `hashed:${password}`;
+  },
+};
 
 function memoryUsers(seed: User[] = []): UserRepository {
   const rows = [...seed];
@@ -43,7 +53,7 @@ function memoryUsers(seed: User[] = []): UserRepository {
 describe("createFirstAdmin", () => {
   it("creates the first admin and hashes the password", async () => {
     const users = memoryUsers();
-    const createFirstAdmin = createCreateFirstAdmin(users, noopAudit);
+    const createFirstAdmin = createCreateFirstAdmin(users, noopAudit, fakeHasher);
     const result = await createFirstAdmin({
       name: " Ada ",
       email: "Ada@Example.com",
@@ -55,6 +65,7 @@ describe("createFirstAdmin", () => {
     assert.ok(stored);
     assert.equal(stored.name, "Ada");
     assert.notEqual(stored.passwordHash, "longenough");
+    assert.equal(stored.passwordHash, "hashed:longenough");
   });
 
   it("locks once a user already exists", async () => {
@@ -69,7 +80,7 @@ describe("createFirstAdmin", () => {
         updatedAt: new Date(),
       },
     ]);
-    const createFirstAdmin = createCreateFirstAdmin(users, noopAudit);
+    const createFirstAdmin = createCreateFirstAdmin(users, noopAudit, fakeHasher);
     const result = await createFirstAdmin({
       name: "B",
       email: "b@b.c",
@@ -83,7 +94,7 @@ describe("createFirstAdmin", () => {
   });
 
   it("rejects a short password", async () => {
-    const createFirstAdmin = createCreateFirstAdmin(memoryUsers(), noopAudit);
+    const createFirstAdmin = createCreateFirstAdmin(memoryUsers(), noopAudit, fakeHasher);
     const result = await createFirstAdmin({
       name: "Ada",
       email: "ada@example.com",

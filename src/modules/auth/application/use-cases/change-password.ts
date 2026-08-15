@@ -1,9 +1,13 @@
-import bcrypt from "bcryptjs";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import type { PasswordHasher } from "../../domain/password-hasher";
 import type { UserRepository } from "../../domain/user";
 
-export function createChangePassword(users: UserRepository, audit: AuditEventWriter) {
+export function createChangePassword(
+  users: UserRepository,
+  audit: AuditEventWriter,
+  hasher: PasswordHasher,
+) {
   return async function changePassword(input: {
     userId: string;
     currentPassword: string;
@@ -13,14 +17,14 @@ export function createChangePassword(users: UserRepository, audit: AuditEventWri
     if (!user) {
       return err("User not found.");
     }
-    const match = await bcrypt.compare(input.currentPassword, user.passwordHash);
+    const match = await hasher.verify(input.currentPassword, user.passwordHash);
     if (!match) {
       return err("Current password is incorrect.");
     }
     if (input.newPassword.length < 8) {
       return err("Password must be at least 8 characters.");
     }
-    const passwordHash = await bcrypt.hash(input.newPassword, 12);
+    const passwordHash = await hasher.hash(input.newPassword);
     await users.update(input.userId, { passwordHash });
     await audit.record({
       actorId: input.userId,

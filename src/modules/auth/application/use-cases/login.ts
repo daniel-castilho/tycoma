@@ -1,6 +1,6 @@
-import bcrypt from "bcryptjs";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import type { PasswordHasher } from "../../domain/password-hasher";
 import type { RateLimiter } from "../../domain/rate-limiter";
 import type { SessionIssuer } from "../../domain/session";
 import type { UserRepository } from "../../domain/user";
@@ -10,6 +10,7 @@ export function createLogin(
   sessions: SessionIssuer,
   limiter: RateLimiter,
   audit: AuditEventWriter,
+  hasher: PasswordHasher,
 ) {
   return async function login(input: {
     email: string;
@@ -39,7 +40,7 @@ export function createLogin(
       });
       return err("Invalid email or password.");
     }
-    const match = await bcrypt.compare(input.password, user.passwordHash);
+    const match = await hasher.verify(input.password, user.passwordHash);
     if (!match) {
       await audit.record({
         actorId: null,
