@@ -3,6 +3,11 @@ import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { Mailer } from "../../domain/mailer";
 import type { PasswordResetTokenRepository } from "../../domain/password-reset-token";
+import {
+  PASSWORD_RESET_RATE_LIMIT,
+  PASSWORD_RESET_TTL_MS,
+  PASSWORD_RESET_TOKEN_BYTES,
+} from "../../domain/policies";
 import type { RateLimiter } from "../../domain/rate-limiter";
 import type { UserRepository } from "../../domain/user";
 
@@ -19,7 +24,11 @@ export function createRequestPasswordReset(
     appUrl: string;
   }): Promise<Result<{ sent: true }>> {
     const email = input.email.trim().toLowerCase();
-    const limit = await limiter.hit(`reset:${input.ip}:${email}`, 5, 15 * 60);
+    const limit = await limiter.hit(
+      `reset:${input.ip}:${email}`,
+      PASSWORD_RESET_RATE_LIMIT.max,
+      PASSWORD_RESET_RATE_LIMIT.windowSeconds,
+    );
     if (!limit.allowed) {
       return err("Too many reset requests. Try again later.");
     }
@@ -28,9 +37,9 @@ export function createRequestPasswordReset(
     if (!user) {
       return ok({ sent: true });
     }
-    const raw = randomBytes(32).toString("hex");
+    const raw = randomBytes(PASSWORD_RESET_TOKEN_BYTES).toString("hex");
     const tokenHash = createHash("sha256").update(raw).digest("hex");
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
     await tokens.create({ userId: user.id, tokenHash, expiresAt });
     const resetUrl = `${input.appUrl.replace(/\/$/, "")}/admin/reset-password?token=${raw}`;
     await mailer.sendPasswordReset(user.email, resetUrl);

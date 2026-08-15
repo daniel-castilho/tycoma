@@ -1,6 +1,7 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { PasswordHasher } from "../../domain/password-hasher";
+import { LOGIN_RATE_LIMIT } from "../../domain/policies";
 import type { RateLimiter } from "../../domain/rate-limiter";
 import type { SessionIssuer } from "../../domain/session";
 import type { UserRepository } from "../../domain/user";
@@ -18,7 +19,11 @@ export function createLogin(
     ip: string;
   }): Promise<Result<{ token: string }>> {
     const email = input.email.trim().toLowerCase();
-    const limit = await limiter.hit(`login:${input.ip}:${email}`, 8, 15 * 60);
+    const limit = await limiter.hit(
+      `login:${input.ip}:${email}`,
+      LOGIN_RATE_LIMIT.max,
+      LOGIN_RATE_LIMIT.windowSeconds,
+    );
     if (!limit.allowed) {
       await audit.record({
         actorId: null,

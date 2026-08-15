@@ -1,6 +1,7 @@
-import { err, ok, type Result } from "../../../../shared/kernel/result.ts";
+import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { PasswordHasher } from "../../domain/password-hasher";
+import { MIN_PASSWORD_LENGTH } from "../../domain/policies";
 import type { UserRepository } from "../../domain/user";
 
 export function createCreateFirstAdmin(
@@ -21,8 +22,8 @@ export function createCreateFirstAdmin(
     if (!name) {
       return err("A name is required.");
     }
-    if (input.password.length < 8) {
-      return err("Password must be at least 8 characters.");
+    if (input.password.length < MIN_PASSWORD_LENGTH) {
+      return err(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
     }
     const email = input.email.trim().toLowerCase();
     if (!email.includes("@")) {

@@ -7,7 +7,11 @@
  *
  * Today this is consumed by `src/proxy.ts` (Next.js middleware).
  */
-import { jwtSessionVerifier } from "../infrastructure/jwt-session-verifier";
+import type { SessionVerifier } from "../domain/session";
 import { createVerifySessionToken } from "./use-cases/verify-session-token";
 
-export const verifySessionToken = createVerifySessionToken(jwtSessionVerifier);
+export function createEdgeAuthApplication(deps: { verifier: SessionVerifier }) {
+  return {
+    verifySessionToken: createVerifySessionToken(deps.verifier),
+  };
+}

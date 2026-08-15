@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { PasswordHasher } from "../../domain/password-hasher";
+import { MIN_PASSWORD_LENGTH } from "../../domain/policies";
 import type { PasswordResetTokenRepository } from "../../domain/password-reset-token";
 import type { UserRepository } from "../../domain/user";
 
@@ -15,8 +16,8 @@ export function createResetPassword(
     token: string;
     password: string;
   }): Promise<Result<{ ok: true }>> {
-    if (input.password.length < 8) {
-      return err("Password must be at least 8 characters.");
+    if (input.password.length < MIN_PASSWORD_LENGTH) {
+      return err(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
     }
     const tokenHash = createHash("sha256").update(input.token).digest("hex");
     const record = await tokens.findValidByHash(tokenHash, new Date());

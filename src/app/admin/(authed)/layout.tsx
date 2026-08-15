@@ -2,8 +2,11 @@ import "./_components/admin-shell.css";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE } from "@/app/admin/_lib/session-cookie";
-import { verifySessionToken } from "@/modules/auth/application/edge";
+import { createEdgeAuthApplication } from "@/modules/auth/application/edge";
+import { jwtSessionVerifier } from "@/modules/auth/infrastructure/jwt-session-verifier";
 import { logoutAction } from "@/app/admin/_actions/auth";
+
+const { verifySessionToken } = createEdgeAuthApplication({ verifier: jwtSessionVerifier });
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Dashboard" },

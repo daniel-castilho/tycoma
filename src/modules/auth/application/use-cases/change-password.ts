@@ -1,6 +1,7 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { PasswordHasher } from "../../domain/password-hasher";
+import { MIN_PASSWORD_LENGTH } from "../../domain/policies";
 import type { UserRepository } from "../../domain/user";
 
 export function createChangePassword(
@@ -21,8 +22,8 @@ export function createChangePassword(
     if (!match) {
       return err("Current password is incorrect.");
     }
-    if (input.newPassword.length < 8) {
-      return err("Password must be at least 8 characters.");
+    if (input.newPassword.length < MIN_PASSWORD_LENGTH) {
+      return err(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
     }
     const passwordHash = await hasher.hash(input.newPassword);
     await users.update(input.userId, { passwordHash });

@@ -1,5 +1,6 @@
-import { SignJWT, jwtVerify } from "jose";
+import { SignJWT } from "jose";
 import { env } from "@/shared/env";
+import { jwtSessionVerifier } from "./jwt-session-verifier";
 import type { SessionIssuer } from "../domain/session";
 
 function secret() {
@@ -14,23 +15,5 @@ export const jwtSessionIssuer: SessionIssuer = {
       .setExpirationTime("7d")
       .sign(secret());
   },
-  async verify(token) {
-    try {
-      const { payload } = await jwtVerify(token, secret());
-      if (
-        typeof payload.sub !== "string" ||
-        typeof payload.email !== "string" ||
-        typeof payload.name !== "string"
-      ) {
-        return null;
-      }
-      return {
-        sub: payload.sub,
-        email: payload.email,
-        name: payload.name,
-      };
-    } catch {
-      return null;
-    }
-  },
+  verify: jwtSessionVerifier.verify,
 };
