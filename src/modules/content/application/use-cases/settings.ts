@@ -1,3 +1,4 @@
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { SettingsRepository, SiteSettings } from "../../domain/types";
 
 const defaults: SiteSettings = {
@@ -29,26 +30,37 @@ export function createGetSettings(settings: SettingsRepository) {
   };
 }
 
-export function createUpdateSettings(settings: SettingsRepository) {
-  return async function updateSettings(input: SiteSettings): Promise<SiteSettings> {
-    const entries: Record<string, string> = {
-      title: input.title,
-      description: input.description,
-      logoMediaId: input.logoMediaId ?? "",
-      faviconMediaId: input.faviconMediaId ?? "",
-      timezone: input.timezone,
-      baseUrl: input.baseUrl,
-      defaultMetaTitle: input.defaultMetaTitle,
-      defaultMetaDescription: input.defaultMetaDescription,
-      sitemapGeneratedAt: input.sitemapGeneratedAt ?? "",
-    };
+export function createUpdateSettings(settings: SettingsRepository, audit: AuditEventWriter) {
+  return async function updateSettings(
+    input: Partial<SiteSettings>,
+    actorId?: string | null,
+  ): Promise<SiteSettings> {
+    const entries: Record<string, string> = {};
+    for (const [key, value] of Object.entries(input)) {
+      entries[key] = value === null ? "" : String(value);
+    }
     await settings.setMany(entries);
-    return input;
+    const current = await createGetSettings(settings)();
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.settings_updated",
+      entityType: "settings",
+      entityId: null,
+      details: JSON.stringify({ fields: Object.keys(input) }),
+    });
+    return current;
   };
 }
 
-export function createTouchSitemap(settings: SettingsRepository) {
-  return async function touchSitemap(): Promise<void> {
+export function createTouchSitemap(settings: SettingsRepository, audit: AuditEventWriter) {
+  return async function touchSitemap(actorId?: string | null): Promise<void> {
     await settings.setMany({ sitemapGeneratedAt: new Date().toISOString() });
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.sitemap_regenerated",
+      entityType: "settings",
+      entityId: null,
+      details: null,
+    });
   };
 }

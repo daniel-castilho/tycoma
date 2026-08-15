@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getPage } from "@/modules/content/application";
+import { content } from "@/app/_lib/modules";
 
 export default async function PagePreviewPage({
   params,
@@ -8,7 +8,7 @@ export default async function PagePreviewPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const page = await getPage(id);
+  const page = await content.getPage(id);
   if (!page) notFound();
 
   return (

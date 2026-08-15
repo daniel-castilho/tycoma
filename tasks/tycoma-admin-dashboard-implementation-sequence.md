@@ -131,11 +131,11 @@ setup/login flow itself.
 
 ## Definition of Done (sequence)
 
-- [ ] Phase 1 — Foundation & access control
-- [ ] Phase 2 — Core content management
-- [ ] Phase 3 — Media
-- [ ] Phase 4 — Site structure & SEO
-- [ ] Phase 5 — Monitoring
+- [x] Phase 1 — Foundation & access control
+- [x] Phase 2 — Core content management
+- [x] Phase 3 — Media
+- [x] Phase 4 — Site structure & SEO
+- [x] Phase 5 — Monitoring
 
 ---
 

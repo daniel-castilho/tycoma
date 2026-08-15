@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { listCategories, listPosts } from "@/modules/content/application";
-import {
-  bulkPostsAction,
-} from "@/app/admin/_actions/content";
+import { content } from "@/app/_lib/modules";
+import { bulkPostsAction } from "@/app/admin/_actions/content";
 import { DataTable } from "@/app/admin/(authed)/_components/data-table";
 import { EmptyState } from "@/app/admin/(authed)/_components/empty-state";
 import { StatusBadge } from "@/app/admin/(authed)/_components/status-badge";
@@ -37,8 +35,8 @@ export default async function PostsListPage({
   const order = sp.order === "asc" ? "asc" : "desc";
 
   const [posts, categories] = await Promise.all([
-    listPosts({ status, search, categoryId, sort, order }),
-    listCategories(),
+    content.listPosts({ status, search, categoryId, sort, order }),
+    content.listCategories(),
   ]);
 
   const categoryName = categoryId

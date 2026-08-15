@@ -1,12 +1,14 @@
 import { createHash } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { err, ok, type Result } from "@/shared/kernel/result";
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { PasswordResetTokenRepository } from "../../domain/password-reset-token";
 import type { UserRepository } from "../../domain/user";
 
 export function createResetPassword(
   users: UserRepository,
   tokens: PasswordResetTokenRepository,
+  audit: AuditEventWriter,
 ) {
   return async function resetPassword(input: {
     token: string;
@@ -23,6 +25,13 @@ export function createResetPassword(
     const passwordHash = await bcrypt.hash(input.password, 12);
     await users.update(record.userId, { passwordHash });
     await tokens.markUsed(record.id, new Date());
+    await audit.record({
+      actorId: record.userId,
+      eventType: "auth.password_reset_completed",
+      entityType: "user",
+      entityId: record.userId,
+      details: null,
+    });
     return ok({ ok: true });
   };
 }

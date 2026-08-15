@@ -27,4 +27,7 @@ export const prismaMediaRepository: MediaRepository = {
     const agg = await prisma.mediaAsset.aggregate({ _sum: { size: true } });
     return agg._sum.size ?? 0;
   },
+  async count() {
+    return prisma.mediaAsset.count();
+  },
 };

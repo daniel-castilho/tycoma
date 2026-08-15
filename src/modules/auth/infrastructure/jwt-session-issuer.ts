@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import type { SessionIssuer, SessionPayload } from "../domain/session";
+import type { SessionIssuer } from "../domain/session";
 
 function secret() {
   const raw = process.env.AUTH_SECRET;

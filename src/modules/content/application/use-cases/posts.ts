@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { ListPostsQuery, Post, PostRepository, PostWrite } from "../../domain/types";
 import { resolveStatus } from "../status";
 
@@ -16,8 +17,8 @@ export function createGetPost(posts: PostRepository) {
   };
 }
 
-export function createCreatePost(posts: PostRepository) {
-  return async function createPost(input: PostWrite): Promise<Result<Post>> {
+export function createCreatePost(posts: PostRepository, audit: AuditEventWriter) {
+  return async function createPost(input: PostWrite, actorId?: string | null): Promise<Result<Post>> {
     const slug = slugify(input.slug || input.title);
     if (!slug) return err("A slug could not be generated from the title.");
     const existing = await posts.findBySlug(slug);
@@ -39,12 +40,23 @@ export function createCreatePost(posts: PostRepository) {
       updatedAt: now,
       ...status,
     });
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.post_created",
+      entityType: "post",
+      entityId: post.id,
+      details: JSON.stringify({ title: post.title, status: post.status }),
+    });
     return ok(post);
   };
 }
 
-export function createUpdatePost(posts: PostRepository) {
-  return async function updatePost(id: string, input: PostWrite): Promise<Result<Post>> {
+export function createUpdatePost(posts: PostRepository, audit: AuditEventWriter) {
+  return async function updatePost(
+    id: string,
+    input: PostWrite,
+    actorId?: string | null,
+  ): Promise<Result<Post>> {
     const current = await posts.findById(id);
     if (!current) return err("Post not found.");
     const slug = slugify(input.slug || input.title);
@@ -63,12 +75,19 @@ export function createUpdatePost(posts: PostRepository) {
       ogImageId: input.ogImageId ?? null,
       ...status,
     });
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.post_updated",
+      entityType: "post",
+      entityId: id,
+      details: JSON.stringify({ title: updated.title, status: updated.status }),
+    });
     return ok(updated);
   };
 }
 
-export function createPublishPost(posts: PostRepository) {
-  return async function publishPost(id: string): Promise<Result<Post>> {
+export function createPublishPost(posts: PostRepository, audit: AuditEventWriter) {
+  return async function publishPost(id: string, actorId?: string | null): Promise<Result<Post>> {
     const current = await posts.findById(id);
     if (!current) return err("Post not found.");
     const updated = await posts.update(id, {
@@ -76,23 +95,41 @@ export function createPublishPost(posts: PostRepository) {
       publishedAt: new Date(),
       scheduledAt: null,
     });
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.post_published",
+      entityType: "post",
+      entityId: id,
+      details: JSON.stringify({ title: updated.title }),
+    });
     return ok(updated);
   };
 }
 
-export function createBulkPosts(posts: PostRepository) {
+export function createBulkPosts(posts: PostRepository, audit: AuditEventWriter) {
+  const publishPost = createPublishPost(posts, audit);
   return async function bulkPosts(input: {
     ids: string[];
     action: "delete" | "publish";
+    actorId?: string | null;
   }): Promise<Result<{ affected: number }>> {
     if (input.ids.length === 0) return ok({ affected: 0 });
     if (input.action === "delete") {
       const affected = await posts.deleteMany(input.ids);
+      for (const id of input.ids) {
+        await audit.record({
+          actorId: input.actorId ?? null,
+          eventType: "content.post_deleted",
+          entityType: "post",
+          entityId: id,
+          details: null,
+        });
+      }
       return ok({ affected });
     }
     let affected = 0;
     for (const id of input.ids) {
-      const result = await createPublishPost(posts)(id);
+      const result = await publishPost(id, input.actorId);
       if (result.ok) affected += 1;
     }
     return ok({ affected });

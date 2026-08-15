@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type {
   Category,
   CategoryRepository,
@@ -32,13 +33,33 @@ export function createSaveCategory(categories: CategoryRepository) {
     if (!slug) return err("A slug could not be generated.");
     const clash = await categories.findBySlug(slug);
     if (clash && clash.id !== input.id) return err("A category with this slug already exists.");
+
+    const parentId = input.parentId ?? null;
+    if (parentId && input.id && parentId === input.id) {
+      return err("A category cannot be its own parent.");
+    }
+    if (parentId && input.id) {
+      const all = await categories.list();
+      // Reject a cycle: the chosen parent must not be (a descendant of) the category itself.
+      const byId = new Map(all.map((c) => [c.id, c]));
+      let current = byId.get(parentId);
+      const guard = new Set<string>();
+      while (current && !guard.has(current.id)) {
+        if (current.id === input.id) {
+          return err("A category cannot be nested under one of its own descendants.");
+        }
+        guard.add(current.id);
+        current = current.parentId ? byId.get(current.parentId) : undefined;
+      }
+    }
+
     if (input.id) {
       return ok(
         await categories.update(input.id, {
           name: input.name.trim(),
           slug,
           description: input.description ?? null,
-          parentId: input.parentId ?? null,
+          parentId,
         }),
       );
     }
@@ -48,17 +69,29 @@ export function createSaveCategory(categories: CategoryRepository) {
         name: input.name.trim(),
         slug,
         description: input.description ?? null,
-        parentId: input.parentId ?? null,
+        parentId,
       }),
     );
   };
 }
 
-export function createDeleteCategory(categories: CategoryRepository, posts: PostRepository) {
-  return async function deleteCategory(id: string): Promise<Result<{ ok: true }>> {
+export function createDeleteCategory(
+  categories: CategoryRepository,
+  posts: PostRepository,
+  audit: AuditEventWriter,
+) {
+  return async function deleteCategory(id: string, actorId?: string | null): Promise<Result<{ ok: true }>> {
     const count = await posts.countByCategory(id);
     if (count > 0) return err("Cannot delete a category that is still used by posts.");
+    const category = await categories.findById(id);
     await categories.delete(id);
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.category_deleted",
+      entityType: "category",
+      entityId: id,
+      details: category ? JSON.stringify({ name: category.name }) : null,
+    });
     return ok({ ok: true });
   };
 }
@@ -101,11 +134,23 @@ export function createSaveTag(tags: TagRepository) {
   };
 }
 
-export function createDeleteTag(tags: TagRepository, posts: PostRepository) {
-  return async function deleteTag(id: string): Promise<Result<{ ok: true }>> {
+export function createDeleteTag(
+  tags: TagRepository,
+  posts: PostRepository,
+  audit: AuditEventWriter,
+) {
+  return async function deleteTag(id: string, actorId?: string | null): Promise<Result<{ ok: true }>> {
     const count = await posts.countByTag(id);
     if (count > 0) return err("Cannot delete a tag that is still used by posts.");
+    const tag = await tags.findById(id);
     await tags.delete(id);
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.tag_deleted",
+      entityType: "tag",
+      entityId: id,
+      details: tag ? JSON.stringify({ name: tag.name }) : null,
+    });
     return ok({ ok: true });
   };
 }

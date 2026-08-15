@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getPage, listPages } from "@/modules/content/application";
+import { content } from "@/app/_lib/modules";
 import { deletePageAction, savePageAction } from "@/app/admin/_actions/content";
 import { PageForm } from "../_components/page-form";
 
@@ -10,7 +10,7 @@ export default async function EditPagePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [page, allPages] = await Promise.all([getPage(id), listPages()]);
+  const [page, allPages] = await Promise.all([content.getPage(id), content.listPages()]);
   if (!page) notFound();
 
   return (

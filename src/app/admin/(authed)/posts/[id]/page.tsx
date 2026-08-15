@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getPost } from "@/modules/content/application";
+import { content } from "@/app/_lib/modules";
 import { savePostAction } from "@/app/admin/_actions/content";
 import { PostForm } from "../_components/post-form";
 
@@ -10,7 +10,7 @@ export default async function EditPostPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const post = await getPost(id);
+  const post = await content.getPost(id);
   if (!post) notFound();
 
   return (

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { countUsers } from "@/modules/auth/application";
+import { auth } from "@/app/_lib/modules";
 import { loginAction } from "../../_actions/auth";
 import { AuthForm } from "../_components/auth-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  const users = await countUsers();
+  const users = await auth.countUsers();
   if (users === 0) {
     redirect("/admin/setup");
   }

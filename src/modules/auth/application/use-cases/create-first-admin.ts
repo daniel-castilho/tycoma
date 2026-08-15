@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 import { err, ok, type Result } from "../../../../shared/kernel/result.ts";
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { UserRepository } from "../../domain/user";
 
-export function createCreateFirstAdmin(users: UserRepository) {
+export function createCreateFirstAdmin(users: UserRepository, audit: AuditEventWriter) {
   return async function createFirstAdmin(input: {
     email: string;
     name: string;
@@ -28,6 +29,13 @@ export function createCreateFirstAdmin(users: UserRepository) {
       email,
       name,
       passwordHash,
+    });
+    await audit.record({
+      actorId: user.id,
+      eventType: "auth.setup",
+      entityType: "user",
+      entityId: user.id,
+      details: JSON.stringify({ email }),
     });
     return ok({ id: user.id });
   };

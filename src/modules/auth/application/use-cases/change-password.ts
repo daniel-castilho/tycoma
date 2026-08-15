@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 import { err, ok, type Result } from "@/shared/kernel/result";
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { UserRepository } from "../../domain/user";
 
-export function createChangePassword(users: UserRepository) {
+export function createChangePassword(users: UserRepository, audit: AuditEventWriter) {
   return async function changePassword(input: {
     userId: string;
     currentPassword: string;
@@ -21,6 +22,13 @@ export function createChangePassword(users: UserRepository) {
     }
     const passwordHash = await bcrypt.hash(input.newPassword, 12);
     await users.update(input.userId, { passwordHash });
+    await audit.record({
+      actorId: input.userId,
+      eventType: "auth.password_changed",
+      entityType: "user",
+      entityId: input.userId,
+      details: null,
+    });
     return ok({ ok: true });
   };
 }

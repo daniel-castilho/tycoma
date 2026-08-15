@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { listCategories, listTags } from "@/modules/content/application";
+import { content } from "@/app/_lib/modules";
 import {
   deleteCategoryAction,
   deleteTagAction,
@@ -27,7 +26,7 @@ function pathFor(categories: Category[], id: string | null): string {
 }
 
 export default async function TaxonomyPage() {
-  const [categories, tags] = await Promise.all([listCategories(), listTags()]);
+  const [categories, tags] = await Promise.all([content.listCategories(), content.listTags()]);
 
   const categoryParents = categories.map((c) => ({ id: c.id, title: c.name }));
 
@@ -86,6 +85,13 @@ export default async function TaxonomyPage() {
                             defaultValue={c.slug}
                             placeholder="Slug"
                           />
+                          <textarea
+                            className="btn-secondary"
+                            name="description"
+                            defaultValue={c.description ?? ""}
+                            placeholder="Description (optional)"
+                            rows={2}
+                          />
                           <select
                             name="parentId"
                             defaultValue={c.parentId ?? ""}
@@ -135,6 +141,12 @@ export default async function TaxonomyPage() {
               <div className="form-stack" style={{ gap: "0.5rem" }}>
                 <input className="btn-secondary" name="name" placeholder="Name" required />
                 <input className="btn-secondary" name="slug" placeholder="Slug (optional)" />
+                <textarea
+                  className="btn-secondary"
+                  name="description"
+                  placeholder="Description (optional)"
+                  rows={2}
+                />
                 <select name="parentId" defaultValue="" className="btn-secondary">
                   <option value="">— No parent —</option>
                   {categoryParents.map((p) => (
@@ -177,6 +189,13 @@ export default async function TaxonomyPage() {
                         <div className="form-stack" style={{ gap: "0.5rem" }}>
                           <input className="btn-secondary" name="name" defaultValue={t.name} required />
                           <input className="btn-secondary" name="slug" defaultValue={t.slug} />
+                          <textarea
+                            className="btn-secondary"
+                            name="description"
+                            defaultValue={t.description ?? ""}
+                            placeholder="Description (optional)"
+                            rows={2}
+                          />
                           <button type="submit" className="btn-primary">
                             Save
                           </button>
@@ -212,6 +231,12 @@ export default async function TaxonomyPage() {
               <div className="form-stack" style={{ gap: "0.5rem" }}>
                 <input className="btn-secondary" name="name" placeholder="Name" required />
                 <input className="btn-secondary" name="slug" placeholder="Slug (optional)" />
+                <textarea
+                  className="btn-secondary"
+                  name="description"
+                  placeholder="Description (optional)"
+                  rows={2}
+                />
                 <button type="submit" className="btn-primary">
                   Create tag
                 </button>

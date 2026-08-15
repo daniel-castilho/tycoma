@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listPages } from "@/modules/content/application";
+import { content } from "@/app/_lib/modules";
 import { DataTable } from "@/app/admin/(authed)/_components/data-table";
 import { EmptyState } from "@/app/admin/(authed)/_components/empty-state";
 import { StatusBadge } from "@/app/admin/(authed)/_components/status-badge";
@@ -26,7 +26,7 @@ function pageDepthPath(
 }
 
 export default async function PagesListPage() {
-  const pages = await listPages();
+  const pages = await content.listPages();
 
   return (
     <>

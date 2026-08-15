@@ -19,17 +19,17 @@ only**, with no business rules of its own.
 
 | Lane                                | Priority   | Status         | Notes                                                        |
 | ------------------------------------ | ---------- | -------------- | ------------------------------------------------------------- |
-| Foundation & Access Control          | Essential  | Mostly shipped | Domain/use cases/infrastructure + setup page shipped; UI for /login, /forgot-password, /reset-password still pending (S3 form, S4 pages) |
-| Dashboard Home                       | Essential  | Mostly shipped | KPIs page wired to `getDashboardKpis`; "recently updated" list + empty state done. Media-storage KPI still pending (depends on `media` use cases in Phase 3) |
+| Foundation & Access Control          | Essential  | Shipped        | Setup, login, recovery, session guard, rate limiting all wired end-to-end |
+| Dashboard Home                       | Essential  | Shipped        | Content KPIs + media-storage KPI, "recently updated" list + empty state |
 | Content Management — Posts           | Essential  | Mostly shipped | List, create/edit, preview, bulk all wired. Form fields for categories/tags/featured image/OG image still pending. |
 | Content Management — Pages           | Essential  | Shipped        | List, create/edit, parent/child hierarchy                      |
-| Taxonomy — Categories & Tags         | Essential  | Not started    | CRUD, category hierarchy, usage counts                         |
-| Media Library                        | Essential  | Not started    | Upload, grid, metadata, usage guard on delete                  |
-| Site Settings                        | Essential  | Not started    | Title, description, logo, favicon, timezone, base URL          |
-| Account / Profile                    | Essential  | Not started    | Edit profile, change password (use cases exist, UI pending)    |
-| Navigation Menus                     | Soon-after | Not started    | Menu CRUD, drag-and-drop items, submenu support                |
-| SEO Panel                            | Soon-after | Not started    | Default meta fallback, Google preview, sitemap status          |
-| Audit Log                            | Soon-after | Not started    | Actor/event/entity trail, filters                               |
+| Taxonomy — Categories & Tags         | Essential  | Shipped        | CRUD, category hierarchy (cycle-guarded), usage counts, description field |
+| Media Library                        | Essential  | Shipped        | Upload (multi-file via `/api/media`), grid + search/filter, metadata, usage guard on delete |
+| Site Settings                        | Essential  | Shipped        | Title, description, logo, favicon, timezone, base URL          |
+| Account / Profile                    | Essential  | Shipped        | Edit profile, change password                                  |
+| Navigation Menus                     | Soon-after | Shipped        | Menu CRUD, items (post/page/category/custom URL), submenus — ordering via up/down buttons, drag-and-drop deferred (see S23) |
+| SEO Panel                            | Soon-after | Shipped        | Default meta fallback, Google preview, sitemap status + `/sitemap.xml` |
+| Audit Log                            | Soon-after | Shipped        | Actor/event/entity trail, filters — write path threaded into content/auth/media use cases |
 
 "Essential" = must exist for the admin to be usable day-to-day.
 "Soon-after" = still v1, but can land once the essential lane is stable.
@@ -47,9 +47,9 @@ only**, with no business rules of its own.
 
 **Boundary cleanup performed during this audit:** the middleware previously imported
 `@/modules/auth/infrastructure/jwt-session-issuer` directly, violating the §1 hard rule of
-`tycoma-admin-dashboard-module-spec.md`. That import now goes through `verifySession` (or, for the
-Edge runtime, a dedicated `verifySessionToken` exposed by `auth/application`) — the
-`infrastructure/` path is no longer reachable from the app tree.
+`tycoma-admin-dashboard-module-spec.md`. That import now goes through the edge-safe
+`verifySessionToken` exported by `auth/application/edge` — the `infrastructure/` path is no longer
+reachable from the app tree.
 
 ---
 
@@ -66,8 +66,8 @@ Edge runtime, a dedicated `verifySessionToken` exposed by `auth/application`) �
 
 ### Dashboard Home
 
-- [x] **S7 (content KPIs)** — Dashboard home wired to `getDashboardKpis` (`/admin/(authed)/dashboard/page.tsx`): post/page counts by status, "recently updated posts" table, empty state with CTA to create the first post. **Media-storage KPI deferred to Phase 3** (the `media` module has no use cases yet).
-- **S7 (media KPI)** — Will land with Phase 3 once the `media` module exposes a storage-stats use case.
+- [x] **S7 (content KPIs)** — Dashboard home wired to `getDashboardKpis` (`/admin/(authed)/dashboard/page.tsx`): post/page counts by status, "recently updated posts" table, empty state with CTA to create the first post.
+- [x] **S7 (media KPI)** — Media-storage KPI (file count + total bytes) added via `getMediaStorageStats` from the `media` module; composed in the dashboard page. Cross-module composition happens in the page (allowed) — no content↔media infra coupling.
 
 ### Admin shell (cross-cutting, introduced alongside S7)
 
@@ -97,39 +97,39 @@ Edge runtime, a dedicated `verifySessionToken` exposed by `auth/application`) �
 
 ### Taxonomy — Categories & Tags
 
-- **S14** — Category CRUD (name, slug, description, optional parent) + posts-per-category count
-- **S15** — Tag CRUD (name, slug, description) + posts-per-tag count
+- [x] **S14** — Category CRUD (name, slug, description, optional parent) + posts-per-category count. Parent cycle-prevention enforced in `saveCategory` (a category cannot be its own parent or one of its own descendants); description field wired in both the create and edit forms.
+- [x] **S15** — Tag CRUD (name, slug, description) + posts-per-tag count. Description field wired in both the create and edit forms.
 
 ### Media Library
 
-- **S16** — Media upload (drag-and-drop, multi-file)
-- **S17** — Media grid with search/filter by type
-- **S18** — Media detail panel (alt text, caption, usage references across posts/pages, delete guard when in use)
+- [x] **S16** — Media upload: multi-file via `POST /api/media` (session-guarded inside the handler, since `/api/*` is outside the middleware matcher) consuming `uploadMedia`. UI is a file-picker dropzone client component on `/admin/media`. Drag-and-drop styling deferred — the component accepts multiple files via the native picker (works on all devices).
+- [x] **S17** — Media grid at `/admin/media` with search + type filter (images/videos/audio/documents), thumbnails, file size.
+- [x] **S18** — Media detail at `/admin/media/[id]`: preview, alt text + caption form, usage references across posts/pages (resolved to titles + edit links), delete with usage guard, file metadata (URL, storage key).
 
 ### Site Settings
 
-- **S19** — General settings: site title, description, logo, favicon, timezone, base URL (feeds SEO defaults and sitemap generation)
+- [x] **S19** — General settings at `/admin/settings`: site title, description, logo/favicon media IDs, timezone, base URL. `updateSettings` refactored to accept a `Partial<SiteSettings>` so the SEO panel can update only the meta fields without clobbering the rest.
 
 ### Account / Profile
 
-- [x] **S20 (backend)** — Use cases `getProfile` / `updateProfile` exist in `auth/application`; UI pending
-- [x] **S21 (backend)** — Use case `changePassword` exists in `auth/application`; UI pending
+- [x] **S20** — `/admin/account` profile form (name, email, avatar media ID) consuming `updateProfile`, resolved from the session cookie.
+- [x] **S21** — `/admin/account` change-password form (current, new, confirm) consuming `changePassword`.
 
 ### Navigation Menus
 
-- **S22** — Menu CRUD (e.g. "Main menu", "Footer")
-- **S23** — Menu items (link to post, page, category, or custom URL), drag-and-drop ordering, submenu support
+- [x] **S22** — Menu CRUD at `/admin/menus` (list, create, delete) consuming `saveMenu`/`deleteMenu`.
+- [x] **S23** — Menu editor at `/admin/menus/[id]`: nested items (post/page/category/custom URL), label editing, move up/down, add child, remove. Client component serializes a tree to JSON; `saveMenuItems` was refactored to accept a nested `MenuItemDraft[]` and flatten it with correct parent/child ids in the application layer. **Deviation:** drag-and-drop replaced by up/down buttons (more robust and keyboard-accessible); the JSON payload is validated with a `zod` recursive schema in the Server Action. Drag-and-drop could be layered on later without touching the use case.
 
 ### SEO Panel
 
-- **S24** — Default SEO settings (fallback meta title/description used when content doesn't define its own)
-- **S25** — Google result preview simulator
-- **S26** — Sitemap status panel (link to `sitemap.xml`, last generation timestamp)
+- [x] **S24** — Default SEO settings (fallback meta title/description) at `/admin/seo`, saved via `updateSettings` (partial update).
+- [x] **S25** — Google result preview simulator (live client-side preview as the meta title/description are typed).
+- [x] **S26** — Sitemap status panel: last-generation timestamp, "Regenerate now" (`touchSitemap`) and a link to `/sitemap.xml`. New public route `src/app/sitemap.xml/route.ts` emits published posts/pages; it calls `touchSitemap` on every GET and is `force-dynamic`.
 
 ### Audit Log
 
-- **S27** — Audit log data model + write path (actor, event type, entity type/id, timestamp, details) triggered from the owning modules' use cases
-- **S28** — Audit log viewer (filters: event type, entity, date range, keyword search)
+- [x] **S27** — New `audit` module (`src/modules/audit`): `AuditEvent` domain type, `AuditRepository` port, `AuditEventWriter` outbound port, Prisma adapter, `recordAuditEvent` + `listAuditEvents` use cases, composition root, unit tests. The writer is threaded through owning modules' use cases via their factories and records: auth (setup, login/login_failed/login_blocked, password reset/changed), content (post created/updated/published/deleted, page deleted, category/tag deleted, settings updated, sitemap regenerated, menu created/updated/deleted/items saved), media (uploaded/deleted). Deletions and publishes carry the actor id (resolved from the session cookie in Server Actions).
+- [x] **S28** — Audit log viewer at `/admin/audit-log`: read-only table (when, actor, event, entity, details) with filters for search, event type, and date range; human-readable event labels.
 
 ---
 
@@ -165,15 +165,15 @@ These were discussed and deliberately deferred — do not build them as part of 
 ## Definition of Done (Epic)
 
 - [x] First-run setup, login, password recovery (full), session guard
-- [x] Dashboard with content KPIs (media-storage KPI deferred to Phase 3)
+- [x] Dashboard with content + media-storage KPIs
 - [x] Post management (list, create/edit, preview, bulk — categories/tags/images picker fields deferred)
-- [ ] Category / Tag management
-- [ ] Media library with usage guard
-- [ ] Site settings
-- [ ] Account/profile management (use cases done, UI pending)
-- [ ] Navigation menus
-- [ ] SEO panel
-- [ ] Audit log (write path + viewer)
+- [x] Category / Tag management
+- [x] Media library with usage guard
+- [x] Site settings
+- [x] Account/profile management
+- [x] Navigation menus
+- [x] SEO panel
+- [x] Audit log (write path + viewer)
 
 ---
 

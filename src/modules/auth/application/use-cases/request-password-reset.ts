@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { Mailer } from "../../domain/mailer";
 import type { PasswordResetTokenRepository } from "../../domain/password-reset-token";
 import type { RateLimiter } from "../../domain/rate-limiter";
@@ -10,6 +11,7 @@ export function createRequestPasswordReset(
   tokens: PasswordResetTokenRepository,
   mailer: Mailer,
   limiter: RateLimiter,
+  audit: AuditEventWriter,
 ) {
   return async function requestPasswordReset(input: {
     email: string;
@@ -32,6 +34,13 @@ export function createRequestPasswordReset(
     await tokens.create({ userId: user.id, tokenHash, expiresAt });
     const resetUrl = `${input.appUrl.replace(/\/$/, "")}/admin/reset-password?token=${raw}`;
     await mailer.sendPasswordReset(user.email, resetUrl);
+    await audit.record({
+      actorId: user.id,
+      eventType: "auth.password_reset_requested",
+      entityType: "user",
+      entityId: user.id,
+      details: JSON.stringify({ ip: input.ip }),
+    });
     return ok({ sent: true });
   };
 }

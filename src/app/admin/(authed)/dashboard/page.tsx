@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDashboardKpis } from "@/modules/content/application";
+import { content, media } from "@/app/_lib/modules";
 
 function formatDate(value: Date): string {
   return new Intl.DateTimeFormat("en", {
@@ -8,8 +8,14 @@ function formatDate(value: Date): string {
   }).format(value);
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default async function DashboardPage() {
-  const kpis = await getDashboardKpis();
+  const [kpis, stats] = await Promise.all([content.getDashboardKpis(), media.getMediaStorageStats()]);
 
   const postTotal = Object.values(kpis.posts).reduce((sum, n) => sum + n, 0);
   const pageTotal = Object.values(kpis.pages).reduce((sum, n) => sum + n, 0);
@@ -43,6 +49,14 @@ export default async function DashboardPage() {
         <div className="kpi-card">
           <div className="label">Pages · Published</div>
           <div className="value">{kpis.pages.published ?? 0}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="label">Media files</div>
+          <div className="value">{stats.count}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="label">Media · Storage</div>
+          <div className="value">{formatBytes(stats.totalBytes)}</div>
         </div>
       </div>
 

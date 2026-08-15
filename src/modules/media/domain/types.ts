@@ -19,11 +19,12 @@ export type MediaRepository = {
     data: Partial<Pick<MediaAsset, "alt" | "caption">>,
   ): Promise<MediaAsset>;
   delete(id: string): Promise<void>;
+  count(): Promise<number>;
   totalBytes(): Promise<number>;
 };
 
 export type ObjectStorage = {
-  put(key: string, body: Buffer, contentType: string): Promise<{ url: string }>;
+  put(key: string, body: Uint8Array, contentType: string): Promise<{ url: string }>;
   delete(key: string): Promise<void>;
 };
 

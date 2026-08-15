@@ -69,6 +69,15 @@ export type MenuItem = {
   sortOrder: number;
 };
 
+export type MenuItemDraft = {
+  label: string;
+  type: MenuItemType;
+  refId: string | null;
+  url: string | null;
+  sortOrder: number;
+  children: MenuItemDraft[];
+};
+
 export type SiteSettings = {
   title: string;
   description: string;

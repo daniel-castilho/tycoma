@@ -91,16 +91,20 @@ No tagged release yet. Implementation is in progress against
 
 - **Phase 1 — Foundation & access control:** implemented. Setup, login, session guard
   (`src/proxy.ts`), password recovery, rate limiting, profile/change-password.
-- **Phase 2 — Core content management:** largely implemented. Dashboard KPIs, posts, pages,
-  taxonomy (categories/tags). Settings & menu use cases exist; their admin screens are pending.
-- **Phase 3 — Media:** scaffolding only. Domain types plus storage/repository adapters exist; the
-  admin media library UI is pending.
-- **Phases 4–5 — Site structure/SEO and Monitoring:** schema models in place (`Setting`, `Menu`,
-  `MenuItem`, `AuditEvent`); use cases pending.
+- **Phase 2 — Core content management:** implemented. Dashboard KPIs (content + media storage),
+  posts, pages, taxonomy (categories/tags with parent cycle guard and descriptions). Settings &
+  menu use cases exist with admin screens.
+- **Phase 3 — Media:** implemented. Multi-file upload via `POST /api/media`, media grid with
+  search/filter, metadata editing, usage guard on delete.
+- **Phase 4 — Site structure/SEO:** implemented. Site settings, navigation menus (nested items,
+  post/page/category/custom URL), SEO defaults with Google preview, and `/sitemap.xml`.
+- **Phase 5 — Monitoring:** audit module implemented. `AuditEventWriter` threaded through the
+  `content`/`auth`/`media` use cases; read-only audit log viewer with filters at `/admin/audit-log`.
 
 > **Known technical debt:** `auth` use-cases import `bcryptjs` directly and should be migrated to
-> Argon2id (via a `PasswordHasher` port), and Zod is not yet used for input validation. See "Known
-> technical debt" in `AGENTS.md`. Both are backlogged and must be resolved before the `v0.1.0` tag.
+> Argon2id (via a `PasswordHasher` port), and Zod is only partially adopted for input validation.
+> See "Known technical debt" in `AGENTS.md`. Both are backlogged and must be resolved before the
+> `v0.1.0` tag.
 
 ## Roadmap
 

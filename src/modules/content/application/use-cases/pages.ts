@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { Page, PageRepository, PageWrite } from "../../domain/types";
 import { resolveStatus } from "../status";
 
@@ -12,8 +13,8 @@ export function createListPages(pages: PageRepository) {
   };
 }
 
-export function createDeletePage(pages: PageRepository) {
-  return async function deletePage(id: string): Promise<Result<{ ok: true }>> {
+export function createDeletePage(pages: PageRepository, audit: AuditEventWriter) {
+  return async function deletePage(id: string, actorId?: string | null): Promise<Result<{ ok: true }>> {
     const page = await pages.findById(id);
     if (!page) return err("Page not found.");
     const children = await pages.list();
@@ -21,6 +22,13 @@ export function createDeletePage(pages: PageRepository) {
       return err("This page has child pages. Remove or re-parent them first.");
     }
     await pages.delete(id);
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.page_deleted",
+      entityType: "page",
+      entityId: id,
+      details: JSON.stringify({ title: page.title }),
+    });
     return ok({ ok: true });
   };
 }

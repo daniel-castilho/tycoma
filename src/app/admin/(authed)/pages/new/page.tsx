@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { listPages } from "@/modules/content/application";
+import { content } from "@/app/_lib/modules";
 import { savePageAction } from "@/app/admin/_actions/content";
 import { PageForm } from "../_components/page-form";
 
 export default async function NewPagePage() {
-  const pages = await listPages();
+  const pages = await content.listPages();
 
   return (
     <>

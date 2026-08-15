@@ -1,3 +1,4 @@
+import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import {
   prismaCategoryRepository,
   prismaMenuRepository,
@@ -39,37 +40,46 @@ import {
   createSaveTag,
 } from "./use-cases/taxonomy";
 
-export const listPosts = createListPosts(prismaPostRepository);
-export const getPost = createGetPost(prismaPostRepository);
-export const createPost = createCreatePost(prismaPostRepository);
-export const updatePost = createUpdatePost(prismaPostRepository);
-export const publishPost = createPublishPost(prismaPostRepository);
-export const bulkPosts = createBulkPosts(prismaPostRepository);
+/**
+ * Composition root for the `content` module. Wires this module's own
+ * infrastructure adapters into its use cases. Cross-module ports (the audit
+ * writer) are injected — the wiring itself lives in the framework layer
+ * (`src/app/_lib/modules.ts`).
+ */
+export function createContentApplication(auditEventWriter: AuditEventWriter) {
+  return {
+    listPosts: createListPosts(prismaPostRepository),
+    getPost: createGetPost(prismaPostRepository),
+    createPost: createCreatePost(prismaPostRepository, auditEventWriter),
+    updatePost: createUpdatePost(prismaPostRepository, auditEventWriter),
+    publishPost: createPublishPost(prismaPostRepository, auditEventWriter),
+    bulkPosts: createBulkPosts(prismaPostRepository, auditEventWriter),
 
-export const listPages = createListPages(prismaPageRepository);
-export const getPage = createGetPage(prismaPageRepository);
-export const createPage = createCreatePage(prismaPageRepository);
-export const updatePage = createUpdatePage(prismaPageRepository);
-export const deletePage = createDeletePage(prismaPageRepository);
+    listPages: createListPages(prismaPageRepository),
+    getPage: createGetPage(prismaPageRepository),
+    createPage: createCreatePage(prismaPageRepository),
+    updatePage: createUpdatePage(prismaPageRepository),
+    deletePage: createDeletePage(prismaPageRepository, auditEventWriter),
 
-export const listCategories = createListCategories(prismaCategoryRepository, prismaPostRepository);
-export const saveCategory = createSaveCategory(prismaCategoryRepository);
-export const deleteCategory = createDeleteCategory(prismaCategoryRepository, prismaPostRepository);
-export const listTags = createListTags(prismaTagRepository, prismaPostRepository);
-export const saveTag = createSaveTag(prismaTagRepository);
-export const deleteTag = createDeleteTag(prismaTagRepository, prismaPostRepository);
+    listCategories: createListCategories(prismaCategoryRepository, prismaPostRepository),
+    saveCategory: createSaveCategory(prismaCategoryRepository),
+    deleteCategory: createDeleteCategory(prismaCategoryRepository, prismaPostRepository, auditEventWriter),
+    listTags: createListTags(prismaTagRepository, prismaPostRepository),
+    saveTag: createSaveTag(prismaTagRepository),
+    deleteTag: createDeleteTag(prismaTagRepository, prismaPostRepository, auditEventWriter),
 
-export const getSettings = createGetSettings(prismaSettingsRepository);
-export const updateSettings = createUpdateSettings(prismaSettingsRepository);
-export const touchSitemap = createTouchSitemap(prismaSettingsRepository);
+    getSettings: createGetSettings(prismaSettingsRepository),
+    updateSettings: createUpdateSettings(prismaSettingsRepository, auditEventWriter),
+    touchSitemap: createTouchSitemap(prismaSettingsRepository, auditEventWriter),
 
-export const listMenus = createListMenus(prismaMenuRepository);
-export const saveMenu = createSaveMenu(prismaMenuRepository);
-export const deleteMenu = createDeleteMenu(prismaMenuRepository);
-export const getMenuItems = createGetMenuItems(prismaMenuRepository);
-export const saveMenuItems = createSaveMenuItems(prismaMenuRepository);
+    listMenus: createListMenus(prismaMenuRepository),
+    saveMenu: createSaveMenu(prismaMenuRepository, auditEventWriter),
+    deleteMenu: createDeleteMenu(prismaMenuRepository, auditEventWriter),
+    getMenuItems: createGetMenuItems(prismaMenuRepository),
+    saveMenuItems: createSaveMenuItems(prismaMenuRepository, auditEventWriter),
 
-export const getDashboardKpis = createGetDashboardKpis(
-  prismaPostRepository,
-  prismaPageRepository,
-);
+    getDashboardKpis: createGetDashboardKpis(prismaPostRepository, prismaPageRepository),
+  };
+}
+
+export type ContentApplication = ReturnType<typeof createContentApplication>;

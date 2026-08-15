@@ -78,6 +78,10 @@ infrastructure/  Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers 
   glue (`db/prisma.ts`, `cache/redis.ts`). No feature knowledge.
 - `src/app/` — Next.js App Router composition root only: admin backoffice (`/admin/**`), public
   site (`/(site)/**`), API. `src/proxy.ts` guards admin routes.
+- `src/app/_lib/modules.ts` — framework composition root. Cross-module ports are wired here (e.g.
+  the audit writer injected into `auth`, `content`, `media`). Modules expose wiring factories
+  (`create<Module>Application(ports)`) and **never** import another module's `application` or
+  `infrastructure`.
 - Modules are ready for a future split into services; keep boundaries clean.
 
 ## Conventions
@@ -135,9 +139,10 @@ new violations — flag them to the human instead.
    **Argon2id (`@node-rs/argon2`)** in `auth/infrastructure/` — per the original decision — and
    inject it through the use-case factories. Adding the dependency needs explicit human approval
    (rule 5).
-2. **Zod is a dependency but not yet used.** Every external input (forms, query params, API bodies,
-   env) must be validated with Zod per the Conventions section — enforce it in new code, and
-   migrate existing actions/adapters opportunistically.
+2. **Zod is not used everywhere yet.** Server actions now validate every form/API input with Zod
+   (see `src/app/admin/_actions/*` and `src/app/api/media/route.ts`). Remaining gaps: `searchParams`
+   in pages and env validation. Migrate opportunistically; keep every *new* external input
+   Zod-validated.
 
 ## Notes
 

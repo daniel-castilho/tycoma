@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 import type { User, UserRepository } from "../../domain/user.ts";
 import { createCreateFirstAdmin } from "./create-first-admin.ts";
 
+const noopAudit = { record: async () => {} };
+
 function memoryUsers(seed: User[] = []): UserRepository {
   const rows = [...seed];
   return {
@@ -41,7 +43,7 @@ function memoryUsers(seed: User[] = []): UserRepository {
 describe("createFirstAdmin", () => {
   it("creates the first admin and hashes the password", async () => {
     const users = memoryUsers();
-    const createFirstAdmin = createCreateFirstAdmin(users);
+    const createFirstAdmin = createCreateFirstAdmin(users, noopAudit);
     const result = await createFirstAdmin({
       name: " Ada ",
       email: "Ada@Example.com",
@@ -67,7 +69,7 @@ describe("createFirstAdmin", () => {
         updatedAt: new Date(),
       },
     ]);
-    const createFirstAdmin = createCreateFirstAdmin(users);
+    const createFirstAdmin = createCreateFirstAdmin(users, noopAudit);
     const result = await createFirstAdmin({
       name: "B",
       email: "b@b.c",
@@ -81,7 +83,7 @@ describe("createFirstAdmin", () => {
   });
 
   it("rejects a short password", async () => {
-    const createFirstAdmin = createCreateFirstAdmin(memoryUsers());
+    const createFirstAdmin = createCreateFirstAdmin(memoryUsers(), noopAudit);
     const result = await createFirstAdmin({
       name: "Ada",
       email: "ada@example.com",
