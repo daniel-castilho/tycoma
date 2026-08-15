@@ -1,0 +1,34 @@
+import bcrypt from "bcryptjs";
+import { err, ok, type Result } from "../../../../shared/kernel/result.ts";
+import type { UserRepository } from "../../domain/user";
+
+export function createCreateFirstAdmin(users: UserRepository) {
+  return async function createFirstAdmin(input: {
+    email: string;
+    name: string;
+    password: string;
+  }): Promise<Result<{ id: string }>> {
+    const existing = await users.count();
+    if (existing > 0) {
+      return err("Admin account already exists.");
+    }
+    const name = input.name.trim();
+    if (!name) {
+      return err("A name is required.");
+    }
+    if (input.password.length < 8) {
+      return err("Password must be at least 8 characters.");
+    }
+    const email = input.email.trim().toLowerCase();
+    if (!email.includes("@")) {
+      return err("A valid email is required.");
+    }
+    const passwordHash = await bcrypt.hash(input.password, 12);
+    const user = await users.create({
+      email,
+      name,
+      passwordHash,
+    });
+    return ok({ id: user.id });
+  };
+}
