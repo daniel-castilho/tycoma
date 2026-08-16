@@ -146,6 +146,23 @@ describe("deleteMedia", () => {
     assert.equal(result.ok, false);
     assert.ok(await repo.findById("m1"));
   });
+
+  it("refuses to delete an asset referenced by a content entry", async () => {
+    const repo = memoryMedia([baseAsset("m1")]);
+    const usage: MediaUsageLookup = {
+      async findUsages(_id) {
+        return [{ id: "entry-1", type: "entry" }];
+      },
+    };
+    const storage: ObjectStorage = {
+      put: async () => ({ url: "" }),
+      delete: async () => {},
+    };
+    const deleteMedia = createDeleteMedia(repo, usage, storage, { record: async () => {} });
+    const result = await deleteMedia("m1");
+    assert.equal(result.ok, false);
+    assert.ok(await repo.findById("m1"));
+  });
 });
 
 describe("getMediaStorageStats", () => {

@@ -1,4 +1,4 @@
-export type ContentFieldType = "text" | "longtext" | "number" | "boolean" | "date";
+export type ContentFieldType = "text" | "longtext" | "number" | "boolean" | "date" | "media";
 
 export type ContentTypeField = {
   name: string;

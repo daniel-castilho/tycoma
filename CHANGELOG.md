@@ -5,6 +5,55 @@ All notable changes to Tycoma will be documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
 project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
 
+## [v0.4.0] — 2026-08-16
+
+Fourth tagged release: **Media-typed fields** for Custom Content Types. A content type can
+now declare a field of kind `media` whose value is the id of an asset uploaded in the media
+library. The admin picks one through a `<select>` (with a 50×50 preview), and the public
+detail page renders the asset via `next/image` — or a labelled placeholder if the asset has
+been deleted. `deleteMedia` now refuses to remove an asset still referenced by a content
+entry. See `docs/releases/v0.4.0.md` for details.
+
+### Added
+
+- **Domain — `media` field kind.** `ContentFieldType` gains `"media"`. The coercer accepts
+  only 24-character hex strings (delegated to `isObjectId` from `src/shared/db/object-id.ts`),
+  so a malformed value is rejected at save time without a repo query. `isContentFieldType`
+  recognises the new kind automatically through the `FIELD_COERCERS` registry.
+- **Media usage lookup extended to content entries.** `MediaUsageReference` becomes a named
+  union with `{ type: "post" | "page" | "entry"; id: string }`. `findUsages` now also
+  returns entry ids. `deleteMedia` (which only checks `usages.length > 0`) blocks deletes
+  when an entry references the asset — no change to its signature, just more accurate
+  coverage.
+- **Admin media picker.** `content-entry-form.tsx` renders a `<select>` of the media
+  library's image assets when the field kind is `media`. A 50×50 `next/image` preview
+  appears when an asset is selected. The form actions pass the raw mediaId string to the
+  server action, which flows through `validateEntryFields` unchanged.
+- **Public render with placeholder.** `/(site)/types/[type]/[slug]/page.tsx` resolves every
+  declared `media` field through `media.getMedia` and hands the view a
+  `Map<fieldName, MediaAsset | null>`. The view renders `next/image` when present and a
+  `<em>Mídia indisponível</em>` placeholder when the asset is missing — the entry itself
+  never `notFound()`s for a missing media asset.
+
+### Changed
+
+- `src/app/_lib/modules.ts` threads the new `findEntryIdsUsingMedia` dep from
+  `content/infrastructure` into `createContentUsageLookup`. No change to the public shape of
+  `media` or `content` exports.
+
+### Documentation
+
+- New planning docs (`tasks/tycoma-content-types-media-fields-{backlog,module-spec,
+  implementation-sequence}.md`) reflect the delivered state and flag MF6 (admin entry-list
+  thumbnail column) as deferred.
+
+## [v0.3.1] — 2026-08-16
+
+All notable changes to Tycoma will be documented in this file.
+
+The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
+project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
+
 ## [v0.1.0] — 2026-08-14
 
 First tagged release: the complete Admin Dashboard epic (all five milestones shipped together) plus

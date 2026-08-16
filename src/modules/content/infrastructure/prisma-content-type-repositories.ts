@@ -141,3 +141,20 @@ export const prismaContentEntryRepository: ContentEntryRepository = {
     await prisma.contentEntry.delete({ where: { id } });
   },
 };
+
+/**
+ * Scans every ContentEntry for occurrences of `mediaId` inside its JSON `fields`
+ * payload and returns the matching entry ids. The `fields` column is stored as a
+ * MongoDB Json, so the scan happens in JS — acceptable for a single-tenant CMS.
+ */
+export async function findEntryIdsUsingMedia(mediaId: string): Promise<string[]> {
+  if (!isObjectId(mediaId)) return [];
+  const rows = await prisma.contentEntry.findMany({ select: { id: true, fields: true } });
+  return rows
+    .filter((row) => {
+      const fields = row.fields;
+      if (!fields || typeof fields !== "object") return false;
+      return Object.values(fields as Record<string, unknown>).includes(mediaId);
+    })
+    .map((row) => row.id);
+}

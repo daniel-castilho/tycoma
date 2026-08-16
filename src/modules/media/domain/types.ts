@@ -28,6 +28,11 @@ export type ObjectStorage = {
   delete(key: string): Promise<void>;
 };
 
+export type MediaUsageReference =
+  | { type: "post"; id: string }
+  | { type: "page"; id: string }
+  | { type: "entry"; id: string };
+
 export type MediaUsageLookup = {
-  findUsages(mediaId: string): Promise<{ type: "post" | "page"; id: string }[]>;
+  findUsages(mediaId: string): Promise<MediaUsageReference[]>;
 };

@@ -88,11 +88,25 @@ Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
-**`v0.3.1` is the latest tagged release.** It is a documentation + lockfile patch on top of
-`v0.3.0` (Custom Content Types) — no runtime changes, just a clean `package-lock.json` so
-`npm ci` is reproducible, and the durable **lockfile rule** promoted to `AGENTS.md`.
+**`v0.4.0` is the latest tagged release.** It adds **media-typed fields** to Custom Content
+Types: a content type can declare a field whose value is the id of an asset from the media
+library, the admin picks one through a `<select>` (with a 50×50 preview), and the public
+detail page renders the asset via `next/image` — or a labelled placeholder if the asset has
+been deleted. `deleteMedia` now also refuses to delete an asset referenced by a content
+entry.
 
-- **v0.3.1 (lockfile + doc-sync rule)** — refreshed `package-lock.json` to match the dep
+- **v0.4.0 (media-typed fields):**
+  - Domain: `ContentFieldType` gains `"media"` with an ObjectId-hex coercer (delegates to
+    `isObjectId` in `src/shared/db/object-id.ts`).
+  - `MediaUsageReference` union includes `{ type: "entry"; id: string }`; `deleteMedia`
+    blocks deletes referenced by content entries.
+  - Admin: `content-entry-form.tsx` renders a `<select>` of image media assets for `media`
+    fields, with a `next/image` 50×50 preview next to the selected option.
+  - Public: `/(site)/types/[type]/[slug]/page.tsx` resolves media field values through
+    `media.getMedia`; missing assets render a `<em>Mídia indisponível</em>` placeholder —
+    the entry never 404s for a missing media.
+
+- **v0.3.1 (lockfile + doc-sync rule):** refreshed `package-lock.json` to match the dep
   graph grown by the `v0.3.0` Prisma models, and codified the rule that every `npm install`
   which mutates the lockfile must commit it in the same change set (`AGENTS.md` rule 10,
   `docs/lessons.md`).
@@ -140,7 +154,8 @@ The original implementation sequence planned the Admin Dashboard as separate mil
 practice all five phases shipped together as **`v0.1.0`**, followed by the **Public Site MVP** as
 **`v0.2.0`**, then **Custom Content Types** as **`v0.3.0`**. The public-site follow-ups (posts
 index, page breadcrumb, extracted components, favicon from settings) shipped as **`v0.2.1`**;
-the lockfile refresh and doc-sync rule shipped as **`v0.3.1`**.
+the lockfile refresh and doc-sync rule shipped as **`v0.3.1`**; media-typed fields for content
+types shipped as **`v0.4.0`**.
 
 Deliberately deferred: block-based editor, Markdown rendering on the public site, public headless
 API, webhooks, comments, 301 redirects, revision history, automated backup/export scheduling,
@@ -160,6 +175,7 @@ multi-user roles.
 | [docs/releases/v0.2.1.md](docs/releases/v0.2.1.md)                           | Release notes — public-site follow-ups + doc sync rule        |
 | [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md)                           | Release notes — custom content types                          |
 | [docs/releases/v0.3.1.md](docs/releases/v0.3.1.md)                           | Release notes — lockfile refresh & doc-sync rule              |
+| [docs/releases/v0.4.0.md](docs/releases/v0.4.0.md)                           | Release notes — media-typed fields for content types           |
 | [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
 | [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
 | [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |

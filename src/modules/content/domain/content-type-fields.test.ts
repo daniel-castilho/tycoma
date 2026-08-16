@@ -35,6 +35,15 @@ describe("FIELD_COERCERS (strategy per field kind)", () => {
     assert.equal((parsed as Date).toISOString(), d.toISOString());
     assert.equal(FIELD_COERCERS.date("nope"), undefined);
   });
+
+  it("coerces media ids that are valid ObjectId hex strings", () => {
+    assert.equal(FIELD_COERCERS.media("507f1f77bcf86cd799439011"), "507f1f77bcf86cd799439011");
+    assert.equal(FIELD_COERCERS.media("507F1F77BCF86CD799439011"), "507F1F77BCF86CD799439011");
+    assert.equal(FIELD_COERCERS.media("not-an-objectid"), undefined);
+    assert.equal(FIELD_COERCERS.media("507f1f77bcf86cd79943901"), undefined);
+    assert.equal(FIELD_COERCERS.media(42), undefined);
+    assert.equal(FIELD_COERCERS.media(null), undefined);
+  });
 });
 
 describe("validateEntryFields", () => {
@@ -71,14 +80,31 @@ describe("validateEntryFields", () => {
     assert.equal(result.errors.length, 1);
     assert.match(result.errors[0]!.message, /invalid/i);
   });
+
+  it("accepts a media field when the id is a valid ObjectId hex string", () => {
+    const result = validateEntryFields(
+      type([{ name: "cover", label: "Cover", type: "media", required: true }]),
+      { cover: "507f1f77bcf86cd799439011" },
+    );
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.value.cover, "507f1f77bcf86cd799439011");
+  });
+
+  it("flags a media field whose value is not a valid ObjectId", () => {
+    const result = validateEntryFields(
+      type([{ name: "cover", label: "Cover", type: "media", required: true }]),
+      { cover: "nope" },
+    );
+    assert.equal(result.errors.length, 1);
+    assert.match(result.errors[0]!.message, /invalid/i);
+  });
 });
 
 describe("isContentFieldType", () => {
   it("accepts every known kind and rejects the rest", () => {
-    for (const kind of ["text", "longtext", "number", "boolean", "date"] as const) {
+    for (const kind of ["text", "longtext", "number", "boolean", "date", "media"] as const) {
       assert.equal(isContentFieldType(kind), true);
     }
-    assert.equal(isContentFieldType("media"), false);
     assert.equal(isContentFieldType(""), false);
   });
 });

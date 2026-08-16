@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import type { ComponentType } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { SelectField, TextField, TextArea } from "@/app/admin/(authed)/_components/form-field";
 import { SubmitButton } from "@/app/admin/(authed)/_components/submit-button";
 import type { ContentEntry, ContentType, ContentTypeField } from "@/modules/content/domain/content-types";
@@ -10,10 +12,13 @@ import {
   type PostActionState,
 } from "@/app/admin/_lib/action-state";
 
+type MediaPickerAsset = { id: string; filename: string; url: string; alt: string | null };
+
 type Props = {
   action: (prev: PostActionState, formData: FormData) => Promise<PostActionState>;
   type: ContentType;
   entry?: ContentEntry;
+  mediaAssets: MediaPickerAsset[];
 };
 
 function isoLocal(value: Date | null): string {
@@ -25,6 +30,7 @@ function isoLocal(value: Date | null): string {
 type FieldProps = {
   field: ContentTypeField;
   defaultValue: string;
+  mediaAssets: MediaPickerAsset[];
 };
 
 type FieldRenderer = ComponentType<FieldProps>;
@@ -92,6 +98,42 @@ function DateRenderer({ field, defaultValue }: FieldProps) {
   );
 }
 
+function MediaRenderer({ field, defaultValue, mediaAssets }: FieldProps) {
+  const selected = mediaAssets.find((asset) => asset.id === defaultValue) ?? null;
+  return (
+    <div className="field">
+      <label htmlFor={`field_${field.name}`}>{field.label}</label>
+      <select
+        id={`field_${field.name}`}
+        name={`field_${field.name}`}
+        defaultValue={defaultValue}
+        required={field.required}
+      >
+        <option value="">— Selecione uma mídia —</option>
+        {mediaAssets.map((asset) => (
+          <option key={asset.id} value={asset.id}>
+            {asset.filename}
+          </option>
+        ))}
+      </select>
+      {selected ? (
+        <div className="media-picker-preview">
+          <Image
+            src={selected.url}
+            alt={selected.alt ?? selected.filename}
+            width={50}
+            height={50}
+            unoptimized
+          />
+          <span>{selected.filename}</span>
+        </div>
+      ) : (
+        <p className="hint">Upload media in <Link href="/admin/media">Media library</Link> first.</p>
+      )}
+    </div>
+  );
+}
+
 /**
  * Strategy registry: one renderer per field kind. Adding a new field kind is a
  * one-line entry here instead of a new branch in a switch.
@@ -102,6 +144,7 @@ const FIELD_RENDERERS: Record<ContentTypeField["type"], FieldRenderer> = {
   number: NumberRenderer,
   boolean: BooleanRenderer,
   date: DateRenderer,
+  media: MediaRenderer,
 };
 
 function displayValue(field: ContentTypeField, entry?: ContentEntry): string {
@@ -114,7 +157,7 @@ function displayValue(field: ContentTypeField, entry?: ContentEntry): string {
   return String(value);
 }
 
-export function ContentEntryForm({ action, type, entry }: Props) {
+export function ContentEntryForm({ action, type, entry, mediaAssets }: Props) {
   const [state, formAction] = useActionState(action, emptyPostState);
 
   return (
@@ -151,7 +194,7 @@ export function ContentEntryForm({ action, type, entry }: Props) {
 
       {type.fields.map((field) => {
         const RenderField = FIELD_RENDERERS[field.type];
-        return <RenderField key={field.name} field={field} defaultValue={displayValue(field, entry)} />;
+        return <RenderField key={field.name} field={field} defaultValue={displayValue(field, entry)} mediaAssets={mediaAssets} />;
       })}
 
       {state.error ? <p className="flash flash-error">{state.error}</p> : null}

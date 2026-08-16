@@ -1,3 +1,4 @@
+import { isObjectId } from "@/shared/db/object-id";
 import type {
   ContentEntryFieldError,
   ContentFieldType,
@@ -37,12 +38,16 @@ const dateCoercer: FieldCoercer = (raw) => {
   return undefined;
 };
 
+const mediaCoercer: FieldCoercer = (raw) =>
+  typeof raw === "string" && isObjectId(raw) ? raw : undefined;
+
 export const FIELD_COERCERS: Record<ContentFieldType, FieldCoercer> = {
   text: textCoercer,
   longtext: textCoercer,
   number: numberCoercer,
   boolean: booleanCoercer,
   date: dateCoercer,
+  media: mediaCoercer,
 };
 
 /**

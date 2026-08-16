@@ -3,6 +3,7 @@ import { prismaAuditRepository } from "@/modules/audit/infrastructure/prisma-aud
 import { createAuthApplication } from "@/modules/auth/application";
 import { createContentApplication } from "@/modules/content/application";
 import { prismaPageRepository, prismaPostRepository } from "@/modules/content/infrastructure/prisma-content-repositories";
+import { findEntryIdsUsingMedia } from "@/modules/content/infrastructure/prisma-content-type-repositories";
 import { createMediaApplication } from "@/modules/media/application";
 import { createContentUsageLookup } from "@/modules/media/infrastructure/content-usage-lookup";
 
@@ -21,6 +22,7 @@ const { recordAuditEvent } = auditApp;
 const contentUsageLookup = createContentUsageLookup({
   findPostIdsUsingMedia: (mediaId) => prismaPostRepository.idsUsingMedia(mediaId),
   findPageIdsUsingMedia: (mediaId) => prismaPageRepository.idsUsingMedia(mediaId),
+  findEntryIdsUsingMedia: (mediaId) => findEntryIdsUsingMedia(mediaId),
 });
 
 export const auth = createAuthApplication(recordAuditEvent);
