@@ -15,6 +15,7 @@ import type {
 } from "../../domain/types.ts";
 import {
   createGetCategoryBySlug,
+  createGetPageBreadcrumb,
   createGetPublishedPageBySlug,
   createGetPublishedPostBySlug,
   createGetPublicNav,
@@ -304,6 +305,59 @@ describe("getPublishedPageBySlug", () => {
     const pages = memoryPageRepo([page("about", { slug: "about", status: "draft" })]);
     const result = await createGetPublishedPageBySlug(pages)("about");
     assert.equal(result, null);
+  });
+});
+
+describe("getPageBreadcrumb", () => {
+  it("returns ancestors from root to the page", async () => {
+    const pages = memoryPageRepo([
+      page("home", { slug: "home", id: "home" }),
+      page("about", { slug: "about", id: "about", parentId: "home" }),
+      page("team", { slug: "team", id: "team", parentId: "about" }),
+    ]);
+    const breadcrumb = await createGetPageBreadcrumb(pages)("team");
+    assert.deepEqual(
+      breadcrumb.map((p) => p.id),
+      ["home", "about", "team"],
+    );
+  });
+
+  it("returns only the page itself when it has no parent", async () => {
+    const pages = memoryPageRepo([page("about", { slug: "about" })]);
+    const breadcrumb = await createGetPageBreadcrumb(pages)("about");
+    assert.deepEqual(
+      breadcrumb.map((p) => p.id),
+      ["about"],
+    );
+  });
+
+  it("skips unpublished ancestors", async () => {
+    const pages = memoryPageRepo([
+      page("home", { slug: "home", id: "home", status: "draft" }),
+      page("about", { slug: "about", id: "about", parentId: "home" }),
+    ]);
+    const breadcrumb = await createGetPageBreadcrumb(pages)("about");
+    assert.deepEqual(
+      breadcrumb.map((p) => p.id),
+      ["about"],
+    );
+  });
+
+  it("returns an empty list when the page is not published", async () => {
+    const pages = memoryPageRepo([page("about", { slug: "about", status: "draft" })]);
+    const breadcrumb = await createGetPageBreadcrumb(pages)("about");
+    assert.deepEqual(breadcrumb, []);
+  });
+
+  it("stops at a missing parent instead of looping forever", async () => {
+    const pages = memoryPageRepo([
+      page("team", { slug: "team", id: "team", parentId: "missing" }),
+    ]);
+    const breadcrumb = await createGetPageBreadcrumb(pages)("team");
+    assert.deepEqual(
+      breadcrumb.map((p) => p.id),
+      ["team"],
+    );
   });
 });
 

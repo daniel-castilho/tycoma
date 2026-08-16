@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { z } from "zod";
@@ -28,7 +29,10 @@ export async function generateMetadata({
 
 export default async function PageDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = paramsSchema.parse(await params);
-  const page = await content.getPublishedPageBySlug(slug);
+  const [page, breadcrumb] = await Promise.all([
+    content.getPublishedPageBySlug(slug),
+    content.getPageBreadcrumb(slug),
+  ]);
   if (!page) notFound();
 
   const featured = page.featuredImageId ? await media.getMedia(page.featuredImageId) : null;
@@ -36,6 +40,23 @@ export default async function PageDetail({ params }: { params: Promise<{ slug: s
 
   return (
     <article className="site-article">
+      {breadcrumb.length > 1 ? (
+        <nav aria-label="Breadcrumb" className="site-breadcrumb">
+          <ol>
+            {breadcrumb.map((entry) =>
+              entry.id === page.id ? (
+                <li key={entry.id} aria-current="page">
+                  {entry.title}
+                </li>
+              ) : (
+                <li key={entry.id}>
+                  <Link href={`/${entry.slug}`}>{entry.title}</Link>
+                </li>
+              ),
+            )}
+          </ol>
+        </nav>
+      ) : null}
       <h1>{page.title}</h1>
       {featured && isImage ? (
         <div className="site-article-featured" style={{ position: "relative", width: "100%", height: "18rem" }}>

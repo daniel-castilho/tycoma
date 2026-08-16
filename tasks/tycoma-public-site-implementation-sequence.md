@@ -48,7 +48,7 @@ Deliver in **vertical slices** (route + use case if missing + minimal styling + 
 | ---- | ------- | ------------------------------------------------------ |
 | 2.1  | P4–P5   | Post detail by slug + metadata                         |
 | 2.2  | P7–P8   | Page detail by slug + metadata (URL scheme documented) |
-| 2.3  | P6      | Optional `/posts` index — **deferred** (follow-up)     |
+| 2.3  | P6      | Optional `/posts` index — **deferred** (follow-up); **shipped post-v0.2.0** (`/posts`, full list) |
 | 2.4  | P13     | Featured/body media URLs on detail pages               |
 | 2.5  | P17     | `notFound()` for missing/unpublished                   |
 
@@ -71,7 +71,7 @@ Deliver in **vertical slices** (route + use case if missing + minimal styling + 
 
 **Outcome:** Full MVP reading paths + basic SEO coherence.
 
-> Deferred within this phase (kept as follow-ups): `/posts` index (P6), page-hierarchy breadcrumb (P9), favicon `<link>` from settings (part of P14), and splitting cards/header/footer into `_components` (part of P3).
+> Deferred within this phase (kept as follow-ups): `/posts` index (P6), page-hierarchy breadcrumb (P9), favicon `<link>` from settings (part of P14), and splitting cards/header/footer into `_components` (part of P3). **Follow-ups shipped post-v0.2.0:** `/posts` index (P6) and page-hierarchy breadcrumb (P9, via `content.getPageBreadcrumb`).
 
 ---
 

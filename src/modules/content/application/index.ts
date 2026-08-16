@@ -41,6 +41,7 @@ import {
 } from "./use-cases/taxonomy";
 import {
   createGetCategoryBySlug,
+  createGetPageBreadcrumb,
   createGetPublishedPageBySlug,
   createGetPublishedPostBySlug,
   createGetPublicNav,
@@ -97,6 +98,7 @@ export function createContentApplication(auditEventWriter: AuditEventWriter) {
     getPublishedPostBySlug: createGetPublishedPostBySlug(prismaPostRepository),
     listPublishedPages: createListPublishedPages(prismaPageRepository),
     getPublishedPageBySlug: createGetPublishedPageBySlug(prismaPageRepository),
+    getPageBreadcrumb: createGetPageBreadcrumb(prismaPageRepository),
     getCategoryBySlug: createGetCategoryBySlug(prismaCategoryRepository),
     getTagBySlug: createGetTagBySlug(prismaTagRepository),
     listPublishedPostsByCategory: createListPublishedPostsByCategory(prismaPostRepository),

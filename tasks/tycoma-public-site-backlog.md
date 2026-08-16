@@ -20,7 +20,7 @@
 | ----------------------------- | ---------- | ------ | ------------------------------------------------------- |
 | Public layout shell           | Essential  | Done   | Settings + main menu + footer                           |
 | Home                          | Essential  | Done   | Published posts list                                    |
-| Posts (list + detail by slug) | Essential  | Done   | Published only; metadata                                |
+| Posts (list + detail by slug) | Essential  | Done   | Published only; metadata; `/posts` index added as follow-up  |
 | Pages (detail by slug)        | Essential  | Done   | Published only; metadata; top-level `/[slug]`           |
 | Taxonomy (category / tag)     | Essential  | Done   | Listings + detail of published posts                    |
 | Media on public pages         | Essential  | Done   | S3/LocalStack URLs via `media.getMedia`                 |
@@ -48,13 +48,13 @@
 
 - [x] **P4** — Public post detail by slug (route: `/posts/[slug]`). Only **published** posts. Render title, body, dates, category/tag links, featured media if the model already supports it.
 - [x] **P5** — `generateMetadata` for post detail from post fields + SEO defaults + site settings (title, description; canonical when base URL is available).
-- [ ] **P6** — Optional public posts index at `/posts` (paginated or simple full list of published posts). Deferred to follow-up.
+- [x] **P6** — Optional public posts index at `/posts` (paginated or simple full list of published posts). Deferred to follow-up. **(Shipped: `/posts` — full list of published posts, newest first, with metadata. Pagination deferred further — see notes.)**
 
 ### Content reading — pages
 
 - [x] **P7** — Public page detail by slug. URL scheme: **top-level `/[slug]`** — chosen to stay compatible with the existing `/sitemap.xml` (pages already emitted at `/{slug}`) and with the menu resolver; documented in the module spec.
 - [x] **P8** — `generateMetadata` for page detail (same rules as posts).
-- [ ] **P9** — Hierarchy hint optional: parent/child breadcrumb. Deferred to follow-up (model has `parentId`, but no public read path for it yet).
+- [x] **P9** — Hierarchy hint optional: parent/child breadcrumb. Deferred to follow-up (model has `parentId`, but no public read path for it yet). **(Shipped: `content.getPageBreadcrumb` + breadcrumb nav on public page detail.)**
 
 ### Taxonomy
 

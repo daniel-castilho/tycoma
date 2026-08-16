@@ -45,6 +45,26 @@ export function createGetPublishedPageBySlug(pages: PageReader) {
   };
 }
 
+export function createGetPageBreadcrumb(pages: PageReader) {
+  return async function getPageBreadcrumb(slug: string): Promise<Page[]> {
+    const page = await pages.findBySlug(slug);
+    if (!page || page.status !== "published") return [];
+    const chain: Page[] = [page];
+    let current = page;
+    const guard = new Set<string>([page.id]);
+    while (current.parentId && !guard.has(current.parentId)) {
+      const parent = await pages.findById(current.parentId);
+      if (!parent) break;
+      guard.add(parent.id);
+      if (parent.status === "published") {
+        chain.unshift(parent);
+      }
+      current = parent;
+    }
+    return chain;
+  };
+}
+
 export function createGetCategoryBySlug(categories: CategoryRepository) {
   return async function getCategoryBySlug(slug: string): Promise<Category | null> {
     return categories.findBySlug(slug);
