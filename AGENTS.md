@@ -108,7 +108,7 @@ infrastructure/  Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers 
 ## Testing
 
 - Node.js built-in test runner: `npm test`
-  (`node --experimental-strip-types --test src/modules/**/*.test.ts`).
+  (`node --experimental-strip-types --test src/**/*.test.ts`).
 - Test names: `method_condition_expectedResult` or descriptive `it("should …")`.
 - Domain unit tests: **no mocks** — pure entities/value objects.
 - Application tests: mock the domain ports only.
@@ -131,7 +131,18 @@ infrastructure/  Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers 
 Items that currently violate the rules above. Do **not** silently "fix" them, and do **not** add
 new violations — flag them to the human instead.
 
-None at the moment — the previously recorded items were resolved in `v0.1.0`:
+- _None at the moment._ The two items carried over from `v0.1.0` (`asStatus` silent degradation
+  and the wide repository interfaces) were resolved:
+  - `asStatus` was replaced by `parseContentStatus` in
+    `src/modules/content/domain/content-status.ts`, which throws on unknown values (covered by
+    `content-status.test.ts`). The Prisma adapter now calls it from `mapPost`/`mapPage`.
+  - `PostRepository`, `PageRepository` and `MenuRepository` in
+    `src/modules/content/domain/types.ts` were split into `*Reader` / `*Writer` pairs (same
+    shape as `AuditEventStore` + `AuditEventReader`). The use cases now depend only on the
+    fatia they actually use, the adapter still satisfies the union, and `src/app/_lib/modules.ts`
+    was left untouched because the wired objects already expose the same surface.
+
+The previously recorded items were resolved in `v0.1.0`:
 
 - `bcryptjs` direct imports in `auth` use-cases migrated to an Argon2id `PasswordHasher` port.
 - Zod adoption completed: server actions, `searchParams` and environment configuration are all

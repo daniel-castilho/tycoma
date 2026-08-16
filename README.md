@@ -80,9 +80,10 @@ at `/admin/login`.
 ## Testing
 
 `npm test` runs the Node.js built-in test runner
-(`node --experimental-strip-types --test src/modules/**/*.test.ts`). Domain tests use no mocks;
-application tests mock the domain ports only. After significant changes run `npm run build` and
-smoke-test against `npm run docker:up`.
+(`node --import ./scripts/test-register.mjs --experimental-strip-types --test src/**/*.test.ts`).
+The custom resolver registers the `@/*` path alias declared in `tsconfig.json` so application
+imports stay clean. Domain tests use no mocks; application tests mock the domain ports only.
+After significant changes run `npm run build` and smoke-test against `npm run docker:up`.
 
 ## Current state
 
@@ -101,11 +102,20 @@ milestones of `tasks/tycoma-admin-dashboard-implementation-sequence.md` were del
 - **Phase 5 — Monitoring:** audit module with `AuditEventWriter` threaded through the
   `content`/`auth`/`media` use cases; read-only audit log viewer with filters at `/admin/audit-log`.
 
-> **Known technical debt:** none — both items that were backlogged before the `v0.1.0` tag
-> (direct `bcryptjs` imports in `auth` use-cases, partial Zod adoption) are resolved. Passwords are
-> hashed with Argon2id via the `PasswordHasher` port, and every external input — server actions,
-> `searchParams`, environment config (`src/shared/env.ts`) — is Zod-validated. See "Known technical
-> debt" in `AGENTS.md`.
+> **Known technical debt:** two items remain on the backlog (see "Known technical debt" in
+> `AGENTS.md`):
+>
+> - `asStatus` in `prisma-content-repositories.ts` silently maps unknown MongoDB `status` values
+>   to `"draft"` instead of throwing — should fail fast.
+> - `PostRepository` / `PageRepository` / `MenuRepository` in `content/domain/types.ts` still mix
+>   reads, writes and statistical queries on a single interface (ISP). `AuditRepository` was
+>   already split into `AuditEventStore` + `AuditEventReader`; the same split should be applied to
+>   `content` repositories.
+>
+> Both items that were backlogged before the `v0.1.0` tag (direct `bcryptjs` imports in `auth`
+> use-cases, partial Zod adoption) are resolved. Passwords are hashed with Argon2id via the
+> `PasswordHasher` port, and every external input — server actions, `searchParams`, environment
+> config (`src/shared/env.ts`) — is Zod-validated.
 
 ## Roadmap
 
