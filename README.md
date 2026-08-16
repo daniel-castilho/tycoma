@@ -88,11 +88,8 @@ Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
-**`v0.2.0` is the latest tagged release.** It covers the full **Admin Dashboard epic** (v0.1.0)
-plus the **Public Site MVP** (v0.2.0). Follow-up work that has landed on `main` since `v0.2.0`
-(posts index, page breadcrumb, extracted public-site components, favicon from settings, CI
-hardening, additional application tests) is tracked under `[Unreleased]` in `CHANGELOG.md` and
-becomes the next tag once a milestone-sized epic ships:
+**`v0.3.0` is the latest tagged release.** It adds **Custom Content Types** on top of the admin
+dashboard (`v0.1.0`) and the public site MVP (`v0.2.0`):
 
 - **Admin Dashboard (v0.1.0):**
   - **Foundation & access control:** setup, login, session guard (`src/proxy.ts`), password
@@ -118,6 +115,15 @@ becomes the next tag once a milestone-sized epic ships:
   - New published-only read use cases in the `content` module (see
     `src/modules/content/application/use-cases/public.ts`); public site stays a pure composition
     layer.
+- **Custom Content Types (v0.3.0):**
+  - Admin defines content types (`/admin/content-types`) with name, slug, description and a
+    fixed list of fields (text, longtext, number, boolean, date — each with `name`, `label`,
+    `required`).
+  - Per-type entries (`/admin/content-types/[type]/entries`) with create / edit / publish /
+    delete; slug is unique per type; field values validated and coerced by the type's definition.
+  - Public reading at `/types/[type]` (index) and `/types/[type]/[slug]` (detail) with
+    `generateMetadata`, canonical URL, and a generic field renderer; drafts and missing slugs
+    return `notFound()`.
 
 > **Known technical debt:** none. The items recorded at `v0.1.0` (`asStatus` silent degradation and
 > the wide content repository interfaces) were resolved — see `AGENTS.md` for the details.
@@ -126,12 +132,13 @@ becomes the next tag once a milestone-sized epic ships:
 
 The original implementation sequence planned the Admin Dashboard as separate milestones; in
 practice all five phases shipped together as **`v0.1.0`**, followed by the **Public Site MVP** as
-**`v0.2.0`**, with the public-site follow-ups (posts index, page breadcrumb, extracted
-components, favicon from settings) landing on `main` after the tag.
+**`v0.2.0`**, then **Custom Content Types** as **`v0.3.0`**. The public-site follow-ups (posts
+index, page breadcrumb, extracted components, favicon from settings) landed on `main` after
+`v0.2.0` and will be promoted to the next follow-up tag.
 
-Deliberately deferred: custom content types, block-based editor, Markdown rendering on the public
-site, public headless API, webhooks, comments, 301 redirects, revision history, automated
-backup/export scheduling, multi-user roles.
+Deliberately deferred: block-based editor, Markdown rendering on the public site, public headless
+API, webhooks, comments, 301 redirects, revision history, automated backup/export scheduling,
+multi-user roles.
 
 ## Documentation
 
@@ -144,6 +151,7 @@ backup/export scheduling, multi-user roles.
 | [docs/twelve-factor.md](docs/twelve-factor.md)                               | Twelve-Factor App reference & compliance matrix               |
 | [docs/releases/v0.1.0.md](docs/releases/v0.1.0.md)                           | Release notes — admin dashboard                               |
 | [docs/releases/v0.2.0.md](docs/releases/v0.2.0.md)                           | Release notes — public site MVP                               |
+| [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md)                           | Release notes — custom content types                          |
 | [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
 | [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
 | [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |
@@ -152,4 +160,7 @@ backup/export scheduling, multi-user roles.
 | [tasks/tycoma-public-site-implementation-sequence.md](tasks/tycoma-public-site-implementation-sequence.md) | Public Site epic — delivery order & DoD                |
 | [tasks/tycoma-public-site-module-spec.md](tasks/tycoma-public-site-module-spec.md) | Public Site epic — target technical design              |
 | [tasks/tycoma-ai-software-engineer-prompt-public-site.md](tasks/tycoma-ai-software-engineer-prompt-public-site.md) | AI-engineer prompt used for the Public Site epic     |
+| [tasks/tycoma-content-types-backlog.md](tasks/tycoma-content-types-backlog.md) | Content Types epic — stories & scope                        |
+| [tasks/tycoma-content-types-implementation-sequence.md](tasks/tycoma-content-types-implementation-sequence.md) | Content Types epic — delivery order & DoD          |
+| [tasks/tycoma-content-types-module-spec.md](tasks/tycoma-content-types-module-spec.md) | Content Types epic — target technical design            |
 | [CHANGELOG.md](CHANGELOG.md)                                                 | High-level release index                                      |

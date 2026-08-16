@@ -94,10 +94,58 @@ Second tagged release: the complete **Public Site MVP** epic on top of the admin
   `tycoma-public-site-module-spec.md`, `tycoma-ai-software-engineer-prompt-public-site.md`) are
   marked shipped and reflect the delivered state.
 
+## [v0.3.0] — 2026-08-15
+
+Third tagged release: the **Custom Content Types** epic. The admin can now define content types
+with a fixed field set, manage entries for them, and render published entries on the public
+site — without leaving the existing hexagonal `content` module. See
+`docs/releases/v0.3.0.md` for details.
+
+### Added
+
+- **Custom content types** (`ContentType` + `ContentEntry` Prisma models, domain entities in
+  `src/modules/content/domain/content-types.ts`):
+  - **Definitions**: name, slug (`@unique`), description, JSON `fields` list (text, longtext,
+    number, boolean, date — each with `name`, `label`, `required`). A field-coercer registry
+    (`FIELD_COERCERS` in `content-type-fields.ts`) gives one strategy per kind; unknown field
+    names are dropped, required fields are enforced.
+  - **Entries**: per-type slug, title, status (`draft`/`scheduled`/`published`), `publishedAt`,
+    `scheduledAt`, JSON `fields` validated against the type definition. Unique per
+    `(contentTypeId, slug)`.
+  - **Admin UI** at `/admin/content-types`: list, new/edit type (dynamic field editor with
+    add/remove rows), entries list/new/edit per type, publish + delete actions. Server Actions
+    in `src/app/admin/_actions/content-types.ts` with Zod-validated form payloads.
+  - **Public reading** at `/types/[type]` (index of published entries) and
+    `/types/[type]/[slug]` (detail) with `generateMetadata`, canonical URL, and a generic field
+    renderer (`text`, `longtext`, `number`, `boolean`, `date`). Drafts and missing slugs hit
+    `notFound()`.
+- **Use cases** in the `content` module (`application/use-cases/content-types.ts`): list/get/save/
+  delete content types, list/get/create/update/publish/delete entries, plus two public reads
+  (`listPublishedEntriesByTypeSlug`, `getPublishedEntryByTypeAndSlug`). Audit events recorded
+  for every mutation through the existing `AuditEventWriter` port.
+- **Repository ports** (`ContentTypeRepository`, `ContentEntryReader` / `ContentEntryWriter`)
+  split per ISP convention; Prisma adapter with explicit `toDomain` / `toPersistence` mappers.
+- **Application tests** for every new use case (mocks the ports only).
+
+### Changed
+
+- `src/app/admin/(authed)/_components/admin-shell.css` gained shared `.field-set`,
+  `.field-row`, `.checkbox-inline`, and `.btn-sm` styles reused by the content-type forms.
+- The admin sidebar (`src/app/admin/(authed)/layout.tsx`) now lists **Content types** between
+  Taxonomy and Media.
+
+### Documentation
+
+- New planning docs (`tasks/tycoma-content-types-backlog.md`,
+  `tasks/tycoma-content-types-implementation-sequence.md`,
+  `tasks/tycoma-content-types-module-spec.md`) reflect the delivered state.
+- New `docs/testing-playbook.md` consolidates the testing pyramid, port-mocking patterns,
+  regression checklist, and smoke-test guidance that were previously implicit.
+
 ## [Unreleased]
 
-Follow-up work on top of `v0.2.0`. Will become the next tag (`v0.3.0` or similar) once a
-milestone-sized epic lands.
+Follow-up work on top of `v0.2.0`. Will become the next tag (e.g. `v0.2.1`) once a follow-up
+release is prepared.
 
 ### Added
 
@@ -122,6 +170,11 @@ milestone-sized epic lands.
 
 - `src/app/(site)/layout.tsx` is now `force-dynamic` (matches the admin auth pages and
   `/sitemap.xml`) so `next build` does not need a running database or environment secrets.
+- **Doc sync rule**: `AGENTS.md` § *Critical rules* (rule 9) and `docs/coding-standards.md` §
+  *Doc sync* now require the five-file checklist (README Current State, CHANGELOG, tasks/*,
+  AGENTS.md Known technical debt, docs/lessons.md when a durable rule is learned) as part of
+  every milestone-sized change. README documentation table now links the release notes, AI
+  prompts, and testing playbook.
 
 ---
 
