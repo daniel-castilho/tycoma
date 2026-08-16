@@ -2,18 +2,46 @@ import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { PasswordHasher } from "../../domain/password-hasher";
 import { MIN_PASSWORD_LENGTH } from "../../domain/policies";
+import type { RateLimiter } from "../../domain/rate-limiter";
+import type { StepUpStore } from "../../domain/step-up";
 import type { UserRepository } from "../../domain/user";
+
+/**
+ * Rate limit budget for change-password attempts per user id. Tunable.
+ */
+export const CHANGE_PASSWORD_RATE_LIMIT = 5;
+export const CHANGE_PASSWORD_RATE_WINDOW_SECONDS = 60 * 15;
 
 export function createChangePassword(
   users: UserRepository,
   audit: AuditEventWriter,
   hasher: PasswordHasher,
+  limiter: RateLimiter,
+  stepUp: StepUpStore,
 ) {
   return async function changePassword(input: {
     userId: string;
     currentPassword: string;
     newPassword: string;
   }): Promise<Result<{ ok: true }>> {
+    const rateKey = `change_password:${input.userId}`;
+    const decision = await limiter.hit(
+      rateKey,
+      CHANGE_PASSWORD_RATE_LIMIT,
+      CHANGE_PASSWORD_RATE_WINDOW_SECONDS,
+    );
+    if (!decision.allowed) {
+      return err("Too many change-password attempts. Try again in a few minutes.");
+    }
+
+    // Phase B: require a fresh step-up marker (granted by createStepUp after
+    // the admin re-enters the current password). The marker is valid for
+    // STEP_UP_TTL_SECONDS and is reused (not consumed) — better UX for retries.
+    const stepUpOk = await stepUp.has(input.userId);
+    if (!stepUpOk) {
+      return err("Please confirm your current password before changing it.");
+    }
+
     const user = await users.findById(input.userId);
     if (!user) {
       return err("User not found.");

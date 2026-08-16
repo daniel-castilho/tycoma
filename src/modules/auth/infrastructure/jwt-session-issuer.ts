@@ -12,7 +12,7 @@ export const jwtSessionIssuer: SessionIssuer = {
     return new SignJWT(payload)
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime("7d")
+      .setExpirationTime("12h")
       .sign(secret());
   },
   verify: jwtSessionVerifier.verify,

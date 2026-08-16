@@ -1,6 +1,14 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/app/_lib/modules";
-import { changePasswordAction, saveProfileAction } from "@/app/admin/_actions/account";
+
+export const dynamic = "force-dynamic";
+import { redisStepUpStore } from "@/modules/auth/infrastructure/redis-step-up-store";
+import { STEP_UP_TTL_SECONDS } from "@/modules/auth/application/use-cases/step-up";
+import {
+  changePasswordAction,
+  saveProfileAction,
+  stepUpAction,
+} from "@/app/admin/_actions/account";
 import { TextField } from "@/app/admin/(authed)/_components/form-field";
 import { SubmitButton } from "@/app/admin/(authed)/_components/submit-button";
 import { requireSession } from "@/app/admin/_lib/session";
@@ -9,6 +17,8 @@ export default async function AccountPage() {
   const session = await requireSession();
   const profile = await auth.getProfile(session.sub);
   if (!profile.ok) notFound();
+
+  const stepUpActive = await redisStepUpStore.has(session.sub);
 
   return (
     <>
@@ -33,8 +43,32 @@ export default async function AccountPage() {
 
         <section>
           <h2 style={{ fontSize: "1rem" }}>Change password</h2>
+          <p className="hint">
+            Phase B: confirm your current password before changing it. The confirmation
+            stays valid for {Math.round(STEP_UP_TTL_SECONDS / 60)} minutes.
+          </p>
+          <form action={stepUpAction} className="form-stack" style={{ gap: "1rem", marginBottom: "1rem" }}>
+            <TextField
+              label="Confirm current password"
+              name="currentPassword"
+              type="password"
+              required
+              hint={
+                stepUpActive
+                  ? "Re-confirm to refresh the 10-minute window."
+                  : "Required before changing your password."
+              }
+            />
+            <SubmitButton label={stepUpActive ? "Re-confirm password" : "Confirm password"} />
+          </form>
           <form action={changePasswordAction} className="form-stack" style={{ gap: "1rem" }}>
-            <TextField label="Current password" name="currentPassword" type="password" required />
+            <TextField
+              label="Current password"
+              name="currentPassword"
+              type="password"
+              required
+              hint={stepUpActive ? "Step-up confirmed — change allowed." : "Confirm your password above first."}
+            />
             <TextField label="New password" name="newPassword" type="password" hint="At least 8 characters." required />
             <TextField label="Confirm new password" name="confirmPassword" type="password" required />
             <SubmitButton label="Update password" />

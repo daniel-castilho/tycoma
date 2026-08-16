@@ -184,3 +184,40 @@ Rule: if a future feature wants to render CMS body content as HTML, it **must** 
 sanitizer library (a new npm dependency, which requires human approval per AGENTS.md rule 5)
 and remove the regression test only after that library is wired in and tested. Do **not**
 just `dangerouslySetInnerHTML` the body field.
+
+## Phase B shortened the admin session from 7 days to 12 hours
+
+Phase B (`v0.6.0`) reduced the default JWT lifetime and cookie `maxAge` from `7d` to `12h`.
+The motivation was to shrink the theft window for a stolen session cookie. Phase B did **not**
+add sliding refresh or "remember me" — those are deliberate omissions to keep the cookie
+lifetime predictable and to avoid widening the auth surface in this epic.
+
+Consequences worth flagging:
+
+- Any admin logged in before the upgrade will be silently logged out within at most 12 hours
+  after the deploy. That is intended.
+- Phase B+ should add either sliding refresh (with an absolute cap) or a short-lived access +
+  long-lived refresh split. Don't widen the JWT `exp` again as a workaround.
+- The 12h number is a **constant** (`SESSION_TTL_SECONDS = 60 * 60 * 12`) — change it in one
+  place (`src/app/admin/_lib/session-cookie.ts`) and re-run the suite.
+
+## Step-up re-auth lives in Redis, not in the JWT
+
+Phase B added a step-up flow for `change_password`: the admin re-enters the current password
+to receive a `stepup:{userId}` marker in Redis with a 10-minute TTL; the change-password use
+case then gates on `StepUpStore.has(userId)`. The marker is **reused** (not consumed) so the
+admin can retry the form without re-confirming.
+
+Rule: do **not** add step-up state to the JWT. Cookies travel everywhere; Redis-backed
+markers are short-lived, server-side revocable, and require no JWT shape change. Adding TOTP
+later will plug into the same `StepUpStore.has` check rather than inventing a second gate.
+
+## 2FA is explicitly deferred — don't sneak it in
+
+Phase B deferred TOTP 2FA (stories B19–B25) because adding a library requires explicit human
+approval per AGENTS.md rule 5, and a hand-rolled RFC 6238 implementation adds crypto surface
+that is not worth the risk in this sprint. Phase B DoD is valid without 2FA.
+
+Rule: if a future epic proposes 2FA, it **must** come with explicit human approval of a
+specific library (`otpauth`, `@otplib/preset-default`, etc.) in the commit message or lessons
+note. Do not implement hand-rolled TOTP without a separate decision.

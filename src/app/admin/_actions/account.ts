@@ -18,6 +18,10 @@ const changePasswordSchema = z.object({
   confirmPassword: z.string().min(8),
 });
 
+const stepUpSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your current password."),
+});
+
 export async function saveProfileAction(formData: FormData): Promise<void> {
   const session = await requireSession();
   const parsed = profileSchema.safeParse(formDataToObject(formData));
@@ -27,6 +31,28 @@ export async function saveProfileAction(formData: FormData): Promise<void> {
   const result = await auth.updateProfile({
     userId: session.sub,
     ...parsed.data,
+  });
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+  revalidatePath("/admin/account");
+}
+
+/**
+ * Phase B step-up: confirms the admin's current password and grants a
+ * 10-minute Redis-backed marker. The change-password form is split into
+ * two steps: the admin posts the current password here first, then the
+ * actual change-password action runs.
+ */
+export async function stepUpAction(formData: FormData): Promise<void> {
+  const session = await requireSession();
+  const parsed = stepUpSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    throw new Error("Enter your current password.");
+  }
+  const result = await auth.stepUp({
+    userId: session.sub,
+    currentPassword: parsed.data.currentPassword,
   });
   if (!result.ok) {
     throw new Error(result.error);

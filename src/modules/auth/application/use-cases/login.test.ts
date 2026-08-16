@@ -1,12 +1,50 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AuditEventWriter } from "../../../audit/domain/types.ts";
+import type { LockoutStore } from "../../domain/lockout.ts";
 import type { PasswordHasher } from "../../domain/password-hasher.ts";
 import type { SessionIssuer } from "../../domain/session.ts";
 import type { User, UserRepository } from "../../domain/user.ts";
 import { createLogin } from "./login.ts";
+import {
+  LOCKOUT_BLOCK_SECONDS,
+  LOCKOUT_FAILURE_THRESHOLD,
+  LOCKOUT_FAILURE_WINDOW_SECONDS,
+} from "./lockout-policy.ts";
 
 const noopAudit = { record: async () => {} };
+
+function memoryLockout(): LockoutStore & { failures: string[]; blocks: string[]; resets: string[]; blockedKeys: Set<string> } {
+  const failures: string[] = [];
+  const blocks: string[] = [];
+  const resets: string[] = [];
+  const blockedKeys = new Set<string>();
+  const counters = new Map<string, number>();
+  return {
+    failures,
+    blocks,
+    resets,
+    blockedKeys,
+    async countFailure(key, _windowSeconds) {
+      failures.push(key);
+      const n = (counters.get(key) ?? 0) + 1;
+      counters.set(key, n);
+      return n;
+    },
+    async isBlocked(key) {
+      return blockedKeys.has(key);
+    },
+    async block(key, _blockSeconds) {
+      blocks.push(key);
+      blockedKeys.add(key);
+    },
+    async reset(key) {
+      resets.push(key);
+      counters.delete(key);
+      blockedKeys.delete(key);
+    },
+  };
+}
 
 const fakeHasher: PasswordHasher = {
   async hash(password) {
@@ -93,7 +131,7 @@ describe("login", () => {
         events.push(e);
       },
     };
-    const login = createLogin(users, fakeIssuer, memoryLimiter(), audit, fakeHasher);
+    const login = createLogin(users, fakeIssuer, memoryLimiter(), audit, fakeHasher, memoryLockout());
     const result = await login({ email: "Ada@Example.com", password: "longenough", ip: "1.2.3.4" });
     assert.equal(result.ok, true);
     if (result.ok) assert.equal(result.value.token, "token:u1");
@@ -101,14 +139,17 @@ describe("login", () => {
   });
 
   it("rejects an unknown user without leaking whether the account exists", async () => {
-    const login = createLogin(memoryUsers(), fakeIssuer, memoryLimiter(), noopAudit, fakeHasher);
+    const lockout = memoryLockout();
+    const login = createLogin(memoryUsers(), fakeIssuer, memoryLimiter(), noopAudit, fakeHasher, lockout);
     const result = await login({ email: "nobody@example.com", password: "longenough", ip: "1.2.3.4" });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.error, "Invalid email or password.");
+    assert.equal(lockout.failures.length, 1);
+    assert.equal(lockout.blocks.length, 0);
   });
 
   it("rejects a wrong password", async () => {
-    const login = createLogin(memoryUsers([seedUser()]), fakeIssuer, memoryLimiter(), noopAudit, fakeHasher);
+    const login = createLogin(memoryUsers([seedUser()]), fakeIssuer, memoryLimiter(), noopAudit, fakeHasher, memoryLockout());
     const result = await login({ email: "ada@example.com", password: "wrong", ip: "1.2.3.4" });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.error, "Invalid email or password.");
@@ -124,10 +165,49 @@ describe("login", () => {
     };
     const limiter = memoryLimiter();
     limiter.block();
-    const login = createLogin(users, fakeIssuer, limiter, audit, fakeHasher);
+    const login = createLogin(users, fakeIssuer, limiter, audit, fakeHasher, memoryLockout());
     const result = await login({ email: "ada@example.com", password: "longenough", ip: "1.2.3.4" });
     assert.equal(result.ok, false);
     if (!result.ok) assert.match(result.error, /Too many login attempts/i);
     assert.ok(events.some((e) => (e as { eventType: string }).eventType === "auth.login_blocked"));
+  });
+
+  it("extends the lockout once failures reach the threshold", async () => {
+    const lockout = memoryLockout();
+    const users = memoryUsers([seedUser()]);
+    const login = createLogin(users, fakeIssuer, memoryLimiter(), noopAudit, fakeHasher, lockout);
+    for (let i = 0; i < LOCKOUT_FAILURE_THRESHOLD; i++) {
+      await login({ email: "ada@example.com", password: "wrong", ip: "1.2.3.4" });
+    }
+    assert.equal(lockout.blocks.length, 1);
+  });
+
+  it("rejects immediately when the lockout store reports the key as already blocked", async () => {
+    const lockout = memoryLockout();
+    lockout.blockedKeys.add("1.2.3.4:ada@example.com");
+    const events: unknown[] = [];
+    const audit: AuditEventWriter = {
+      record: async (e) => {
+        events.push(e);
+      },
+    };
+    const login = createLogin(memoryUsers([seedUser()]), fakeIssuer, memoryLimiter(), audit, fakeHasher, lockout);
+    const result = await login({ email: "ada@example.com", password: "longenough", ip: "1.2.3.4" });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /Too many login attempts/i);
+    assert.ok(events.some((e) => (e as { eventType: string }).eventType === "auth.login_blocked"));
+  });
+
+  it("resets the lockout state on successful login", async () => {
+    const lockout = memoryLockout();
+    const login = createLogin(memoryUsers([seedUser()]), fakeIssuer, memoryLimiter(), noopAudit, fakeHasher, lockout);
+    await login({ email: "ada@example.com", password: "longenough", ip: "1.2.3.4" });
+    assert.equal(lockout.resets.length, 1);
+  });
+
+  it("uses the documented lockout policy constants", () => {
+    assert.equal(LOCKOUT_FAILURE_THRESHOLD, 10);
+    assert.equal(LOCKOUT_FAILURE_WINDOW_SECONDS, 60 * 60);
+    assert.equal(LOCKOUT_BLOCK_SECONDS, 60 * 30);
   });
 });

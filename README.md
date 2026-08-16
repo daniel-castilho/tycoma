@@ -88,9 +88,24 @@ Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
-**`v0.5.0` is the latest tagged release.** It is the **Security Hardening Phase A** epic —
-day-one resistance to stored XSS and trivial session abuse, without 2FA, session redesign,
-or new npm dependencies.
+**`v0.6.0` is the latest tagged release.** It is the **Security Hardening Phase B** epic —
+shrinks the session-theft window, adds step-up re-auth for sensitive actions, broadens rate
+limiting, and implements a progressive lockout policy. **No new npm dependencies.** 2FA is
+deliberately deferred pending human approval of a TOTP library.
+
+- **v0.6.0 (Security Hardening Phase B):**
+  - Default session lifetime: **`7d` → `12h`**. JWT `exp` and cookie `maxAge` aligned.
+  - **Step-up re-auth** for `change_password`: a Redis-backed `stepup:{userId}` marker
+    with a **10-minute TTL**, time-boxed reuse (not consumed); the admin UI prompts for
+    the current password before the change-password form.
+  - **Rate limit on `POST /api/media`**: 30 / 15 min per `(userId, ip)`; returns `429`
+    on excess.
+  - **Rate limit on `change_password`**: 5 / 15 min per user id.
+  - **Progressive lockout**: 10 failures within 1 hour for an `(ip, email)` pair triggers
+    a **30-minute extended block**; successful login resets the counter and clears any
+    block. Audit events include `failures` and `extended_block` flags.
+  - Sliding session / remember-me / 2FA: **deferred** (Phase B+).
+  - Zero new npm dependencies.
 
 - **v0.5.0 (Security Hardening Phase A):**
   - Security response headers on every response: `X-Content-Type-Options: nosniff`,
@@ -169,12 +184,14 @@ practice all five phases shipped together as **`v0.1.0`**, followed by the **Pub
 **`v0.2.0`**, then **Custom Content Types** as **`v0.3.0`**. The public-site follow-ups (posts
 index, page breadcrumb, extracted components, favicon from settings) shipped as **`v0.2.1`**;
 the lockfile refresh and doc-sync rule shipped as **`v0.3.1`**; media-typed fields for content
-types shipped as **`v0.4.0`**; the Security Hardening Phase A epic shipped as **`v0.5.0`**.
+types shipped as **`v0.4.0`**; the Security Hardening Phase A epic shipped as **`v0.5.0`**; the
+Security Hardening Phase B epic shipped as **`v0.6.0`**.
 
 Deliberately deferred: block-based editor, Markdown rendering on the public site, public headless
 API, webhooks, comments, 301 redirects, revision history, automated backup/export scheduling,
-multi-user roles, **Security Hardening Phase B** (session TTL redesign, 2FA / WebAuthn, full
-CSP enforce pipeline, private-bucket signed URLs).
+multi-user roles, **Security Hardening Phase C** (TOTP 2FA with a human-approved library,
+sliding session / refresh redesign, full CSP enforce pipeline, private-bucket signed URLs,
+destructive-delete step-up).
 
 ## Documentation
 
@@ -192,6 +209,7 @@ CSP enforce pipeline, private-bucket signed URLs).
 | [docs/releases/v0.3.1.md](docs/releases/v0.3.1.md)                           | Release notes — lockfile refresh & doc-sync rule              |
 | [docs/releases/v0.4.0.md](docs/releases/v0.4.0.md)                           | Release notes — media-typed fields for content types           |
 | [docs/releases/v0.5.0.md](docs/releases/v0.5.0.md)                           | Release notes — security hardening phase A                     |
+| [docs/releases/v0.6.0.md](docs/releases/v0.6.0.md)                           | Release notes — security hardening phase B                     |
 | [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
 | [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
 | [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |

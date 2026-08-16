@@ -2,7 +2,7 @@ import { env } from "@/shared/env-instance";
 
 export const SESSION_COOKIE = "tycoma_session";
 
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
+const SESSION_TTL_SECONDS = 60 * 60 * 12;
 
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,

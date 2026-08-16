@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from "./session-cookie.ts";
 
-const SEVEN_DAYS = 60 * 60 * 24 * 7;
+const TWELVE_HOURS = 60 * 60 * 12;
 
 describe("SESSION_COOKIE_OPTIONS", () => {
   it("is always httpOnly", () => {
@@ -17,8 +17,8 @@ describe("SESSION_COOKIE_OPTIONS", () => {
     assert.equal(SESSION_COOKIE_OPTIONS.path, "/");
   });
 
-  it("aligns the cookie lifetime with the JWT 7-day expiry", () => {
-    assert.equal(SESSION_COOKIE_OPTIONS.maxAge, SEVEN_DAYS);
+  it("aligns the cookie lifetime with the JWT 12-hour expiry", () => {
+    assert.equal(SESSION_COOKIE_OPTIONS.maxAge, TWELVE_HOURS);
   });
 
   it("uses a stable cookie name (tycoma_session)", () => {

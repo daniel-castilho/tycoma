@@ -4,7 +4,9 @@ import { consoleMailer } from "../infrastructure/console-mailer";
 import { jwtSessionIssuer } from "../infrastructure/jwt-session-issuer";
 import { prismaPasswordResetTokenRepository } from "../infrastructure/prisma-password-reset-token-repository";
 import { prismaUserRepository } from "../infrastructure/prisma-user-repository";
+import { redisLockoutStore } from "../infrastructure/redis-lockout-store";
 import { redisRateLimiter } from "../infrastructure/redis-rate-limiter";
+import { redisStepUpStore } from "../infrastructure/redis-step-up-store";
 import { createChangePassword } from "./use-cases/change-password";
 import { createCountUsers } from "./use-cases/count-users";
 import { createCreateFirstAdmin } from "./use-cases/create-first-admin";
@@ -12,6 +14,7 @@ import { createGetProfile } from "./use-cases/get-profile";
 import { createLogin } from "./use-cases/login";
 import { createRequestPasswordReset } from "./use-cases/request-password-reset";
 import { createResetPassword } from "./use-cases/reset-password";
+import { createStepUp } from "./use-cases/step-up";
 import { createUpdateProfile } from "./use-cases/update-profile";
 
 /**
@@ -24,7 +27,14 @@ export function createAuthApplication(auditEventWriter: AuditEventWriter) {
   return {
     countUsers: createCountUsers(prismaUserRepository),
     createFirstAdmin: createCreateFirstAdmin(prismaUserRepository, auditEventWriter, argon2PasswordHasher),
-    login: createLogin(prismaUserRepository, jwtSessionIssuer, redisRateLimiter, auditEventWriter, argon2PasswordHasher),
+    login: createLogin(
+      prismaUserRepository,
+      jwtSessionIssuer,
+      redisRateLimiter,
+      auditEventWriter,
+      argon2PasswordHasher,
+      redisLockoutStore,
+    ),
     requestPasswordReset: createRequestPasswordReset(
       prismaUserRepository,
       prismaPasswordResetTokenRepository,
@@ -40,7 +50,14 @@ export function createAuthApplication(auditEventWriter: AuditEventWriter) {
     ),
     getProfile: createGetProfile(prismaUserRepository),
     updateProfile: createUpdateProfile(prismaUserRepository),
-    changePassword: createChangePassword(prismaUserRepository, auditEventWriter, argon2PasswordHasher),
+    changePassword: createChangePassword(
+      prismaUserRepository,
+      auditEventWriter,
+      argon2PasswordHasher,
+      redisRateLimiter,
+      redisStepUpStore,
+    ),
+    stepUp: createStepUp(prismaUserRepository, argon2PasswordHasher, redisStepUpStore),
   };
 }
 

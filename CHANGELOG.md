@@ -5,6 +5,72 @@ All notable changes to Tycoma will be documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
 project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
 
+## [v0.6.0] — 2026-08-16
+
+Sixth tagged release: **Security Hardening Phase B**. Shrinks the session-theft window,
+adds step-up re-auth for sensitive actions, broadens rate limiting, and implements a
+progressive lockout policy on the login path. **No new npm dependencies.** 2FA is
+deliberately deferred (pending human approval of a TOTP library). See
+`docs/releases/v0.6.0.md` for details.
+
+### Added
+
+- **Step-up re-auth for `change_password`.** `createStepUp` re-verifies the admin's
+  current password and writes a `stepup:{userId}` marker in Redis with a **10-minute TTL**
+  (`STEP_UP_TTL_SECONDS`). `changePassword` now requires `StepUpStore.has(userId)` before
+  proceeding. The marker is reused (not consumed) so form retries work without re-confirming.
+  Admin UI at `/admin/account` exposes a "Confirm current password" form before the
+  change-password form, with a hint that reflects whether the step-up is currently active.
+- **Rate limit on `POST /api/media`.** 30 / 15 min per `(userId, ip)` pair. Returns
+  `429 Too many uploads. Try again in a few minutes.` on excess.
+- **Rate limit on `change_password`.** 5 / 15 min per `userId`. Returns a clear Result
+  error on excess. Constants exported from the use case for tunability.
+- **Progressive lockout.** After **10 failures within 1 hour** for a given
+  `(ip, email)` pair, an extended **30-minute block** is applied. New `LockoutStore` port
+  + `redisLockoutStore` adapter (`lockfail:{key}` counter + `lockblock:{key}` flag, both
+  TTL-bounded). Successful login resets the counter and clears any block.
+- **Domain ports.** New `StepUpStore` (`grant` / `has` / `revoke`) and `LockoutStore`
+  (`countFailure` / `isBlocked` / `block` / `reset`) ports in `auth/domain`. Adapters live
+  in `auth/infrastructure`. Both store impls use the existing Redis client.
+
+### Changed
+
+- **Default session lifetime: `7d` → `12h`.** `SESSION_TTL_SECONDS` and the JWT
+  `setExpirationTime("12h")` are aligned. Cookie `maxAge` matches. Any admin logged in
+  before the upgrade is silently logged out within at most 12 hours after deploy (intended).
+- **`changePassword` use case signature** now takes `StepUpStore` as a 5th argument.
+  The `changePassword` Server Action and the new `stepUpAction` Server Action both live in
+  `src/app/admin/_actions/account.ts`.
+- **`login` use case signature** now takes `LockoutStore` as a 6th argument. The order of
+  audit events is unchanged; lockout checks happen before the rate-limit `hit` so a blocked
+  key never increments the counter.
+- **`account` page** is now `force-dynamic` (was implicit before) so the step-up status
+  query at render time always reflects the current Redis marker.
+
+### Deferred (Phase B+)
+
+- **TOTP 2FA** (B19–B25). Pending explicit human approval of a TOTP library. Phase B DoD
+  is valid without 2FA.
+- **Sliding session / remember-me** (B2, B3). Default short TTL only.
+- **Step-up gating on destructive deletes** (delete post/page/media in bulk). Audit
+  already exists; the step-up gate can be added later without changing the shape.
+
+### Documentation
+
+- New durable rules in `docs/lessons.md`: session TTL dropped to `12h` (with the
+  consequences spelled out), step-up lives in Redis not in the JWT, 2FA deliberately
+  deferred — don't sneak it in.
+- New planning docs: `tasks/tycoma-security-hardening-phase-b-{backlog,
+  implementation-sequence, module-spec}.md` + AI prompt, cleaned from the same fence-block
+  issue that affected Phase A.
+
+## [v0.5.0] — 2026-08-16
+
+All notable changes to Tycoma will be documented in this file.
+
+The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
+project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
+
 ## [v0.5.0] — 2026-08-16
 
 Fifth tagged release: **Security Hardening Phase A**. Closes the deferred security
