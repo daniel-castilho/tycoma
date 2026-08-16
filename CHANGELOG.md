@@ -142,6 +142,23 @@ site — without leaving the existing hexagonal `content` module. See
 - New `docs/testing-playbook.md` consolidates the testing pyramid, port-mocking patterns,
   regression checklist, and smoke-test guidance that were previously implicit.
 
+## [v0.3.1] — 2026-08-16
+
+Patch release on top of `v0.3.0`. No runtime changes — only a clean `package-lock.json` so
+`npm ci` resolves every transitive entry, plus the durable **lockfile rule** learned while
+recovering CI. See `docs/releases/v0.3.1.md` for details.
+
+### Changed
+
+- **Lockfile refresh** (`07e8a41`): regenerated `package-lock.json` from a clean
+  `node_modules` so `npm ci` no longer rejects with `Missing: @emnapi/runtime@1.11.3 from
+  lock file` (and the matching `@emnapi/core`). The lockfile was stale relative to the
+  dep graph grown by the `v0.3.0` Prisma models and Next.js wasm32 optionals.
+- **Lockfile rule** (`e8177be`): `AGENTS.md` § *Critical rules* (rule 10) and
+  `docs/lessons.md` require every `npm install` that mutates the lockfile to commit the
+  updated `package-lock.json` in the same change set. Local sanity check:
+  `rm -rf node_modules && npm ci`.
+
 ## [v0.2.1] — 2026-08-15
 
 Follow-up release on top of `v0.2.0`. Closes the deferred follow-ups from the public-site epic

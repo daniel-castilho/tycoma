@@ -88,8 +88,14 @@ Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
-**`v0.3.0` is the latest tagged release.** It adds **Custom Content Types** on top of the admin
-dashboard (`v0.1.0`) and the public site MVP (`v0.2.0`):
+**`v0.3.1` is the latest tagged release.** It is a documentation + lockfile patch on top of
+`v0.3.0` (Custom Content Types) — no runtime changes, just a clean `package-lock.json` so
+`npm ci` is reproducible, and the durable **lockfile rule** promoted to `AGENTS.md`.
+
+- **v0.3.1 (lockfile + doc-sync rule)** — refreshed `package-lock.json` to match the dep
+  graph grown by the `v0.3.0` Prisma models, and codified the rule that every `npm install`
+  which mutates the lockfile must commit it in the same change set (`AGENTS.md` rule 10,
+  `docs/lessons.md`).
 
 - **Admin Dashboard (v0.1.0):**
   - **Foundation & access control:** setup, login, session guard (`src/proxy.ts`), password
@@ -133,8 +139,8 @@ dashboard (`v0.1.0`) and the public site MVP (`v0.2.0`):
 The original implementation sequence planned the Admin Dashboard as separate milestones; in
 practice all five phases shipped together as **`v0.1.0`**, followed by the **Public Site MVP** as
 **`v0.2.0`**, then **Custom Content Types** as **`v0.3.0`**. The public-site follow-ups (posts
-index, page breadcrumb, extracted components, favicon from settings) landed on `main` after
-`v0.2.0` and will be promoted to the next follow-up tag.
+index, page breadcrumb, extracted components, favicon from settings) shipped as **`v0.2.1`**;
+the lockfile refresh and doc-sync rule shipped as **`v0.3.1`**.
 
 Deliberately deferred: block-based editor, Markdown rendering on the public site, public headless
 API, webhooks, comments, 301 redirects, revision history, automated backup/export scheduling,
@@ -153,6 +159,7 @@ multi-user roles.
 | [docs/releases/v0.2.0.md](docs/releases/v0.2.0.md)                           | Release notes — public site MVP                               |
 | [docs/releases/v0.2.1.md](docs/releases/v0.2.1.md)                           | Release notes — public-site follow-ups + doc sync rule        |
 | [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md)                           | Release notes — custom content types                          |
+| [docs/releases/v0.3.1.md](docs/releases/v0.3.1.md)                           | Release notes — lockfile refresh & doc-sync rule              |
 | [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
 | [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
 | [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |
