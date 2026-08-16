@@ -5,6 +5,75 @@ All notable changes to Tycoma will be documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
 project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
 
+## [v0.5.0] — 2026-08-16
+
+Fifth tagged release: **Security Hardening Phase A**. Closes the deferred security
+follow-ups by raising the day-one resistance bar against stored XSS and trivial session
+abuse — without 2FA, session redesign, or new npm dependencies. See
+`docs/releases/v0.5.0.md` for details.
+
+### Added
+
+- **Security response headers** via `next.config.ts` `headers()` (site-wide):
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+  `X-Frame-Options: DENY`, `Permissions-Policy` (camera/microphone/geolocation disabled),
+  and a `Content-Security-Policy-Report-Only` baseline (`default-src 'self'`, `img-src` and
+  `connect-src` allow the configured S3 host, `frame-ancestors 'none'`, no `unsafe-eval`).
+  `Strict-Transport-Security` is sent only when both `NODE_ENV === 'production'` and
+  `APP_URL` is `https://`, so local HTTP dev is not broken.
+- **`AUTH_SECRET` production policy** in `src/shared/env.ts`. `parseEnv` requires length
+  ≥ 32 in production, rejects documented placeholders, and rejects leading/trailing
+  whitespace. Local dev/test keeps the 16-char minimum. `next build` is detected via
+  `NEXT_PHASE` so a local build with the placeholder secret still works; the rule bites at
+  runtime. `src/shared/env-instance.ts` is the validated singleton; adapters import from
+  there.
+- **Media upload hardening** in `src/modules/media/application/use-cases/upload-media.ts`:
+  10 MiB max size, MIME allowlist (`image/jpeg`, `image/png`, `image/webp`, `image/gif`
+  only), magic-byte sniffing that must match the declared type, **SVG blocked by both
+  MIME and extension**, and server-generated storage keys (`media/${objectId}.${ext}`).
+  The `next/image` SVG allow flag is now `false`.
+- **Public-site XSS regression guard** at
+  `src/app/(site)/_components/xss-regression.test.ts`: walks the `(site)/` subtree and
+  fails if any file references `dangerouslySetInnerHTML` — the entire stored-XSS defence
+  for Phase A.
+- **`scripts/test-register.mjs`** now seeds `process.env` with safe defaults
+  (`AUTH_SECRET`, `DATABASE_URL`, `REDIS_URL`, `NODE_ENV=test`) before any module is
+  imported, so tests that transitively pull in adapters (`prisma`, `redis`,
+  `session-cookie`) don't crash on `process.env` reads.
+
+### Changed
+
+- **Session cookie** (`src/app/admin/_lib/session-cookie.ts` + `src/app/admin/_actions/auth.ts`):
+  attributes already centralised and validated; logout now writes an empty value with
+  `maxAge: 0` using the same option object so the browser actually drops the cookie.
+  `src/app/admin/_lib/session-cookie.test.ts` asserts the option shape so it cannot
+  regress silently.
+- **`package.json` `test` script** wraps the `src/**/*.test.ts` glob in single quotes so
+  the shell does not pre-expand it (the previous command silently matched only
+  `env.test.ts`).
+- `.env.example` now comments the production bar for `AUTH_SECRET`.
+
+### Documentation
+
+- `tasks/tycoma-security-hardening-phase-a-{backlog,implementation-sequence,module-spec}.md`
+  and `tasks/tycoma-ai-software-engineer-prompt-security-hardening-phase-a.md` are clean
+  Markdown (the planning files originally landed wrapped in fenced code blocks; cleaned
+  up at the start of the epic).
+- New durable rules in `docs/lessons.md`:
+  - `next build` forces `NODE_ENV=production` for local builds; detect via `NEXT_PHASE`
+    when a boot-time rule must only bite at runtime.
+  - Stored XSS is blocked only as long as the public site stays plain text; any future
+    HTML mode must come with a human-approved sanitizer library.
+- New planning docs section: AGENTS.md `Known technical debt` remains empty (no new
+  violations introduced).
+
+## [v0.4.0] — 2026-08-16
+
+All notable changes to Tycoma will be documented in this file.
+
+The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
+project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
+
 ## [v0.4.0] — 2026-08-16
 
 Fourth tagged release: **Media-typed fields** for Custom Content Types. A content type can

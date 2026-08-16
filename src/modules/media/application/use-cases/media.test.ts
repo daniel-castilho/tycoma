@@ -82,13 +82,33 @@ const baseAsset = (id: string): MediaAsset => ({
 });
 
 describe("uploadMedia", () => {
-  it("stores the file, persists the asset and records an audit event", async () => {
+  // Minimal valid magic-byte prefixes for the allowed image types.
+  const pngHeader = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00]);
+  const jpegHeader = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+  const gifHeader = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x00, 0x00]);
+  const webpHeader = new Uint8Array([
+    0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+  ]);
+
+  const bodyOf = (header: Uint8Array, pad: number) => {
+    const out = new Uint8Array(header.length + 8);
+    out.set(header, 0);
+    for (let i = header.length; i < out.length; i++) out[i] = pad;
+    return out;
+  };
+
+  it("stores a valid PNG, persists the asset and records an audit event", async () => {
     const { storage, keys } = memoryStorage();
     const repo = memoryMedia();
     const { writer, events } = memoryAudit();
     const uploadMedia = createUploadMedia(storage, repo, writer);
     const result = await uploadMedia(
-      { filename: "hero.png", mimeType: "image/png", size: 2048, body: new Uint8Array([1, 2, 3]) },
+      {
+        filename: "hero.png",
+        mimeType: "image/png",
+        size: 18,
+        body: bodyOf(pngHeader, 0),
+      },
       "user-1",
     );
     assert.equal(result.ok, true);
@@ -102,11 +122,90 @@ describe("uploadMedia", () => {
     assert.equal(events[0]!.entityId, stored?.id);
   });
 
+  it("accepts jpeg, gif and webp magic bytes with their declared types", async () => {
+    for (const [mime, header, ext] of [
+      ["image/jpeg", jpegHeader, "jpg"],
+      ["image/gif", gifHeader, "gif"],
+      ["image/webp", webpHeader, "webp"],
+    ] as const) {
+      const { storage, keys } = memoryStorage();
+      const uploadMedia = createUploadMedia(storage, memoryMedia(), { record: async () => {} });
+      const result = await uploadMedia(
+        {
+          filename: `file.${ext}`,
+          mimeType: mime,
+          size: header.length + 4,
+          body: bodyOf(header, 0),
+        },
+        "user-1",
+      );
+      assert.equal(result.ok, true, `expected ${mime} to be accepted`);
+      assert.match(keys[0]!, new RegExp(`\\.${ext}$`));
+    }
+  });
+
   it("rejects an empty file", async () => {
     const { storage } = memoryStorage();
     const uploadMedia = createUploadMedia(storage, memoryMedia(), { record: async () => {} });
-    const result = await uploadMedia({ filename: "x.png", mimeType: "image/png", size: 0, body: new Uint8Array() });
+    const result = await uploadMedia({
+      filename: "x.png",
+      mimeType: "image/png",
+      size: 0,
+      body: new Uint8Array(),
+    });
     assert.equal(result.ok, false);
+  });
+
+  it("rejects a file above the size limit", async () => {
+    const { storage } = memoryStorage();
+    const uploadMedia = createUploadMedia(storage, memoryMedia(), { record: async () => {} });
+    const result = await uploadMedia({
+      filename: "big.png",
+      mimeType: "image/png",
+      size: 11 * 1024 * 1024,
+      body: bodyOf(pngHeader, 0),
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /upload limit/);
+  });
+
+  it("rejects an SVG file (declarative or by extension)", async () => {
+    const { storage } = memoryStorage();
+    const uploadMedia = createUploadMedia(storage, memoryMedia(), { record: async () => {} });
+    const result = await uploadMedia({
+      filename: "evil.svg",
+      mimeType: "image/svg+xml",
+      size: 100,
+      body: new Uint8Array([0x3c, 0x73, 0x76, 0x67]),
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /SVG/);
+  });
+
+  it("rejects a payload whose declared MIME type does not match its magic bytes", async () => {
+    const { storage } = memoryStorage();
+    const uploadMedia = createUploadMedia(storage, memoryMedia(), { record: async () => {} });
+    const result = await uploadMedia({
+      filename: "fake.png",
+      mimeType: "image/png",
+      size: 18,
+      body: bodyOf(jpegHeader, 0),
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /does not match/);
+  });
+
+  it("rejects a payload with no recognised magic bytes", async () => {
+    const { storage } = memoryStorage();
+    const uploadMedia = createUploadMedia(storage, memoryMedia(), { record: async () => {} });
+    const result = await uploadMedia({
+      filename: "weird.png",
+      mimeType: "image/png",
+      size: 16,
+      body: new Uint8Array(16).fill(0x41),
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /not supported/);
   });
 });
 

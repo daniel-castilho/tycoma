@@ -159,3 +159,28 @@ breaks at the next push. If CI fails at `npm ci` with `Missing: <pkg>@<x.y.z> fr
 the fix is to regenerate the lockfile cleanly (`rm -rf node_modules package-lock.json`,
 `npm install`) and commit it. `npm ci --ignore-scripts` is a quick local sanity check before
 pushing.
+
+## `next build` forces `NODE_ENV=production` even for local builds
+
+When `parseEnv` (or any boot-time validator) tightens rules for `NODE_ENV === "production"`
+(e.g. `AUTH_SECRET` length ≥ 32 in production), `next build` on a local dev box — where the
+`.env` still has the placeholder secret — crashes with the production error. The runtime
+contract is correct (production deployments must use a real secret), but local builds should
+not require production-grade secrets.
+
+Rule: when a boot-time env rule must apply only to **runtime** production, detect the Next
+build phase via `process.env.NEXT_PHASE === "phase-production-build"` and treat it as
+development for the rule's purposes. The rule still bites at `next start` and at any
+real deployment where `NODE_ENV === "production"` without the build-phase flag.
+
+## Stored XSS is blocked only as long as the public site stays plain text
+
+Tycoma's public site renders post/page bodies inside `<pre>` / `<p>` (React auto-escapes).
+There is **no** `dangerouslySetInnerHTML` anywhere under `src/app/(site)/` today, and a
+regression test (`xss-regression.test.ts`) walks that subtree and fails if anyone adds one.
+This is the entire stored-XSS defence for Phase A — no sanitizer library is in play.
+
+Rule: if a future feature wants to render CMS body content as HTML, it **must** introduce a
+sanitizer library (a new npm dependency, which requires human approval per AGENTS.md rule 5)
+and remove the regression test only after that library is wired in and tested. Do **not**
+just `dangerouslySetInnerHTML` the body field.

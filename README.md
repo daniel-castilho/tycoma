@@ -88,12 +88,26 @@ Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
-**`v0.4.0` is the latest tagged release.** It adds **media-typed fields** to Custom Content
-Types: a content type can declare a field whose value is the id of an asset from the media
-library, the admin picks one through a `<select>` (with a 50×50 preview), and the public
-detail page renders the asset via `next/image` — or a labelled placeholder if the asset has
-been deleted. `deleteMedia` now also refuses to delete an asset referenced by a content
-entry.
+**`v0.5.0` is the latest tagged release.** It is the **Security Hardening Phase A** epic —
+day-one resistance to stored XSS and trivial session abuse, without 2FA, session redesign,
+or new npm dependencies.
+
+- **v0.5.0 (Security Hardening Phase A):**
+  - Security response headers on every response: `X-Content-Type-Options: nosniff`,
+    `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`,
+    `Permissions-Policy` (no camera/mic/geo), and a strict
+    `Content-Security-Policy-Report-Only` baseline (`default-src 'self'`, no `unsafe-eval`,
+    S3 host allowed for images/connect). `Strict-Transport-Security` is sent only in
+    production over HTTPS.
+  - `AUTH_SECRET` production policy: ≥ 32 chars, no documented placeholders, no
+    leading/trailing whitespace. Dev/test keep the 16-char minimum.
+  - Session cookie attributes explicit and tested (`httpOnly`, `secure` in production,
+    `sameSite: lax`, `path: /`, 7-day `maxAge`); logout uses matching attributes.
+  - Media upload hardening: 10 MiB max, MIME allowlist (jpeg/png/webp/gif), magic-byte
+    sniffing that must match the declared type, **SVG blocked by both MIME and
+    extension**, server-generated storage keys.
+  - Stored XSS defence: the public site renders body as plain text; a regression test
+    fails if anyone introduces `dangerouslySetInnerHTML` without a sanitizer.
 
 - **v0.4.0 (media-typed fields):**
   - Domain: `ContentFieldType` gains `"media"` with an ObjectId-hex coercer (delegates to
@@ -155,11 +169,12 @@ practice all five phases shipped together as **`v0.1.0`**, followed by the **Pub
 **`v0.2.0`**, then **Custom Content Types** as **`v0.3.0`**. The public-site follow-ups (posts
 index, page breadcrumb, extracted components, favicon from settings) shipped as **`v0.2.1`**;
 the lockfile refresh and doc-sync rule shipped as **`v0.3.1`**; media-typed fields for content
-types shipped as **`v0.4.0`**.
+types shipped as **`v0.4.0`**; the Security Hardening Phase A epic shipped as **`v0.5.0`**.
 
 Deliberately deferred: block-based editor, Markdown rendering on the public site, public headless
 API, webhooks, comments, 301 redirects, revision history, automated backup/export scheduling,
-multi-user roles.
+multi-user roles, **Security Hardening Phase B** (session TTL redesign, 2FA / WebAuthn, full
+CSP enforce pipeline, private-bucket signed URLs).
 
 ## Documentation
 
@@ -176,6 +191,7 @@ multi-user roles.
 | [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md)                           | Release notes — custom content types                          |
 | [docs/releases/v0.3.1.md](docs/releases/v0.3.1.md)                           | Release notes — lockfile refresh & doc-sync rule              |
 | [docs/releases/v0.4.0.md](docs/releases/v0.4.0.md)                           | Release notes — media-typed fields for content types           |
+| [docs/releases/v0.5.0.md](docs/releases/v0.5.0.md)                           | Release notes — security hardening phase A                     |
 | [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
 | [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
 | [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |

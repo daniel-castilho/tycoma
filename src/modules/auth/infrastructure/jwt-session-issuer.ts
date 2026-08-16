@@ -1,5 +1,5 @@
 import { SignJWT } from "jose";
-import { env } from "@/shared/env";
+import { env } from "@/shared/env-instance";
 import { jwtSessionVerifier } from "./jwt-session-verifier";
 import type { SessionIssuer } from "../domain/session";
 

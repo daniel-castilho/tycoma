@@ -40,7 +40,7 @@ async function setSessionCookie(token: string) {
 
 async function clearSessionCookie() {
   const jar = await cookies();
-  jar.delete(SESSION_COOKIE);
+  jar.set(SESSION_COOKIE, "", { ...SESSION_COOKIE_OPTIONS, maxAge: 0 });
 }
 
 export async function setupAction(

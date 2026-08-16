@@ -1,4 +1,4 @@
-import { env } from "@/shared/env";
+import { env } from "@/shared/env-instance";
 
 export const SESSION_COOKIE = "tycoma_session";
 

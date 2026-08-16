@@ -1,4 +1,4 @@
-import { env } from "@/shared/env";
+import { env } from "@/shared/env-instance";
 import type { ObjectStorage } from "../domain/types";
 
 function config() {
