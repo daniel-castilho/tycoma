@@ -1,16 +1,20 @@
-import { randomUUID } from "node:crypto";
-import { err, ok, type Result } from "../../../../shared/kernel/result.ts";
-import { slugify } from "../../../../shared/kernel/slug.ts";
+import { err, ok, type Result } from "@/shared/kernel/result";
+import { slugify } from "@/shared/kernel/slug";
+import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
-import type { Menu, MenuItem, MenuItemDraft, MenuRepository } from "../../domain/types";
-
-const oid = () => randomUUID().replace(/-/g, "").slice(0, 24);
+import type {
+  Menu,
+  MenuItem,
+  MenuItemDraft,
+  MenuReader,
+  MenuWriter,
+} from "../../domain/types";
 
 function flattenItems(menuId: string, drafts: MenuItemDraft[], parentId: string | null): MenuItem[] {
   const flat: MenuItem[] = [];
   drafts.forEach((draft, index) => {
     const item: MenuItem = {
-      id: oid(),
+      id: newObjectId(),
       menuId,
       parentId,
       label: draft.label.trim(),
@@ -27,13 +31,13 @@ function flattenItems(menuId: string, drafts: MenuItemDraft[], parentId: string 
   return flat;
 }
 
-export function createListMenus(menus: MenuRepository) {
+export function createListMenus(menus: MenuReader) {
   return async function listMenus(): Promise<Menu[]> {
     return menus.list();
   };
 }
 
-export function createSaveMenu(menus: MenuRepository, audit: AuditEventWriter) {
+export function createSaveMenu(menus: MenuWriter & MenuReader, audit: AuditEventWriter) {
   return async function saveMenu(
     input: { id?: string; name: string; slug?: string },
     actorId?: string | null,
@@ -51,7 +55,7 @@ export function createSaveMenu(menus: MenuRepository, audit: AuditEventWriter) {
       });
       return ok(menu);
     }
-    const menu = await menus.create({ id: oid(), name: input.name.trim(), slug });
+    const menu = await menus.create({ id: newObjectId(), name: input.name.trim(), slug });
     await audit.record({
       actorId: actorId ?? null,
       eventType: "content.menu_created",
@@ -63,7 +67,7 @@ export function createSaveMenu(menus: MenuRepository, audit: AuditEventWriter) {
   };
 }
 
-export function createDeleteMenu(menus: MenuRepository, audit: AuditEventWriter) {
+export function createDeleteMenu(menus: MenuReader & MenuWriter, audit: AuditEventWriter) {
   return async function deleteMenu(id: string, actorId?: string | null): Promise<void> {
     const menu = await menus.findById(id);
     await menus.delete(id);
@@ -77,13 +81,13 @@ export function createDeleteMenu(menus: MenuRepository, audit: AuditEventWriter)
   };
 }
 
-export function createGetMenuItems(menus: MenuRepository) {
+export function createGetMenuItems(menus: MenuReader) {
   return async function getMenuItems(menuId: string): Promise<MenuItem[]> {
     return menus.listItems(menuId);
   };
 }
 
-export function createSaveMenuItems(menus: MenuRepository, audit: AuditEventWriter) {
+export function createSaveMenuItems(menus: MenuReader & MenuWriter, audit: AuditEventWriter) {
   return async function saveMenuItems(
     menuId: string,
     items: MenuItemDraft[],

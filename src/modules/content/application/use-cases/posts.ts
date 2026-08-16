@@ -1,23 +1,29 @@
-import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
+import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
-import type { ListPostsQuery, Post, PostRepository, PostWrite } from "../../domain/types";
+import type {
+  ListPostsQuery,
+  Post,
+  PostReader,
+  PostWrite,
+  PostWriter,
+} from "../../domain/types";
 import { resolveStatus } from "../status";
 
-export function createListPosts(posts: PostRepository) {
+export function createListPosts(posts: PostReader) {
   return async function listPosts(query: ListPostsQuery = {}): Promise<Post[]> {
     return posts.list(query);
   };
 }
 
-export function createGetPost(posts: PostRepository) {
+export function createGetPost(posts: PostReader) {
   return async function getPost(id: string): Promise<Post | null> {
     return posts.findById(id);
   };
 }
 
-export function createCreatePost(posts: PostRepository, audit: AuditEventWriter) {
+export function createCreatePost(posts: PostReader & PostWriter, audit: AuditEventWriter) {
   return async function createPost(input: PostWrite, actorId?: string | null): Promise<Result<Post>> {
     const slug = slugify(input.slug || input.title);
     if (!slug) return err("A slug could not be generated from the title.");
@@ -26,7 +32,7 @@ export function createCreatePost(posts: PostRepository, audit: AuditEventWriter)
     const status = resolveStatus(input);
     const now = new Date();
     const post = await posts.create({
-      id: randomUUID().replace(/-/g, "").slice(0, 24),
+      id: newObjectId(),
       title: input.title.trim(),
       slug,
       body: input.body,
@@ -51,7 +57,7 @@ export function createCreatePost(posts: PostRepository, audit: AuditEventWriter)
   };
 }
 
-export function createUpdatePost(posts: PostRepository, audit: AuditEventWriter) {
+export function createUpdatePost(posts: PostReader & PostWriter, audit: AuditEventWriter) {
   return async function updatePost(
     id: string,
     input: PostWrite,
@@ -86,7 +92,7 @@ export function createUpdatePost(posts: PostRepository, audit: AuditEventWriter)
   };
 }
 
-export function createPublishPost(posts: PostRepository, audit: AuditEventWriter) {
+export function createPublishPost(posts: PostReader & PostWriter, audit: AuditEventWriter) {
   return async function publishPost(id: string, actorId?: string | null): Promise<Result<Post>> {
     const current = await posts.findById(id);
     if (!current) return err("Post not found.");
@@ -106,7 +112,7 @@ export function createPublishPost(posts: PostRepository, audit: AuditEventWriter
   };
 }
 
-export function createBulkPosts(posts: PostRepository, audit: AuditEventWriter) {
+export function createBulkPosts(posts: PostReader & PostWriter, audit: AuditEventWriter) {
   const publishPost = createPublishPost(posts, audit);
   return async function bulkPosts(input: {
     ids: string[];

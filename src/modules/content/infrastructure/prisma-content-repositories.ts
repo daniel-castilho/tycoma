@@ -1,8 +1,9 @@
 import { prisma } from "@/shared/db/prisma";
+import { isObjectId } from "@/shared/db/object-id";
+import { parseContentStatus } from "../domain/content-status";
 import type {
   Category,
   CategoryRepository,
-  ContentStatus,
   Menu,
   MenuItem,
   MenuRepository,
@@ -14,13 +15,6 @@ import type {
   Tag,
   TagRepository,
 } from "../domain/types";
-
-function asStatus(value: string): ContentStatus {
-  if (value === "published" || value === "scheduled" || value === "draft") {
-    return value;
-  }
-  return "draft";
-}
 
 function mapPost(row: {
   id: string;
@@ -39,7 +33,7 @@ function mapPost(row: {
   createdAt: Date;
   updatedAt: Date;
 }): Post {
-  return { ...row, status: asStatus(row.status) };
+  return { ...row, status: parseContentStatus(row.status) };
 }
 
 function mapPage(row: {
@@ -58,7 +52,7 @@ function mapPage(row: {
   createdAt: Date;
   updatedAt: Date;
 }): Page {
-  return { ...row, status: asStatus(row.status) };
+  return { ...row, status: parseContentStatus(row.status) };
 }
 
 export const prismaPostRepository: PostRepository = {
@@ -66,7 +60,7 @@ export const prismaPostRepository: PostRepository = {
     const rows = await prisma.post.findMany({
       where: {
         status: query.status,
-        categoryIds: query.categoryId ? { has: query.categoryId } : undefined,
+        categoryIds: isObjectId(query.categoryId) ? { has: query.categoryId } : undefined,
         title: query.search ? { contains: query.search, mode: "insensitive" } : undefined,
         updatedAt:
           query.from || query.to
@@ -78,6 +72,7 @@ export const prismaPostRepository: PostRepository = {
     return rows.map(mapPost);
   },
   async findById(id) {
+    if (!isObjectId(id)) return null;
     const row = await prisma.post.findUnique({ where: { id } });
     return row ? mapPost(row) : null;
   },
@@ -93,7 +88,9 @@ export const prismaPostRepository: PostRepository = {
     return mapPost(await prisma.post.update({ where: { id }, data }));
   },
   async deleteMany(ids) {
-    const res = await prisma.post.deleteMany({ where: { id: { in: ids } } });
+    const validIds = ids.filter(isObjectId);
+    if (validIds.length === 0) return 0;
+    const res = await prisma.post.deleteMany({ where: { id: { in: validIds } } });
     return res.count;
   },
   async countByStatus() {
@@ -101,9 +98,11 @@ export const prismaPostRepository: PostRepository = {
     return Object.fromEntries(groups.map((g) => [g.status, g._count]));
   },
   async countByCategory(categoryId) {
+    if (!isObjectId(categoryId)) return 0;
     return prisma.post.count({ where: { categoryIds: { has: categoryId } } });
   },
   async countByTag(tagId) {
+    if (!isObjectId(tagId)) return 0;
     return prisma.post.count({ where: { tagIds: { has: tagId } } });
   },
   async latestUpdated(limit) {
@@ -114,6 +113,7 @@ export const prismaPostRepository: PostRepository = {
     return rows.map(mapPost);
   },
   async idsUsingMedia(mediaId) {
+    if (!isObjectId(mediaId)) return [];
     const rows = await prisma.post.findMany({
       where: {
         OR: [{ featuredImageId: mediaId }, { ogImageId: mediaId }],
@@ -130,6 +130,7 @@ export const prismaPageRepository: PageRepository = {
     return rows.map(mapPage);
   },
   async findById(id) {
+    if (!isObjectId(id)) return null;
     const row = await prisma.page.findUnique({ where: { id } });
     return row ? mapPage(row) : null;
   },
@@ -152,6 +153,7 @@ export const prismaPageRepository: PageRepository = {
     return Object.fromEntries(groups.map((g) => [g.status, g._count]));
   },
   async idsUsingMedia(mediaId) {
+    if (!isObjectId(mediaId)) return [];
     const rows = await prisma.page.findMany({
       where: {
         OR: [{ featuredImageId: mediaId }, { ogImageId: mediaId }],
@@ -167,6 +169,7 @@ export const prismaCategoryRepository: CategoryRepository = {
     return prisma.category.findMany({ orderBy: { name: "asc" } }) as Promise<Category[]>;
   },
   async findById(id) {
+    if (!isObjectId(id)) return null;
     return prisma.category.findUnique({ where: { id } });
   },
   async findBySlug(slug) {
@@ -189,6 +192,7 @@ export const prismaTagRepository: TagRepository = {
     return prisma.tag.findMany({ orderBy: { name: "asc" } }) as Promise<Tag[]>;
   },
   async findById(id) {
+    if (!isObjectId(id)) return null;
     return prisma.tag.findUnique({ where: { id } });
   },
   async findBySlug(slug) {
@@ -211,6 +215,7 @@ export const prismaMenuRepository: MenuRepository = {
     return prisma.menu.findMany({ orderBy: { name: "asc" } }) as Promise<Menu[]>;
   },
   async findById(id) {
+    if (!isObjectId(id)) return null;
     return prisma.menu.findUnique({ where: { id } });
   },
   async create(data) {

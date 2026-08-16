@@ -129,13 +129,10 @@ export type PageWrite = {
   ogImageId?: string | null;
 };
 
-export type PostRepository = {
+export type PostReader = {
   list(query: ListPostsQuery): Promise<Post[]>;
   findById(id: string): Promise<Post | null>;
   findBySlug(slug: string): Promise<Post | null>;
-  create(data: Post): Promise<Post>;
-  update(id: string, data: Partial<Post>): Promise<Post>;
-  deleteMany(ids: string[]): Promise<number>;
   countByStatus(): Promise<Record<string, number>>;
   countByCategory(categoryId: string): Promise<number>;
   countByTag(tagId: string): Promise<number>;
@@ -143,16 +140,29 @@ export type PostRepository = {
   idsUsingMedia(mediaId: string): Promise<string[]>;
 };
 
-export type PageRepository = {
+export type PostWriter = {
+  create(data: Post): Promise<Post>;
+  update(id: string, data: Partial<Post>): Promise<Post>;
+  deleteMany(ids: string[]): Promise<number>;
+};
+
+export type PostRepository = PostReader & PostWriter;
+
+export type PageReader = {
   list(): Promise<Page[]>;
   findById(id: string): Promise<Page | null>;
   findBySlug(slug: string): Promise<Page | null>;
-  create(data: Page): Promise<Page>;
-  update(id: string, data: Partial<Page>): Promise<Page>;
-  delete(id: string): Promise<void>;
   countByStatus(): Promise<Record<string, number>>;
   idsUsingMedia(mediaId: string): Promise<string[]>;
 };
+
+export type PageWriter = {
+  create(data: Page): Promise<Page>;
+  update(id: string, data: Partial<Page>): Promise<Page>;
+  delete(id: string): Promise<void>;
+};
+
+export type PageRepository = PageReader & PageWriter;
 
 export type CategoryRepository = {
   list(): Promise<Category[]>;
@@ -172,15 +182,20 @@ export type TagRepository = {
   delete(id: string): Promise<void>;
 };
 
-export type MenuRepository = {
+export type MenuReader = {
   list(): Promise<Menu[]>;
   findById(id: string): Promise<Menu | null>;
+  listItems(menuId: string): Promise<MenuItem[]>;
+};
+
+export type MenuWriter = {
   create(data: Menu): Promise<Menu>;
   update(id: string, data: Partial<Menu>): Promise<Menu>;
   delete(id: string): Promise<void>;
-  listItems(menuId: string): Promise<MenuItem[]>;
   replaceItems(menuId: string, items: MenuItem[]): Promise<void>;
 };
+
+export type MenuRepository = MenuReader & MenuWriter;
 
 export type SettingsRepository = {
   getAll(): Promise<Record<string, string>>;

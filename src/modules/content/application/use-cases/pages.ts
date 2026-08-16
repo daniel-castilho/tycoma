@@ -1,19 +1,17 @@
-import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
+import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
-import type { Page, PageRepository, PageWrite } from "../../domain/types";
+import type { Page, PageReader, PageWrite, PageWriter } from "../../domain/types";
 import { resolveStatus } from "../status";
 
-const oid = () => randomUUID().replace(/-/g, "").slice(0, 24);
-
-export function createListPages(pages: PageRepository) {
+export function createListPages(pages: PageReader) {
   return async function listPages(): Promise<Page[]> {
     return pages.list();
   };
 }
 
-export function createDeletePage(pages: PageRepository, audit: AuditEventWriter) {
+export function createDeletePage(pages: PageReader & PageWriter, audit: AuditEventWriter) {
   return async function deletePage(id: string, actorId?: string | null): Promise<Result<{ ok: true }>> {
     const page = await pages.findById(id);
     if (!page) return err("Page not found.");
@@ -33,13 +31,13 @@ export function createDeletePage(pages: PageRepository, audit: AuditEventWriter)
   };
 }
 
-export function createGetPage(pages: PageRepository) {
+export function createGetPage(pages: PageReader) {
   return async function getPage(id: string): Promise<Page | null> {
     return pages.findById(id);
   };
 }
 
-export function createCreatePage(pages: PageRepository) {
+export function createCreatePage(pages: PageWriter & PageReader) {
   return async function createPage(input: PageWrite): Promise<Result<Page>> {
     const slug = slugify(input.slug || input.title);
     if (!slug) return err("A slug could not be generated from the title.");
@@ -51,7 +49,7 @@ export function createCreatePage(pages: PageRepository) {
     const status = resolveStatus(input);
     const now = new Date();
     const page = await pages.create({
-      id: oid(),
+      id: newObjectId(),
       title: input.title.trim(),
       slug,
       body: input.body,
@@ -68,7 +66,7 @@ export function createCreatePage(pages: PageRepository) {
   };
 }
 
-export function createUpdatePage(pages: PageRepository) {
+export function createUpdatePage(pages: PageReader & PageWriter) {
   return async function updatePage(id: string, input: PageWrite): Promise<Result<Page>> {
     const current = await pages.findById(id);
     if (!current) return err("Page not found.");

@@ -1,18 +1,16 @@
-import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
+import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type {
   Category,
   CategoryRepository,
-  PostRepository,
+  PostReader,
   Tag,
   TagRepository,
 } from "../../domain/types";
 
-const oid = () => randomUUID().replace(/-/g, "").slice(0, 24);
-
-export function createListCategories(categories: CategoryRepository, posts: PostRepository) {
+export function createListCategories(categories: CategoryRepository, posts: PostReader) {
   return async function listCategories(): Promise<(Category & { postCount: number })[]> {
     const list = await categories.list();
     return Promise.all(
@@ -65,7 +63,7 @@ export function createSaveCategory(categories: CategoryRepository) {
     }
     return ok(
       await categories.create({
-        id: oid(),
+        id: newObjectId(),
         name: input.name.trim(),
         slug,
         description: input.description ?? null,
@@ -77,7 +75,7 @@ export function createSaveCategory(categories: CategoryRepository) {
 
 export function createDeleteCategory(
   categories: CategoryRepository,
-  posts: PostRepository,
+  posts: PostReader,
   audit: AuditEventWriter,
 ) {
   return async function deleteCategory(id: string, actorId?: string | null): Promise<Result<{ ok: true }>> {
@@ -96,7 +94,7 @@ export function createDeleteCategory(
   };
 }
 
-export function createListTags(tags: TagRepository, posts: PostRepository) {
+export function createListTags(tags: TagRepository, posts: PostReader) {
   return async function listTags(): Promise<(Tag & { postCount: number })[]> {
     const list = await tags.list();
     return Promise.all(list.map(async (t) => ({ ...t, postCount: await posts.countByTag(t.id) })));
@@ -125,7 +123,7 @@ export function createSaveTag(tags: TagRepository) {
     }
     return ok(
       await tags.create({
-        id: oid(),
+        id: newObjectId(),
         name: input.name.trim(),
         slug,
         description: input.description ?? null,
@@ -136,7 +134,7 @@ export function createSaveTag(tags: TagRepository) {
 
 export function createDeleteTag(
   tags: TagRepository,
-  posts: PostRepository,
+  posts: PostReader,
   audit: AuditEventWriter,
 ) {
   return async function deleteTag(id: string, actorId?: string | null): Promise<Result<{ ok: true }>> {
