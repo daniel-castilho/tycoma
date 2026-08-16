@@ -1,0 +1,262 @@
+.site-shell {
+  --site-bg: #ffffff;
+  --site-surface: #f5f7fa;
+  --site-border: #e3e8ef;
+  --site-text: #1b2534;
+  --site-muted: #5c6b80;
+  --site-accent: #1d4ed8;
+  --site-accent-soft: #eaf0fd;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--site-bg);
+  color: var(--site-text);
+}
+
+.site-header {
+  border-bottom: 1px solid var(--site-border);
+  background: var(--site-surface);
+}
+
+.site-header-inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--site-text);
+  text-decoration: none;
+}
+
+.site-logo {
+  border-radius: 0.35rem;
+  object-fit: cover;
+}
+
+.site-nav-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.site-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.site-nav > li {
+  position: relative;
+}
+
+.site-nav a {
+  display: block;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.4rem;
+  color: var(--site-text);
+  text-decoration: none;
+  font-size: 0.925rem;
+}
+
+.site-nav a:hover {
+  background: var(--site-accent-soft);
+  color: var(--site-accent);
+}
+
+.site-nav > li:hover .site-nav-sub,
+.site-nav > li:focus-within .site-nav-sub {
+  display: block;
+}
+
+.site-nav-sub {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+  min-width: 12rem;
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: 0.4rem;
+  box-shadow: 0 8px 24px rgb(20 30 50 / 0.08);
+}
+
+.site-nav-sub a {
+  white-space: nowrap;
+}
+
+.site-main {
+  flex: 1;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 3rem;
+}
+
+.site-main h1 {
+  font-size: 1.75rem;
+  margin: 0 0 0.35rem;
+}
+
+.site-main h2 {
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem;
+}
+
+.site-lead {
+  color: var(--site-muted);
+  margin: 0 0 1.75rem;
+}
+
+.site-article {
+  line-height: 1.7;
+  font-size: 1.02rem;
+}
+
+.site-article-meta {
+  color: var(--site-muted);
+  font-size: 0.9rem;
+  margin: 0.25rem 0 1.5rem;
+}
+
+.site-article-body {
+  white-space: pre-wrap;
+  margin: 0;
+  font-family: inherit;
+  line-height: 1.7;
+}
+
+.site-article-featured {
+  margin: 0 0 1.25rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.site-post-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.site-post-card {
+  display: block;
+  border: 1px solid var(--site-border);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--site-surface);
+  text-decoration: none;
+  color: var(--site-text);
+}
+
+.site-post-card:hover {
+  border-color: var(--site-accent);
+}
+
+.site-post-card h2 {
+  margin: 0 0 0.3rem;
+  color: var(--site-text);
+}
+
+.site-post-card:hover h2 {
+  color: var(--site-accent);
+}
+
+.site-post-card time {
+  color: var(--site-muted);
+  font-size: 0.85rem;
+}
+
+.site-post-card p {
+  margin: 0.55rem 0 0;
+  color: var(--site-muted);
+  font-size: 0.95rem;
+}
+
+.site-taxonomy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.site-taxonomy-list a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--site-border);
+  border-radius: 0.5rem;
+  padding: 0.85rem 1.1rem;
+  background: var(--site-surface);
+  color: var(--site-text);
+  text-decoration: none;
+}
+
+.site-taxonomy-list a:hover {
+  border-color: var(--site-accent);
+}
+
+.site-taxonomy-list span {
+  color: var(--site-muted);
+  font-size: 0.85rem;
+}
+
+.site-empty {
+  color: var(--site-muted);
+}
+
+.site-footer {
+  border-top: 1px solid var(--site-border);
+  background: var(--site-surface);
+}
+
+.site-footer-inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--site-muted);
+  font-size: 0.9rem;
+}
+
+.site-footer-inner p {
+  margin: 0;
+}
+
+.site-404 {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+.site-404 h1 {
+  font-size: 3rem;
+  margin: 0 0 0.5rem;
+}
+
+.site-404 a {
+  color: var(--site-accent);
+}
