@@ -1,6 +1,5 @@
-import { formatDate, excerpt } from "./_lib/format";
-import Link from "next/link";
 import { content } from "@/app/_lib/modules";
+import { PostList } from "./_components/post-card";
 
 export default async function HomePage() {
   const [settings, posts] = await Promise.all([content.getSettings(), content.listPublishedPosts()]);
@@ -15,19 +14,7 @@ export default async function HomePage() {
       {posts.length === 0 ? (
         <p className="site-empty">No published posts yet.</p>
       ) : (
-        <ul className="site-post-list">
-          {posts.map((post) => (
-            <li key={post.id}>
-              <Link href={`/posts/${post.slug}`} className="site-post-card">
-                <h2>{post.title}</h2>
-                <time dateTime={post.publishedAt?.toISOString() ?? undefined}>
-                  {formatDate(post.publishedAt, settings.timezone)}
-                </time>
-                {post.body ? <p>{excerpt(post.body)}</p> : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <PostList posts={posts} timezone={settings.timezone} />
       )}
     </>
   );

@@ -42,7 +42,7 @@
 
 - [x] **P1** — Public layout under `src/app/(site)/layout.tsx`: site title/branding from site settings; primary navigation from the active/published menu (nested items); minimal footer (site name / optional settings fields already available). No new design system or UI library.
 - [x] **P2** — Home page at `src/app/(site)/page.tsx`: list **published** posts (newest first) with title, optional excerpt/summary, date, link to detail. Empty state when no published posts exist.
-- [x] **P3** — Shared presentational helpers colocated under `src/app/(site)/_components` (e.g. `PostCard`, `SiteHeader`, `SiteFooter`, `Prose`) — presentation only, no use-case logic inside components beyond props. (Shipped as `PublicNav` + `_lib/format`; cards/header/footer stay inline — noted as follow-up.)
+- [x] **P3** — Shared presentational helpers colocated under `src/app/(site)/_components` (e.g. `PostCard`, `SiteHeader`, `SiteFooter`, `Prose`) — presentation only, no use-case logic inside components beyond props. (Shipped as `PublicNav` + `_lib/format`; cards/header/footer stay inline — noted as follow-up.) **(Follow-up done: `SiteHeader`, `SiteFooter`, `PostCard`/`PostList` extracted to `_components`.)**
 
 ### Content reading — posts
 
@@ -65,7 +65,7 @@
 ### Media & assets
 
 - [x] **P13** — Resolve media public URLs on the front (featured image). `next/image` used (S3 remote host already configured via `next.config.ts`).
-- [x] **P14** — Logo/favicon from site settings render in the public layout when media ids are set. (Logo renders; favicon link tag not yet added — follow-up.)
+- [x] **P14** — Logo/favicon from site settings render in the public layout when media ids are set. (Logo renders; favicon link tag not yet added — follow-up.) **(Follow-up done: favicon served via `generateMetadata` `icons`.)**
 
 ### SEO, sitemap, errors
 

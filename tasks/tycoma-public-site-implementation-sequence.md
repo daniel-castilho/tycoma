@@ -71,7 +71,7 @@ Deliver in **vertical slices** (route + use case if missing + minimal styling + 
 
 **Outcome:** Full MVP reading paths + basic SEO coherence.
 
-> Deferred within this phase (kept as follow-ups): `/posts` index (P6), page-hierarchy breadcrumb (P9), favicon `<link>` from settings (part of P14), and splitting cards/header/footer into `_components` (part of P3). **Follow-ups shipped post-v0.2.0:** `/posts` index (P6) and page-hierarchy breadcrumb (P9, via `content.getPageBreadcrumb`).
+> Deferred within this phase (kept as follow-ups): `/posts` index (P6), page-hierarchy breadcrumb (P9), favicon `<link>` from settings (part of P14), and splitting cards/header/footer into `_components` (part of P3). **Follow-ups shipped post-v0.2.0:** `/posts` index (P6), page-hierarchy breadcrumb (P9, via `content.getPageBreadcrumb`), favicon `<link>` (P14), and `SiteHeader`/`SiteFooter`/`PostCard` components (P3).
 
 ---
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { content } from "@/app/_lib/modules";
-import { excerpt, formatDate, resolveBaseUrl } from "../_lib/format";
+import { resolveBaseUrl } from "../_lib/format";
+import { PostList } from "../_components/post-card";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await content.getSettings();
@@ -24,19 +24,7 @@ export default async function PostsIndexPage() {
       {posts.length === 0 ? (
         <p className="site-empty">No published posts yet.</p>
       ) : (
-        <ul className="site-post-list">
-          {posts.map((post) => (
-            <li key={post.id}>
-              <Link href={`/posts/${post.slug}`} className="site-post-card">
-                <h2>{post.title}</h2>
-                <time dateTime={post.publishedAt?.toISOString() ?? undefined}>
-                  {formatDate(post.publishedAt, settings.timezone)}
-                </time>
-                {post.body ? <p>{excerpt(post.body)}</p> : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <PostList posts={posts} timezone={settings.timezone} />
       )}
     </>
   );
