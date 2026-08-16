@@ -63,6 +63,37 @@ resolution of the recorded technical debt. See `docs/releases/v0.1.0.md` for det
   (`NODE_ENV`, `AUTH_SECRET`, `APP_URL`, `DATABASE_URL`, `REDIS_URL`, `S3_*`). Infrastructure
   adapters read config from the validated `env` object instead of `process.env` directly.
 
+## [v0.2.0] — 2026-08-15
+
+Second tagged release: the complete **Public Site MVP** epic on top of the admin dashboard. See
+`docs/releases/v0.2.0.md` for details.
+
+### Added
+
+- Public site (`src/app/(site)/**`) — composition-only anonymous reading experience:
+  - Public layout shell driven by site settings (title, description, logo) + navigation menu
+    (nested items; `main` slug, fallback to first menu) with a scoped light theme.
+  - Home `/` listing published posts (newest first) with date and excerpt; empty state.
+  - Post detail `/posts/[slug]` — published-only, `generateMetadata` (meta title/description,
+    canonical, `ogImage`), featured image via `next/image`.
+  - Page detail `/[slug]` (top-level, matching `/sitemap.xml`) — published-only, same metadata.
+  - Category/tag index pages (`/categories`, `/tags`) with post counts, and detail pages listing
+    published posts.
+  - Friendly `not-found` for missing/unpublished slugs; drafts never leak.
+- Public read use cases in the `content` module (`application/use-cases/public.ts`): published
+  post/page by slug, list published posts/pages, posts by category/tag, and a public-nav resolver
+  that maps menu items to public hrefs (published-only, skipping unresolvable refs).
+
+### Changed
+
+- `ListPostsQuery` gained a `tagId` filter, implemented in the Prisma post adapter.
+- README "Current state" promoted to `v0.2.0`; the previously recorded technical debt notes were
+  removed (both items were resolved in `v0.1.0` and the section was stale).
+- Planning docs for the Public Site epic
+  (`tycoma-public-site-backlog.md`, `tycoma-public-site-implementation-sequence.md`,
+  `tycoma-public-site-module-spec.md`, `tycoma-ai-software-engineer-prompt-public-site.md`) are
+  marked shipped and reflect the delivered state.
+
 ---
 
 _Add a high-level entry here before every tag, per the **Releases** section of `AGENTS.md`._

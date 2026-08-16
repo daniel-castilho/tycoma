@@ -87,42 +87,41 @@ After significant changes run `npm run build` and smoke-test against `npm run do
 
 ## Current state
 
-**`v0.1.0` is the first tagged release** and covers the full Admin Dashboard epic — all five
-milestones of `tasks/tycoma-admin-dashboard-implementation-sequence.md` were delivered together:
+**`v0.2.0` is the latest tagged release.** It covers the full **Admin Dashboard epic** (v0.1.0)
+plus the **Public Site MVP** (v0.2.0):
 
-- **Phase 1 — Foundation & access control:** setup, login, session guard (`src/proxy.ts`), password
-  recovery, rate limiting, profile/change-password.
-- **Phase 2 — Core content management:** dashboard KPIs (content + media storage), posts, pages,
-  taxonomy (categories/tags with parent cycle guard and descriptions). Settings & menu use cases
-  exist with admin screens.
-- **Phase 3 — Media:** multi-file upload via `POST /api/media`, media grid with search/filter,
-  metadata editing, usage guard on delete.
-- **Phase 4 — Site structure/SEO:** site settings, navigation menus (nested items, post/page/
-  category/custom URL), SEO defaults with Google preview, and `/sitemap.xml`.
-- **Phase 5 — Monitoring:** audit module with `AuditEventWriter` threaded through the
-  `content`/`auth`/`media` use cases; read-only audit log viewer with filters at `/admin/audit-log`.
+- **Admin Dashboard (v0.1.0):**
+  - **Foundation & access control:** setup, login, session guard (`src/proxy.ts`), password
+    recovery, rate limiting, profile/change-password.
+  - **Core content management:** dashboard KPIs (content + media storage), posts, pages, taxonomy
+    (categories/tags with parent cycle guard and descriptions). Settings & menu use cases exist
+    with admin screens.
+  - **Media:** multi-file upload via `POST /api/media`, media grid with search/filter, metadata
+    editing, usage guard on delete.
+  - **Site structure/SEO:** site settings, navigation menus (nested items, post/page/category/
+    custom URL), SEO defaults with Google preview, and `/sitemap.xml`.
+  - **Monitoring:** audit module with `AuditEventWriter` threaded through the
+    `content`/`auth`/`media` use cases; read-only audit log viewer with filters at
+    `/admin/audit-log`.
+- **Public Site (v0.2.0):**
+  - Public layout shell driven by settings + navigation menu; home listing published posts.
+  - Post detail `/posts/[slug]` and page detail `/[slug]` (top-level) — published-only, with
+    `generateMetadata`, canonical URLs, `ogImage` and featured images.
+  - Category/tag index + detail pages; friendly 404 for missing/unpublished slugs.
+  - New published-only read use cases in the `content` module (see
+    `src/modules/content/application/use-cases/public.ts`); public site stays a pure composition
+    layer.
 
-> **Known technical debt:** two items remain on the backlog (see "Known technical debt" in
-> `AGENTS.md`):
->
-> - `asStatus` in `prisma-content-repositories.ts` silently maps unknown MongoDB `status` values
->   to `"draft"` instead of throwing — should fail fast.
-> - `PostRepository` / `PageRepository` / `MenuRepository` in `content/domain/types.ts` still mix
->   reads, writes and statistical queries on a single interface (ISP). `AuditRepository` was
->   already split into `AuditEventStore` + `AuditEventReader`; the same split should be applied to
->   `content` repositories.
->
-> Both items that were backlogged before the `v0.1.0` tag (direct `bcryptjs` imports in `auth`
-> use-cases, partial Zod adoption) are resolved. Passwords are hashed with Argon2id via the
-> `PasswordHasher` port, and every external input — server actions, `searchParams`, environment
-> config (`src/shared/env.ts`) — is Zod-validated.
+> **Known technical debt:** none. The items recorded at `v0.1.0` (`asStatus` silent degradation and
+> the wide content repository interfaces) were resolved — see `AGENTS.md` for the details.
 
 ## Roadmap
 
-The original implementation sequence planned `v0.1.0` (Phase 1) → `v0.5.0` (Monitoring) as separate
-milestones; in practice all five phases shipped together as **`v0.1.0`**. Deliberately deferred:
-custom content types, block-based editor, public headless API, webhooks, comments, 301 redirects,
-revision history, automated backup/export scheduling, multi-user roles.
+The original implementation sequence planned the Admin Dashboard as separate milestones; in
+practice all five phases shipped together as **`v0.1.0`**, followed by the **Public Site MVP** as
+**`v0.2.0`**. Deliberately deferred: custom content types, block-based editor, Markdown rendering
+on the public site, public headless API, webhooks, comments, 301 redirects, revision history,
+automated backup/export scheduling, multi-user roles.
 
 ## Documentation
 

@@ -100,3 +100,31 @@ into their own action/schema. When a schema makes a key `.optional()`, make sure
 layer treats `undefined` as "do not touch" and add a unit test for the partial update. The default
 `"UTC"`-style `.default()` only fires when the key is absent, so it is safe, but it cannot rescue a
 field the form never sends in the first place.
+
+## Public read use cases must be explicit, not filters in the app layer
+
+A public site is a composition layer: it must never reach into repositories or re-derive business
+rules in `.tsx`. The right seam is explicit **published-only** use cases in the owning module —
+`getPublishedPostBySlug`, `listPublishedPosts`, `listPublishedPostsByTag`, etc. — so "only
+published content is visible anonymously" is enforced once, in the application layer, and unit
+tested against mocked ports. The public-nav resolver also belongs there: it takes menu items and
+maps `refId` → public href, dropping references to unpublished/dangling entities, and returning
+`[]` for an explicitly requested menu that does not exist (no silent fallback).
+
+Rule: when the admin-facing read already exists (`getPost` by id), do not force the site to filter
+post-hoc in the component — add a dedicated published-by-slug read instead. Keep the URL scheme
+(`/[slug]` for pages) aligned with the existing `/sitemap.xml` and the menu resolver so one source
+of truth drives both navigation and SEO.
+
+## Adding a query filter means touching query type, adapter and tests together
+
+Extending a query (e.g. `ListPostsQuery` gained `tagId`) touches the domain query type, the
+infrastructure adapter's `where` clause, and the use case that exercises it. Because MongoDB stores
+arrays (`tagIds`), the filter is `{ has: <id> }` guarded by an `isObjectId` check — the same shape
+the existing `categoryId` filter already used. Application tests for "posts by tag/category" mock
+the reader port, so they verify the query object is passed through with the right `status` +
+`tagId`/`categoryId` combination rather than exercising Prisma.
+
+Rule: a filter on a shared query is three coordinated edits (type, adapter, use case + tests). Use
+the existing in-memory reader in tests to assert the resulting filter combination instead of
+spinning up a database.
