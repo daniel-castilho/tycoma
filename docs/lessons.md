@@ -128,3 +128,34 @@ the reader port, so they verify the query object is passed through with the righ
 Rule: a filter on a shared query is three coordinated edits (type, adapter, use case + tests). Use
 the existing in-memory reader in tests to assert the resulting filter combination instead of
 spinning up a database.
+
+## `npm ci` is strict — the lockfile must include every transitive entry, including optional platform ones
+
+`npm ci` refuses to install when `package.json` and `package-lock.json` are out of sync, even if
+the missing pieces are **optional** transitive packages like `@emnapi/runtime` or
+`@emnapi/core` (pulled in transitively by `@img/sharp-wasm32` from Next.js 16's image stack).
+The error looks like:
+
+```
+npm error code EUSAGE
+npm error `npm ci` can only install packages when your package.json and package-lock.json
+            or npm-shrinkwrap.json are in sync.
+npm error Missing: @emnapi/runtime@1.11.3 from lock file
+npm error Missing: @emnapi/core@1.11.3 from lock file
+```
+
+This surfaced in CI right after the v0.1.0 release: a clean `npm install` on a dev box had
+grown the dependency graph (Prisma `ContentType` / `ContentEntry` models + Next.js's wasm32
+optionals), but the lockfile committed before `v0.1.0` had only declared those packages as
+dependencies of other packages — not as resolved `node_modules` entries. The dev box kept
+working because `npm install` quietly filled the gaps; the CI runner, using `npm ci`, did not.
+This is also a known npm/cli bug ([#8726](https://github.com/npm/cli/issues/8726), still
+open as of late 2025) where `npm install` does not always produce a lockfile that a
+subsequent `npm ci` considers in-sync.
+
+Rule: any `npm install` (or `npm install <pkg>`) that **mutates** `package-lock.json` must
+commit the updated lockfile in the same change set as the dependency change — otherwise CI
+breaks at the next push. If CI fails at `npm ci` with `Missing: <pkg>@<x.y.z> from lock file`,
+the fix is to regenerate the lockfile cleanly (`rm -rf node_modules package-lock.json`,
+`npm install`) and commit it. `npm ci --ignore-scripts` is a quick local sanity check before
+pushing.

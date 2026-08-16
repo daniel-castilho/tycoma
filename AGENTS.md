@@ -42,6 +42,12 @@ Re-read the relevant parts before starting any task.
 
    Do **not** claim work DONE while any of those files still describes the previous milestone as
    current. See `docs/coding-standards.md` § _Doc sync_ for the short bullet list.
+10. **Commit `package-lock.json` whenever `npm install` mutates it.** A lockfile drift between
+    `main` and the dev box breaks CI at `npm ci` (see `docs/lessons.md` for the failure mode).
+    Any change that runs `npm install` (adding/upgrading a dependency, switching npm versions,
+    `prisma generate` pulling new transitive deps, or a fresh `npm install` on a different
+    platform) MUST include the updated `package-lock.json` in the same commit. Local sanity
+    check before pushing: `rm -rf node_modules && npm ci` must complete cleanly.
 
 ## Commands
 
@@ -66,6 +72,8 @@ Re-read the relevant parts before starting any task.
 > require it — always use `npm run docker:up`, never a bare `mongo` container.
 > Prisma is pinned to **6.x** — Prisma ORM 7 does not support MongoDB. Do not bump to 7 until
 > MongoDB support ships (see `docs/lessons.md`).
+> Node version is pinned via `.nvmrc` (`24`) and CI's `setup-node` action. Run `nvm use` (or
+> ensure your local is 24.x) before any `npm install` so the lockfile stays in sync with CI.
 
 ## Architecture
 
