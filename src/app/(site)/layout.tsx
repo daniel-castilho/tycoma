@@ -5,6 +5,11 @@ import { content, media } from "@/app/_lib/modules";
 import { PublicNav } from "./_components/public-nav";
 import "./site.css";
 
+// Public pages read live content through the content/media modules. Render them
+// on demand (like the admin auth pages and /sitemap.xml) so `next build` does
+// not need a running database or environment secrets.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await content.getSettings();
   return {

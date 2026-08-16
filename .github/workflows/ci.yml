@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: mongodb://localhost:27017/tycoma?replicaSet=rs0&directConnection=true
+      # Required by src/shared/env.ts at module scope during `next build`; test-only value.
+      AUTH_SECRET: ci-test-only-secret-0123456789abcdef
     steps:
       - uses: actions/checkout@v4
 
