@@ -39,6 +39,17 @@ import {
   createSaveCategory,
   createSaveTag,
 } from "./use-cases/taxonomy";
+import {
+  createGetCategoryBySlug,
+  createGetPublishedPageBySlug,
+  createGetPublishedPostBySlug,
+  createGetPublicNav,
+  createGetTagBySlug,
+  createListPublishedPages,
+  createListPublishedPosts,
+  createListPublishedPostsByCategory,
+  createListPublishedPostsByTag,
+} from "./use-cases/public";
 
 /**
  * Composition root for the `content` module. Wires this module's own
@@ -81,6 +92,21 @@ export function createContentApplication(auditEventWriter: AuditEventWriter) {
     saveMenuItems: createSaveMenuItems(prismaMenuRepository, auditEventWriter),
 
     getDashboardKpis: createGetDashboardKpis(prismaPostRepository, prismaPageRepository),
+
+    listPublishedPosts: createListPublishedPosts(prismaPostRepository),
+    getPublishedPostBySlug: createGetPublishedPostBySlug(prismaPostRepository),
+    listPublishedPages: createListPublishedPages(prismaPageRepository),
+    getPublishedPageBySlug: createGetPublishedPageBySlug(prismaPageRepository),
+    getCategoryBySlug: createGetCategoryBySlug(prismaCategoryRepository),
+    getTagBySlug: createGetTagBySlug(prismaTagRepository),
+    listPublishedPostsByCategory: createListPublishedPostsByCategory(prismaPostRepository),
+    listPublishedPostsByTag: createListPublishedPostsByTag(prismaPostRepository),
+    getPublicNav: createGetPublicNav(
+      prismaMenuRepository,
+      prismaPostRepository,
+      prismaPageRepository,
+      prismaCategoryRepository,
+    ),
   };
 }
 

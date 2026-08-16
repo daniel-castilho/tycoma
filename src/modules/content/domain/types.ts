@@ -93,6 +93,7 @@ export type SiteSettings = {
 export type ListPostsQuery = {
   status?: ContentStatus;
   categoryId?: string;
+  tagId?: string;
   search?: string;
   from?: Date;
   to?: Date;

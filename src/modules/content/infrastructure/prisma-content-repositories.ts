@@ -61,6 +61,7 @@ export const prismaPostRepository: PostRepository = {
       where: {
         status: query.status,
         categoryIds: isObjectId(query.categoryId) ? { has: query.categoryId } : undefined,
+        tagIds: isObjectId(query.tagId) ? { has: query.tagId } : undefined,
         title: query.search ? { contains: query.search, mode: "insensitive" } : undefined,
         updatedAt:
           query.from || query.to
