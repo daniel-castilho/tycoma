@@ -142,10 +142,11 @@ site — without leaving the existing hexagonal `content` module. See
 - New `docs/testing-playbook.md` consolidates the testing pyramid, port-mocking patterns,
   regression checklist, and smoke-test guidance that were previously implicit.
 
-## [Unreleased]
+## [v0.2.1] — 2026-08-15
 
-Follow-up work on top of `v0.2.0`. Will become the next tag (e.g. `v0.2.1`) once a follow-up
-release is prepared.
+Follow-up release on top of `v0.2.0`. Closes the deferred follow-ups from the public-site epic
+(P3, P6, P9, P14), tightens CI, and adds the **doc-sync** rule that requires every milestone
+to keep the five documentation surfaces in step. See `docs/releases/v0.2.1.md` for details.
 
 ### Added
 
@@ -165,16 +166,20 @@ release is prepared.
 - **Application tests**: login, password-reset, and content-guard paths are now covered by unit
   tests in `src/modules/auth/application/use-cases/{login,password-reset}.test.ts` and
   `src/modules/content/application/use-cases/content-guards.test.ts` (domain ports mocked only).
+- **Doc sync rule**: `AGENTS.md` § *Critical rules* (rule 9) and `docs/coding-standards.md` §
+  *Doc sync* now require the five-file checklist (README Current State, CHANGELOG, tasks/*,
+  AGENTS.md Known technical debt, docs/lessons.md when a durable rule is learned) as part of
+  every milestone-sized change.
+- **Testing playbook**: `docs/testing-playbook.md` consolidates the testing pyramid,
+  port-mocking patterns, regression checklist, and smoke-test guidance that were previously
+  implicit.
 
 ### Changed
 
 - `src/app/(site)/layout.tsx` is now `force-dynamic` (matches the admin auth pages and
   `/sitemap.xml`) so `next build` does not need a running database or environment secrets.
-- **Doc sync rule**: `AGENTS.md` § *Critical rules* (rule 9) and `docs/coding-standards.md` §
-  *Doc sync* now require the five-file checklist (README Current State, CHANGELOG, tasks/*,
-  AGENTS.md Known technical debt, docs/lessons.md when a durable rule is learned) as part of
-  every milestone-sized change. README documentation table now links the release notes, AI
-  prompts, and testing playbook.
+- README documentation table now links the release notes, AI-prompt task files, and the new
+  testing playbook.
 
 ---
 
