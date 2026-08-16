@@ -69,3 +69,34 @@ interface (`algorithm: 2 /* Argon2id */`, `version: 1 /* 0x13 */`). Add the valu
 Use the OWASP-recommended Argon2id baseline (64 MiB memory, 3 passes, 1 lane) and remember that
 `verify()` throws on a malformed encoded hash — wrap it so a corrupt stored hash degrades to a
 failed login instead of a 500.
+
+## Prisma + MongoDB: a never-set optional field is `isSet: false`, not `null`
+
+Filtering on `field: null` with Prisma's MongoDB adapter does **not** match documents where the
+optional field was never written — the field simply is not set (`isSet: false`), so a `null`
+equality filter matches zero rows even though the record looks like it has `null` when read back.
+This silently broke password reset: `findValidByHash` filtered `usedAt: null`, every reset link was
+rejected as "invalid or has expired", and the token row was present, unexpired and unused.
+
+Rule: to query "this optional field has never been set", filter with `field: { isSet: false }`
+instead of `field: null`. `isSet: false` also stays correct once the field is written, because a
+real value flips it to `isSet: true`. This applies to every optional Prisma field on MongoDB — do
+not copy the `field: null` pattern into new adapters.
+
+## Zod schemas on Server Actions must match what the form actually sends
+
+A Server Action whose Zod schema requires a field the form does not post will throw on every
+submit and surface as a 500 to the user. The Settings page only posts site fields
+(title/description/baseUrl/timezone/logo/favicon), but `saveSettingsAction` also required
+`defaultMetaTitle`/`defaultMetaDescription` — which only exist on the SEO form. Saving settings
+was broken until those became `.optional()`.
+
+Second trap: turning such fields `.optional()` makes the key present with value `undefined`, and
+naive persistence (`String(value)`) writes the literal string `"undefined"` into the DB. The
+partial-update use case must `continue` on `undefined` keys.
+
+Rule: keep a Server Action's Zod schema aligned with the form that feeds it — cross-page fields go
+into their own action/schema. When a schema makes a key `.optional()`, make sure the persistence
+layer treats `undefined` as "do not touch" and add a unit test for the partial update. The default
+`"UTC"`-style `.default()` only fires when the key is absent, so it is safe, but it cannot rescue a
+field the form never sends in the first place.
