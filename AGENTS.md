@@ -31,6 +31,17 @@ Re-read the relevant parts before starting any task.
    `/admin/forgot-password`, `/admin/reset-password`, and `/admin/setup` while no user exists)
    must be covered by the session guard in `src/proxy.ts`. Verify `src/app/admin/_lib/auth-routes.ts`
    and the matcher before adding any new admin route.
+9. **Doc sync is part of Done.** After milestone-sized work — an epic phase, a public
+   behaviour change, a debt resolution, or a stack pin — the same change set or the immediate
+   follow-up commit MUST update all five of:
+   1. `README.md` → "Current State"
+   2. `CHANGELOG.md` (entry under the next version or `Unreleased`)
+   3. The relevant `tasks/*` statuses
+   4. `AGENTS.md` → "Known technical debt" (add or clear)
+   5. `docs/lessons.md` only if a durable rule was learned
+
+   Do **not** claim work DONE while any of those files still describes the previous milestone as
+   current. See `docs/coding-standards.md` § _Doc sync_ for the short bullet list.
 
 ## Commands
 
@@ -92,7 +103,7 @@ infrastructure/  Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers 
   functions/hooks `camelCase`; constants `UPPER_SNAKE_CASE`; tests `*.test.ts`; routes kebab-case
   folders.
 - Use-case factories: `createLogin(repo, issuer, limiter)` returning `async (...args) =>
-  Result<...>`. Errors as `Result<T, E>` (`@/shared/kernel/result`) or domain exceptions — never
+Result<...>`. Errors as `Result<T, E>` (`@/shared/kernel/result`) or domain exceptions — never
   let an invalid entity exist.
 - Port interfaces live in `domain/` next to the types they serve (e.g. `domain/user.ts` exports
   `User` + `UserRepository`).
@@ -113,6 +124,7 @@ infrastructure/  Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers 
 - Domain unit tests: **no mocks** — pure entities/value objects.
 - Application tests: mock the domain ports only.
 - After significant changes run `npm run build` + a smoke test against `npm run docker:up`.
+- Testing details: `docs/testing-playbook.md` (pyramid, patterns, regression checklist, smoke).
 
 ## Releases
 
@@ -146,7 +158,7 @@ The previously recorded items were resolved in `v0.1.0`:
 
 - `bcryptjs` direct imports in `auth` use-cases migrated to an Argon2id `PasswordHasher` port.
 - Zod adoption completed: server actions, `searchParams` and environment configuration are all
-  validated (`src/shared/env.ts`). Keep every *new* external input Zod-validated.
+  validated (`src/shared/env.ts`). Keep every _new_ external input Zod-validated.
 
 ## Notes
 

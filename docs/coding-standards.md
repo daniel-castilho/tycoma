@@ -152,6 +152,20 @@ Cross-module access is **ports only**. Shared UI components live under `src/comp
 - English only for code, comments, commits, and docs.
 - Releases: `docs/releases/v0.X.0.md`. Durable rules: `docs/lessons.md`. Epic status: `tasks/*`.
 
+### Doc sync
+
+After milestone-sized work (epic phase, public behaviour change, debt resolution, stack pin), the
+same change set — or an immediate follow-up commit — MUST update all of:
+
+- `README.md` → "Current State"
+- `CHANGELOG.md` (entry under the next version or `Unreleased`)
+- The relevant `tasks/*` statuses
+- `AGENTS.md` → "Known technical debt" (add or clear)
+- `docs/lessons.md` only if a durable rule was learned
+
+Do **not** claim work DONE while any of those files still describes a previous milestone as
+current. The hard rule lives in `AGENTS.md` § *Critical rules* (rule 9).
+
 ---
 
 ## 9. Version control

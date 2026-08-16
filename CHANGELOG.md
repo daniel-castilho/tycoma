@@ -94,6 +94,37 @@ Second tagged release: the complete **Public Site MVP** epic on top of the admin
   `tycoma-public-site-module-spec.md`, `tycoma-ai-software-engineer-prompt-public-site.md`) are
   marked shipped and reflect the delivered state.
 
+## [Unreleased]
+
+Follow-up work on top of `v0.2.0`. Will become the next tag (`v0.3.0` or similar) once a
+milestone-sized epic lands.
+
+### Added
+
+- **Public posts index** at `/posts`: full list of published posts (newest first) with metadata
+  (title from SEO defaults, canonical URL). Closes the deferred follow-up P6 from the public-site
+  backlog.
+- **Page hierarchy breadcrumb** on public page detail (`/[slug]`): rendered from a new
+  `content.getPageBreadcrumb` use case that walks `parentId` (cycle-guarded) and shows only
+  published ancestors. Closes the deferred follow-up P9.
+- **Public-site `SiteHeader` / `SiteFooter` / `PostCard` components** under `src/app/(site)/_components`,
+  replacing the inline JSX in the layout/home/posts routes. Closes the deferred follow-up P3.
+- **Public favicon from settings**: when `settings.faviconMediaId` resolves to a media asset, the
+  public layout's `generateMetadata` exposes it via the `icons.icon` field. Closes the deferred
+  follow-up P14.
+- **CI hardening**: `.github/workflows/ci.yml` now publishes the Next.js build before running
+  tests, so the same `next build` invocation the gate runs is exercised end-to-end.
+- **Application tests**: login, password-reset, and content-guard paths are now covered by unit
+  tests in `src/modules/auth/application/use-cases/{login,password-reset}.test.ts` and
+  `src/modules/content/application/use-cases/content-guards.test.ts` (domain ports mocked only).
+
+### Changed
+
+- `src/app/(site)/layout.tsx` is now `force-dynamic` (matches the admin auth pages and
+  `/sitemap.xml`) so `next build` does not need a running database or environment secrets.
+
 ---
 
 _Add a high-level entry here before every tag, per the **Releases** section of `AGENTS.md`._
+_Add entries under `[Unreleased]` for follow-up work that has landed on `main` but is not yet
+tagged — promote the section to a dated `[v0.X.0]` entry when the next tag is created._

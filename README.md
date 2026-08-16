@@ -84,11 +84,15 @@ at `/admin/login`.
 The custom resolver registers the `@/*` path alias declared in `tsconfig.json` so application
 imports stay clean. Domain tests use no mocks; application tests mock the domain ports only.
 After significant changes run `npm run build` and smoke-test against `npm run docker:up`.
+Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
 **`v0.2.0` is the latest tagged release.** It covers the full **Admin Dashboard epic** (v0.1.0)
-plus the **Public Site MVP** (v0.2.0):
+plus the **Public Site MVP** (v0.2.0). Follow-up work that has landed on `main` since `v0.2.0`
+(posts index, page breadcrumb, extracted public-site components, favicon from settings, CI
+hardening, additional application tests) is tracked under `[Unreleased]` in `CHANGELOG.md` and
+becomes the next tag once a milestone-sized epic ships:
 
 - **Admin Dashboard (v0.1.0):**
   - **Foundation & access control:** setup, login, session guard (`src/proxy.ts`), password
@@ -103,10 +107,13 @@ plus the **Public Site MVP** (v0.2.0):
   - **Monitoring:** audit module with `AuditEventWriter` threaded through the
     `content`/`auth`/`media` use cases; read-only audit log viewer with filters at
     `/admin/audit-log`.
-- **Public Site (v0.2.0):**
-  - Public layout shell driven by settings + navigation menu; home listing published posts.
+- **Public Site (v0.2.0 + post-tag follow-ups on `main`):**
+  - Public layout shell driven by settings + navigation menu, with `SiteHeader` / `SiteFooter` /
+    `PostCard` components and the favicon served from `settings.faviconMediaId`.
+  - Home `/` listing published posts; `/posts` full index (newest first).
   - Post detail `/posts/[slug]` and page detail `/[slug]` (top-level) — published-only, with
-    `generateMetadata`, canonical URLs, `ogImage` and featured images.
+    `generateMetadata`, canonical URLs, `ogImage`, featured images, and a page-hierarchy
+    breadcrumb for published ancestors.
   - Category/tag index + detail pages; friendly 404 for missing/unpublished slugs.
   - New published-only read use cases in the `content` module (see
     `src/modules/content/application/use-cases/public.ts`); public site stays a pure composition
@@ -119,9 +126,12 @@ plus the **Public Site MVP** (v0.2.0):
 
 The original implementation sequence planned the Admin Dashboard as separate milestones; in
 practice all five phases shipped together as **`v0.1.0`**, followed by the **Public Site MVP** as
-**`v0.2.0`**. Deliberately deferred: custom content types, block-based editor, Markdown rendering
-on the public site, public headless API, webhooks, comments, 301 redirects, revision history,
-automated backup/export scheduling, multi-user roles.
+**`v0.2.0`**, with the public-site follow-ups (posts index, page breadcrumb, extracted
+components, favicon from settings) landing on `main` after the tag.
+
+Deliberately deferred: custom content types, block-based editor, Markdown rendering on the public
+site, public headless API, webhooks, comments, 301 redirects, revision history, automated
+backup/export scheduling, multi-user roles.
 
 ## Documentation
 
@@ -130,8 +140,16 @@ automated backup/export scheduling, multi-user roles.
 | [AGENTS.md](AGENTS.md)                                                       | Rules for AI agents and human contributors                    |
 | [docs/lessons.md](docs/lessons.md)                                           | Durable lessons learned                                       |
 | [docs/coding-standards.md](docs/coding-standards.md)                         | Day-to-day coding standards (TypeScript/Next.js/Prisma)       |
+| [docs/testing-playbook.md](docs/testing-playbook.md)                         | Testing pyramid, patterns, regression checklist & smoke        |
 | [docs/twelve-factor.md](docs/twelve-factor.md)                               | Twelve-Factor App reference & compliance matrix               |
+| [docs/releases/v0.1.0.md](docs/releases/v0.1.0.md)                           | Release notes — admin dashboard                               |
+| [docs/releases/v0.2.0.md](docs/releases/v0.2.0.md)                           | Release notes — public site MVP                               |
 | [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
 | [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
 | [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |
+| [tasks/tycoma-ai-software-engineer-prompt-admin-dashboard.md](tasks/tycoma-ai-software-engineer-prompt-admin-dashboard.md) | AI-engineer prompt used for the Admin Dashboard epic |
+| [tasks/tycoma-public-site-backlog.md](tasks/tycoma-public-site-backlog.md)   | Public Site epic — stories & scope                            |
+| [tasks/tycoma-public-site-implementation-sequence.md](tasks/tycoma-public-site-implementation-sequence.md) | Public Site epic — delivery order & DoD                |
+| [tasks/tycoma-public-site-module-spec.md](tasks/tycoma-public-site-module-spec.md) | Public Site epic — target technical design              |
+| [tasks/tycoma-ai-software-engineer-prompt-public-site.md](tasks/tycoma-ai-software-engineer-prompt-public-site.md) | AI-engineer prompt used for the Public Site epic     |
 | [CHANGELOG.md](CHANGELOG.md)                                                 | High-level release index                                      |
