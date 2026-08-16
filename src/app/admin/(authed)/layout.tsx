@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/admin/posts", label: "Posts" },
   { href: "/admin/pages", label: "Pages" },
   { href: "/admin/taxonomy", label: "Categories & Tags" },
+  { href: "/admin/content-types", label: "Content types" },
   { href: "/admin/media", label: "Media" },
   { href: "/admin/menus", label: "Menus" },
   { href: "/admin/settings", label: "Settings" },

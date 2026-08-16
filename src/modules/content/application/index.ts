@@ -7,6 +7,25 @@ import {
   prismaSettingsRepository,
   prismaTagRepository,
 } from "../infrastructure/prisma-content-repositories";
+import {
+  prismaContentEntryRepository,
+  prismaContentTypeRepository,
+} from "../infrastructure/prisma-content-type-repositories";
+import {
+  createDeleteContentType,
+  createCreateEntry,
+  createDeleteEntry,
+  createGetContentType,
+  createGetContentTypeBySlug,
+  createGetEntry,
+  createGetPublishedEntryByTypeAndSlug,
+  createListContentTypes,
+  createListEntries,
+  createListPublishedEntriesByTypeSlug,
+  createPublishEntry,
+  createSaveContentType,
+  createUpdateEntry,
+} from "./use-cases/content-types";
 import { createGetDashboardKpis } from "./use-cases/dashboard";
 import {
   createDeleteMenu,
@@ -108,6 +127,28 @@ export function createContentApplication(auditEventWriter: AuditEventWriter) {
       prismaPostRepository,
       prismaPageRepository,
       prismaCategoryRepository,
+    ),
+
+    listContentTypes: createListContentTypes(prismaContentTypeRepository),
+    getContentType: createGetContentType(prismaContentTypeRepository),
+    getContentTypeBySlug: createGetContentTypeBySlug(prismaContentTypeRepository),
+    saveContentType: createSaveContentType(prismaContentTypeRepository, auditEventWriter),
+    deleteContentType: createDeleteContentType(prismaContentTypeRepository, auditEventWriter),
+
+    listEntries: createListEntries(prismaContentEntryRepository),
+    getEntry: createGetEntry(prismaContentEntryRepository),
+    createEntry: createCreateEntry(prismaContentEntryRepository, prismaContentTypeRepository, auditEventWriter),
+    updateEntry: createUpdateEntry(prismaContentEntryRepository, prismaContentTypeRepository, auditEventWriter),
+    publishEntry: createPublishEntry(prismaContentEntryRepository, auditEventWriter),
+    deleteEntry: createDeleteEntry(prismaContentEntryRepository, auditEventWriter),
+
+    listPublishedEntriesByTypeSlug: createListPublishedEntriesByTypeSlug(
+      prismaContentTypeRepository,
+      prismaContentEntryRepository,
+    ),
+    getPublishedEntryByTypeAndSlug: createGetPublishedEntryByTypeAndSlug(
+      prismaContentTypeRepository,
+      prismaContentEntryRepository,
     ),
   };
 }

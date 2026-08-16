@@ -76,6 +76,31 @@ model Tag {
   description String?
 }
 
+model ContentType {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String   @unique
+  description String?
+  fields      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContentEntry {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  contentTypeId String   @db.ObjectId
+  slug          String
+  title         String
+  status        String
+  fields        Json
+  publishedAt   DateTime?
+  scheduledAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([contentTypeId, slug])
+}
+
 model MediaAsset {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   filename  String
