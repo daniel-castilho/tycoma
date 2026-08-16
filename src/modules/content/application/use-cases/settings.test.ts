@@ -78,6 +78,16 @@ describe("updateSettings", () => {
     await updateSettings({ logoMediaId: null });
     assert.equal(rows.logoMediaId, "");
   });
+
+  it("skips undefined fields so partial updates do not clobber them", async () => {
+    const { repo, rows } = memorySettings({ title: "Old" });
+    const { writer } = memoryAudit();
+    const getSettings = createGetSettings(repo);
+    const updateSettings = createUpdateSettings(repo, writer, getSettings);
+    await updateSettings({ title: "New", defaultMetaTitle: undefined });
+    assert.equal(rows.title, "New");
+    assert.equal(rows.defaultMetaTitle, undefined);
+  });
 });
 
 describe("touchSitemap", () => {

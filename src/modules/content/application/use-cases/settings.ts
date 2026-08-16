@@ -41,6 +41,7 @@ export function createUpdateSettings(
   ): Promise<SiteSettings> {
     const entries: Record<string, string> = {};
     for (const [key, value] of Object.entries(input)) {
+      if (value === undefined) continue;
       entries[key] = value === null ? "" : String(value);
     }
     await settings.setMany(entries);

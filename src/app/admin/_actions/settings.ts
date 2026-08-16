@@ -13,8 +13,8 @@ const settingsSchema = z.object({
   faviconMediaId: z.string().transform((v) => v.trim() || null),
   timezone: z.string().trim().min(1).default("UTC"),
   baseUrl: z.string().trim(),
-  defaultMetaTitle: z.string().trim(),
-  defaultMetaDescription: z.string().trim(),
+  defaultMetaTitle: z.string().trim().optional(),
+  defaultMetaDescription: z.string().trim().optional(),
 });
 
 export async function saveSettingsAction(formData: FormData): Promise<void> {

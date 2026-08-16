@@ -12,7 +12,7 @@ export const prismaPasswordResetTokenRepository: PasswordResetTokenRepository = 
     return prisma.passwordResetToken.findFirst({
       where: {
         tokenHash,
-        usedAt: null,
+        usedAt: { isSet: false },
         expiresAt: { gt: now },
       },
     });
