@@ -6,6 +6,7 @@ import { content } from "@/app/_lib/modules";
 import { formDataToObject } from "../_lib/form";
 import { requireSession } from "../_lib/session";
 import { isContentFieldType } from "@/modules/content/domain/content-type-fields";
+import type { ContentTypeField } from "@/modules/content/domain/content-types";
 import type { PostActionState } from "../_lib/action-state";
 
 const fieldSchema = z.object({
@@ -27,7 +28,7 @@ const fieldSchema = z.object({
 const contentTypeSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(1, "A name is required."),
-  slug: z.string().trim().optional(),
+  slug: z.string().trim().min(1, "A slug is required."),
   description: z.string().trim().optional(),
 });
 
@@ -35,7 +36,7 @@ const entrySchema = z.object({
   id: z.string().optional(),
   contentTypeId: z.string().min(1),
   title: z.string().trim().min(1, "A title is required."),
-  slug: z.string().trim().optional(),
+  slug: z.string().trim().min(1, "A slug is required."),
   status: z.preprocess(
     (value) => (value === "published" || value === "scheduled" ? value : "draft"),
     z.enum(["draft", "scheduled", "published"]),
@@ -77,7 +78,7 @@ export async function saveContentTypeAction(
   const labels = formData.getAll("fieldLabel").map(String);
   const types = formData.getAll("fieldType").map(String);
   const required = formData.getAll("fieldRequired").map(String);
-  const fields: { name: string; label: string; type: string; required: boolean }[] = [];
+  const fields: ContentTypeField[] = [];
   for (let i = 0; i < names.length; i++) {
     const parsed = fieldSchema.safeParse({
       name: names[i],
@@ -88,7 +89,7 @@ export async function saveContentTypeAction(
     if (!parsed.success) {
       return { error: "Check the field list and try again.", message: null };
     }
-    fields.push(parsed.data);
+    fields.push(parsed.data as ContentTypeField);
   }
   if (fields.length === 0) {
     return { error: "Add at least one field.", message: null };

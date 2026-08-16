@@ -65,6 +65,7 @@ function memoryTypes(
     async create(data) {
       const row: ContentType = {
         ...data,
+        description: data.description ?? null,
         id: String(rows.length + 1),
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -115,6 +116,8 @@ function memoryEntries(seed: ContentEntry[] = [], target?: ContentEntry[]): Cont
     async create(data) {
       const row: ContentEntry = {
         ...data,
+        publishedAt: data.publishedAt ?? null,
+        scheduledAt: data.scheduledAt ?? null,
         id: String(rows.length + 1),
         createdAt: new Date(),
         updatedAt: new Date(),

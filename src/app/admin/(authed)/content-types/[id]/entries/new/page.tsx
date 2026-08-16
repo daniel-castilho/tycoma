@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { content } from "@/app/_lib/modules";
 import { saveContentEntryAction } from "@/app/admin/_actions/content-types";
-import { ContentEntryForm } from "../../_components/content-entry-form";
+import { ContentEntryForm } from "../../../_components/content-entry-form";
 
 export default async function NewEntryPage({
   params,

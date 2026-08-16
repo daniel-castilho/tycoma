@@ -2,7 +2,6 @@ import type {
   ContentEntryFieldError,
   ContentFieldType,
   ContentType,
-  ContentTypeField,
 } from "./content-types";
 
 /**
