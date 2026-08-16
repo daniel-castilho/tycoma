@@ -5,6 +5,8 @@ import { bulkPostsAction } from "@/app/admin/_actions/content";
 import { DataTable } from "@/app/admin/(authed)/_components/data-table";
 import { EmptyState } from "@/app/admin/(authed)/_components/empty-state";
 import { StatusBadge } from "@/app/admin/(authed)/_components/status-badge";
+import { StepUpHint } from "@/app/admin/(authed)/_components/step-up-hint";
+import { requireSession } from "@/app/admin/_lib/session";
 import type { ContentStatus, Post } from "@/modules/content/domain/types";
 
 const STATUSES: ContentStatus[] = ["draft", "scheduled", "published"];
@@ -32,6 +34,7 @@ export default async function PostsListPage({
     order?: string;
   }>;
 }) {
+  const session = await requireSession();
   const filters = filtersSchema.parse(await searchParams);
 
   const [posts, categories] = await Promise.all([
@@ -106,6 +109,7 @@ export default async function PostsListPage({
         </p>
       ) : null}
 
+      <StepUpHint userId={session.sub} />
       <form action={bulkPostsAction}>
         <div style={{ marginBottom: "0.5rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
           <span style={{ color: "var(--muted)", fontSize: "0.875rem" }}>Bulk:</span>

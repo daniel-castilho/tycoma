@@ -22,6 +22,11 @@ jobs:
 
       - run: npm ci
 
+      - name: Vulnerability audit
+        # Phase C: fail on critical and high. Document any time-boxed exceptions
+        # in `docs/lessons.md` with the advisory id + intended removal date.
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Lint
         run: npm run lint
 

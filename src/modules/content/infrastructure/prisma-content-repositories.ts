@@ -88,6 +88,9 @@ export const prismaPostRepository: PostRepository = {
   async update(id, data) {
     return mapPost(await prisma.post.update({ where: { id }, data }));
   },
+  async delete(id) {
+    await prisma.post.delete({ where: { id } });
+  },
   async deleteMany(ids) {
     const validIds = ids.filter(isObjectId);
     if (validIds.length === 0) return 0;

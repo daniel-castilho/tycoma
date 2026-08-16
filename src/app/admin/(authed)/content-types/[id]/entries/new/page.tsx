@@ -14,12 +14,12 @@ export default async function NewEntryPage({
   if (!type) notFound();
 
   const mediaAssets = typeHasMediaField(type)
-    ? await media.listMedia({ mimePrefix: "image" })
+    ? await media.listMediaWithUrls()
     : [];
   const pickerAssets = mediaAssets.map((asset) => ({
     id: asset.id,
     filename: asset.filename,
-    url: asset.url,
+    url: asset.signedUrl,
     alt: asset.alt,
   }));
 

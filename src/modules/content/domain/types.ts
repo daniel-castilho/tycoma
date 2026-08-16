@@ -144,6 +144,7 @@ export type PostReader = {
 export type PostWriter = {
   create(data: Post): Promise<Post>;
   update(id: string, data: Partial<Post>): Promise<Post>;
+  delete(id: string): Promise<void>;
   deleteMany(ids: string[]): Promise<number>;
 };
 

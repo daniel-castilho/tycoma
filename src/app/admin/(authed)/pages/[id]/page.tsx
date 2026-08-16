@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { content } from "@/app/_lib/modules";
 import { deletePageAction, savePageAction } from "@/app/admin/_actions/content";
+import { StepUpHint } from "@/app/admin/(authed)/_components/step-up-hint";
+import { requireSession } from "@/app/admin/_lib/session";
 import { PageForm } from "../_components/page-form";
 
 export default async function EditPagePage({
@@ -10,6 +12,7 @@ export default async function EditPagePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await requireSession();
   const [page, allPages] = await Promise.all([content.getPage(id), content.listPages()]);
   if (!page) notFound();
 
@@ -30,6 +33,7 @@ export default async function EditPagePage({
           .filter((p) => p.id !== page.id)
           .map((p) => ({ id: p.id, title: p.title }))}
       />
+      <StepUpHint userId={session.sub} />
       <form action={deletePageAction} style={{ marginTop: "2rem" }}>
         <input type="hidden" name="id" value={page.id} />
         <button type="submit" className="btn-danger">

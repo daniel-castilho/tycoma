@@ -2,10 +2,12 @@ import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
 import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import type { StepUpStore } from "@/modules/auth/domain/step-up";
 import type {
   ListPostsQuery,
   Post,
   PostReader,
+  PostRepository,
   PostWrite,
   PostWriter,
 } from "../../domain/types";
@@ -112,7 +114,39 @@ export function createPublishPost(posts: PostReader & PostWriter, audit: AuditEv
   };
 }
 
-export function createBulkPosts(posts: PostReader & PostWriter, audit: AuditEventWriter) {
+export function createDeletePost(
+  posts: PostRepository,
+  audit: AuditEventWriter,
+  stepUp: StepUpStore,
+) {
+  return async function deletePost(
+    id: string,
+    actorId?: string | null,
+  ): Promise<Result<{ ok: true }>> {
+    // Phase C: destructive deletes require a recent step-up (Redis TTL 10 min,
+    // time-boxed reuse — see `STEP_UP_TTL_SECONDS` in `auth/application/use-cases/step-up.ts`).
+    if (!(await stepUp.has(actorId ?? ""))) {
+      return err("Please confirm your current password before this action.");
+    }
+    const post = await posts.findById(id);
+    if (!post) return err("Post not found.");
+    await posts.delete(id);
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.post_deleted",
+      entityType: "post",
+      entityId: id,
+      details: JSON.stringify({ title: post.title }),
+    });
+    return ok({ ok: true });
+  };
+}
+
+export function createBulkPosts(
+  posts: PostRepository,
+  audit: AuditEventWriter,
+  stepUp: StepUpStore,
+) {
   const publishPost = createPublishPost(posts, audit);
   return async function bulkPosts(input: {
     ids: string[];
@@ -121,6 +155,11 @@ export function createBulkPosts(posts: PostReader & PostWriter, audit: AuditEven
   }): Promise<Result<{ affected: number }>> {
     if (input.ids.length === 0) return ok({ affected: 0 });
     if (input.action === "delete") {
+      // Phase C: bulk deletes are gated on the same step-up as single deletes
+      // — leaving bulk ungated would let the step-up be bypassed.
+      if (!(await stepUp.has(input.actorId ?? ""))) {
+        return err("Please confirm your current password before this action.");
+      }
       const affected = await posts.deleteMany(input.ids);
       for (const id of input.ids) {
         await audit.record({

@@ -31,6 +31,9 @@ const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().min(1).default("test"),
   S3_FORCE_PATH_STYLE: z.string().default("true"),
   S3_PUBLIC_BASE_URL: z.string().min(1).default("http://localhost:4566/tycoma-media"),
+  // Phase C: contact shown in /.well-known/security.txt (RFC 9116). Defaults
+  // to the admin mailbox so dev installs always expose a valid file.
+  SECURITY_CONTACT: z.string().email().default("admin@example.test"),
 });
 
 export type EnvInput = Record<string, string | undefined>;

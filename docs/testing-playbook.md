@@ -145,6 +145,23 @@ npm run dev                # or npm run start after build
 
 ---
 
+## Security regression (Phase C)
+
+These checks belong with the browser smoke above; add them to the table on
+each release tag candidate. Failures block the tag.
+
+| #   | Step                                                                    | Expected                                                                                |
+| --- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 17  | Delete a post / page / media without confirming password first         | Server action rejected with `Please confirm your current password…`                      |
+| 18  | Bulk delete posts without step-up                                       | Same rejection as single                                                                |
+| 19  | Open any admin URL                                                      | Response includes `Cross-Origin-Opener-Policy: same-origin`                             |
+| 20  | `curl /.well-known/security.txt`                                         | 200, `text/plain`, `Expires:` within 1 year of `Date:`                                  |
+| 21  | Inspect a media card / public page image source                         | URL is a SigV4 presigned URL containing `X-Amz-Signature` (≈30 min TTL)                 |
+| 22  | `npm audit --omit=dev --audit-level=high`                               | Returns `found 0 vulnerabilities`; CI fails on any other outcome                        |
+| 23  | `node --no-warnings --experimental-strip-types scripts/backup-roundtrip.mjs > /tmp/backup.json && node --no-warnings --experimental-strip-types scripts/backup-roundtrip.mjs --import /tmp/backup.json` | Second run prints `OK — manifest checksum verified: …` |
+
+---
+
 ## Quality gates (CI local mirror)
 
 ```bash
@@ -152,9 +169,10 @@ npm test
 npm run lint
 npm run typecheck
 npm run build
+npm audit --omit=dev --audit-level=high
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same four. Prefer green unit tests without Docker; smoke uses `docker:up`.
+CI (`.github/workflows/ci.yml`) runs all five. Prefer green unit tests without Docker; smoke uses `docker:up`.
 
 ---
 

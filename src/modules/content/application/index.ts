@@ -1,4 +1,5 @@
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import type { StepUpStore } from "@/modules/auth/domain/step-up";
 import {
   prismaCategoryRepository,
   prismaMenuRepository,
@@ -44,6 +45,7 @@ import {
 import {
   createBulkPosts,
   createCreatePost,
+  createDeletePost,
   createGetPost,
   createListPosts,
   createPublishPost,
@@ -74,23 +76,24 @@ import {
 /**
  * Composition root for the `content` module. Wires this module's own
  * infrastructure adapters into its use cases. Cross-module ports (the audit
- * writer) are injected — the wiring itself lives in the framework layer
- * (`src/app/_lib/modules.ts`).
+ * writer and the step-up store) are injected — the wiring itself lives in
+ * the framework layer (`src/app/_lib/modules.ts`).
  */
-export function createContentApplication(auditEventWriter: AuditEventWriter) {
+export function createContentApplication(auditEventWriter: AuditEventWriter, stepUp: StepUpStore) {
   return {
     listPosts: createListPosts(prismaPostRepository),
     getPost: createGetPost(prismaPostRepository),
     createPost: createCreatePost(prismaPostRepository, auditEventWriter),
     updatePost: createUpdatePost(prismaPostRepository, auditEventWriter),
     publishPost: createPublishPost(prismaPostRepository, auditEventWriter),
-    bulkPosts: createBulkPosts(prismaPostRepository, auditEventWriter),
+    deletePost: createDeletePost(prismaPostRepository, auditEventWriter, stepUp),
+    bulkPosts: createBulkPosts(prismaPostRepository, auditEventWriter, stepUp),
 
     listPages: createListPages(prismaPageRepository),
     getPage: createGetPage(prismaPageRepository),
     createPage: createCreatePage(prismaPageRepository),
     updatePage: createUpdatePage(prismaPageRepository),
-    deletePage: createDeletePage(prismaPageRepository, auditEventWriter),
+    deletePage: createDeletePage(prismaPageRepository, auditEventWriter, stepUp),
 
     listCategories: createListCategories(prismaCategoryRepository, prismaPostRepository),
     saveCategory: createSaveCategory(prismaCategoryRepository),

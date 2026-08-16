@@ -88,10 +88,35 @@ Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
-**`v0.6.0` is the latest tagged release.** It is the **Security Hardening Phase B** epic —
-shrinks the session-theft window, adds step-up re-auth for sensitive actions, broadens rate
-limiting, and implements a progressive lockout policy. **No new npm dependencies.** 2FA is
-deliberately deferred pending human approval of a TOTP library.
+**`v0.7.0` is the latest documented release** (Security Hardening Phase C — operational
+excellence + residual A/B debt). **No new npm dependencies.** The tag is created by the human
+after the smoke in [docs/release-runbook.md](docs/release-runbook.md); the previous tag
+remains **`v0.6.0`** until that happens.
+
+- **v0.7.0 (Security Hardening Phase C):**
+  - **CI security gate.** `npm audit --omit=dev --audit-level=high` runs right after `npm ci`
+    and fails on critical/high vulnerabilities. Current tree: zero.
+  - **Dependabot weekly** for the `npm` ecosystem (`.github/dependabot.yml`); patch + minor
+    batches, majors stay as individual PRs.
+  - **Step-up on destructive deletes** (single + bulk posts / single page / single media).
+    Reuses the Phase B `StepUpStore` Redis marker — no second step-up system. The admin UI
+    shows a `<StepUpHint />` above the delete form on `/admin/posts`, `/admin/pages/[id]`,
+    and `/admin/media/[id]`.
+  - **SigV4 presigned media URLs** (30 min TTL, named constant) for both admin preview and
+    the public site. Implementation uses `node:crypto` only — no `@aws-sdk/*` direct
+    dependency was added.
+  - **Backup manifest + checksum.** New `src/shared/backup/manifest.ts` defines the v1 schema
+    (metadata + object keys; binaries stay in the bucket) with stable JSON canonicalisation.
+    `scripts/backup-roundtrip.mjs` proves the export → SHA-256 → re-import loop without
+    Docker.
+  - **`/.well-known/security.txt`** (RFC 9116) with a rolling one-year `Expires`. New
+    `SECURITY_CONTACT` env var — operator must set the real mailbox in production.
+  - **COOP on `/admin/:path*`.** `Cross-Origin-Opener-Policy: same-origin` in `next.config.ts`.
+    Public site is unchanged.
+  - **Documentation.** New [docs/release-runbook.md](docs/release-runbook.md); the testing
+    playbook gained a § Security regression block.
+  - **Residual.** CSP stays Report-Only — enforcement is a follow-up (lesson entry). 2FA
+    and sliding/remember-me remain skipped.
 
 - **v0.6.0 (Security Hardening Phase B):**
   - Default session lifetime: **`7d` → `12h`**. JWT `exp` and cookie `maxAge` aligned.
@@ -185,13 +210,13 @@ practice all five phases shipped together as **`v0.1.0`**, followed by the **Pub
 index, page breadcrumb, extracted components, favicon from settings) shipped as **`v0.2.1`**;
 the lockfile refresh and doc-sync rule shipped as **`v0.3.1`**; media-typed fields for content
 types shipped as **`v0.4.0`**; the Security Hardening Phase A epic shipped as **`v0.5.0`**; the
-Security Hardening Phase B epic shipped as **`v0.6.0`**.
+Security Hardening Phase B epic shipped as **`v0.6.0`**; Security Hardening Phase C is
+**`v0.7.0`** (documented, tag pending human action).
 
 Deliberately deferred: block-based editor, Markdown rendering on the public site, public headless
 API, webhooks, comments, 301 redirects, revision history, automated backup/export scheduling,
-multi-user roles, **Security Hardening Phase C** (TOTP 2FA with a human-approved library,
-sliding session / refresh redesign, full CSP enforce pipeline, private-bucket signed URLs,
-destructive-delete step-up).
+multi-user roles, **2FA TOTP** with a human-approved library, **sliding session / refresh
+redesign**, **CSP enforce pipeline**, **real LocalStack-backed backup drill run by CI**.
 
 ## Documentation
 
@@ -210,6 +235,8 @@ destructive-delete step-up).
 | [docs/releases/v0.4.0.md](docs/releases/v0.4.0.md)                           | Release notes — media-typed fields for content types           |
 | [docs/releases/v0.5.0.md](docs/releases/v0.5.0.md)                           | Release notes — security hardening phase A                     |
 | [docs/releases/v0.6.0.md](docs/releases/v0.6.0.md)                           | Release notes — security hardening phase B                     |
+| [docs/releases/v0.7.0.md](docs/releases/v0.7.0.md)                           | Release notes — security hardening phase C                     |
+| [docs/release-runbook.md](docs/release-runbook.md)                           | Pre-tag procedure: gates, smoke, doc sync, human-only tag       |
 | [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
 | [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
 | [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |

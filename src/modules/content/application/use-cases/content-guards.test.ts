@@ -1,11 +1,24 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Category, CategoryRepository, Page, PageReader, PageWriter, Post, PostReader, PostWriter } from "../../domain/types.ts";
+import type { StepUpStore } from "../../../auth/domain/step-up.ts";
 import { createDeletePage, createUpdatePage } from "./pages.ts";
 import { createCreatePost, createUpdatePost, createPublishPost } from "./posts.ts";
 import { createDeleteCategory, createSaveCategory } from "./taxonomy.ts";
 
 const noopAudit = { record: async () => {} };
+
+const okStepUp: StepUpStore = {
+  async has() {
+    return true;
+  },
+  async grant() {
+    // no-op
+  },
+  async revoke() {
+    // no-op
+  },
+};
 
 function categoryRow(overrides: Partial<Category>): Category {
   return {
@@ -116,6 +129,10 @@ function memoryPosts(seed: Post[] = []): PostReader & PostWriter {
       const idx = rows.findIndex((p) => p.id === id);
       rows[idx] = { ...rows[idx]!, ...data };
       return rows[idx]!;
+    },
+    async delete(id) {
+      const idx = rows.findIndex((p) => p.id === id);
+      if (idx >= 0) rows.splice(idx, 1);
     },
     async deleteMany(ids) {
       const before = rows.length;
@@ -234,7 +251,7 @@ describe("page guards", () => {
       pageRow({ id: "parent", slug: "parent" }),
       pageRow({ id: "child", slug: "child", parentId: "parent" }),
     ]);
-    const del = createDeletePage(pages, noopAudit);
+    const del = createDeletePage(pages, noopAudit, okStepUp);
     const result = await del("parent");
     assert.equal(result.ok, false);
     if (!result.ok) assert.match(result.error, /child pages/i);
@@ -242,7 +259,7 @@ describe("page guards", () => {
 
   it("deletes a leaf page", async () => {
     const pages = memoryPages([pageRow({ id: "leaf", slug: "leaf" })]);
-    const del = createDeletePage(pages, noopAudit);
+    const del = createDeletePage(pages, noopAudit, okStepUp);
     const result = await del("leaf");
     assert.equal(result.ok, true);
   });

@@ -1,6 +1,8 @@
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import type { StepUpStore } from "@/modules/auth/domain/step-up";
 import { prismaMediaRepository } from "../infrastructure/prisma-media-repository";
 import { s3ObjectStorage } from "../infrastructure/s3-object-storage";
+import { attachSignedUrl } from "./use-cases/attach-signed-url";
 import { createDeleteMedia } from "./use-cases/delete-media";
 import { createGetMedia } from "./use-cases/get-media";
 import { createGetMediaUsages } from "./use-cases/get-media-usages";
@@ -12,18 +14,27 @@ import { createUploadMedia } from "./use-cases/upload-media";
 /**
  * Composition root for the `media` module. Wires this module's own
  * infrastructure adapters into its use cases. Cross-module ports (the audit
- * writer and the content-side media-usage lookup) are injected — the wiring
- * itself lives in the framework layer (`src/app/_lib/modules.ts`).
+ * writer, the content-side media-usage lookup, and the auth step-up store)
+ * are injected — the wiring itself lives in the framework layer
+ * (`src/app/_lib/modules.ts`).
  */
 export function createMediaApplication(deps: {
   auditEventWriter: AuditEventWriter;
   contentUsageLookup: import("../domain/types").MediaUsageLookup;
+  stepUp: StepUpStore;
 }) {
-  const { auditEventWriter, contentUsageLookup } = deps;
+  const { auditEventWriter, contentUsageLookup, stepUp } = deps;
   return {
     uploadMedia: createUploadMedia(s3ObjectStorage, prismaMediaRepository, auditEventWriter),
     listMedia: createListMedia(prismaMediaRepository),
     getMedia: createGetMedia(prismaMediaRepository),
+    listMediaWithUrls: async () =>
+      Promise.all((await prismaMediaRepository.list({})).map((a) => attachSignedUrl(s3ObjectStorage, a))),
+    getMediaWithUrl: async (id: string) => {
+      const asset = await prismaMediaRepository.findById(id);
+      if (!asset) return null;
+      return attachSignedUrl(s3ObjectStorage, asset);
+    },
     getMediaUsages: createGetMediaUsages(contentUsageLookup),
     updateMediaMetadata: createUpdateMediaMetadata(prismaMediaRepository),
     deleteMedia: createDeleteMedia(
@@ -31,6 +42,7 @@ export function createMediaApplication(deps: {
       contentUsageLookup,
       s3ObjectStorage,
       auditEventWriter,
+      stepUp,
     ),
     getMediaStorageStats: createGetMediaStorageStats(prismaMediaRepository),
   };

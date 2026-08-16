@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ContentType, ContentTypeField } from "@/modules/content/domain/content-types";
-import type { MediaAsset } from "@/modules/media/domain/types";
+import type { MediaAssetWithUrl } from "@/modules/media/application/use-cases/attach-signed-url";
 import { formatDate } from "../../_lib/format";
 
 export function ContentEntryFields({
@@ -12,7 +12,7 @@ export function ContentEntryFields({
   fields: Record<string, unknown>;
   contentType: ContentType;
   timezone: string;
-  mediaFields: Map<string, MediaAsset | null>;
+  mediaFields: Map<string, MediaAssetWithUrl | null>;
 }) {
   return (
     <dl className="site-entry-fields">
@@ -45,13 +45,13 @@ function ContentFieldValue({
   field: ContentTypeField;
   value: unknown;
   timezone: string;
-  media: MediaAsset | null;
+  media: MediaAssetWithUrl | null;
 }) {
   if (field.type === "media") {
     if (!media) return <em className="site-empty site-media-unavailable">Mídia indisponível</em>;
     return (
       <Image
-        src={media.url}
+        src={media.signedUrl}
         alt={media.alt ?? media.filename}
         width={800}
         height={450}

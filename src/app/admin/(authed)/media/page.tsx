@@ -25,10 +25,7 @@ export default async function MediaPage({
   searchParams: Promise<{ q?: string; type?: string }>;
 }) {
   const filters = filtersSchema.parse(await searchParams);
-  const assets = await media.listMedia({
-    search: filters.q,
-    mimePrefix: filters.type,
-  });
+  const assets = await media.listMediaWithUrls();
 
   return (
     <>
@@ -87,7 +84,7 @@ export default async function MediaPage({
               {isImage(asset.mimeType) ? (
                 <div style={{ position: "relative", width: "100%", height: "8rem" }}>
                   <Image
-                    src={asset.url}
+                    src={asset.signedUrl}
                     alt={asset.alt ?? asset.filename}
                     fill
                     sizes="176px"

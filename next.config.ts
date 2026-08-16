@@ -60,6 +60,17 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
+      // Phase C: isolate the admin origin from cross-window references. The
+      // public site is unaffected (it does not depend on same-origin window
+      // handles for ads, OAuth popups, etc.). If a future flow needs to relax
+      // this, scope the override to a single path — do not remove COOP
+      // globally.
+      {
+        source: "/admin/:path*",
+        headers: [
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        ],
+      },
     ];
   },
 };

@@ -221,3 +221,44 @@ that is not worth the risk in this sprint. Phase B DoD is valid without 2FA.
 Rule: if a future epic proposes 2FA, it **must** come with explicit human approval of a
 specific library (`otpauth`, `@otplib/preset-default`, etc.) in the commit message or lessons
 note. Do not implement hand-rolled TOTP without a separate decision.
+
+## CSP enforcement is a follow-up, not Phase C scope (v0.7.0)
+
+`Content-Security-Policy-Report-Only` ships in Phase A and is **kept** in Phase C
+(`v0.7.0`). Flipping the directive to enforce requires a per-request nonce pipeline
+(`'nonce-…'`) for every `<script>` and `<style>` that the App Router injects. Without the
+nonce, an enforced policy breaks the admin shell or the public site because Next.js emits
+inline style/script tags for runtime bootstrap.
+
+Rule: do **not** flip CSP to enforce-mode in a side change. Track it as its own epic with a
+nonce strategy (likely a custom `headers()` wrapper + Server Component inline-script
+override). Until then, leave the Report-Only directive in place and document the residual
+in the next release notes. When the audit gate (`npm audit --omit=dev --audit-level=high`)
+starts reporting a CSP-bypass advisory, the nonce epic becomes blocking.
+
+## SigV4 presigning without the SDK (v0.7.0)
+
+For private-bucket signed URLs we deliberately avoided pulling `@aws-sdk/*` as a direct
+dependency. Query-string presigning only needs SHA-256 + HMAC-SHA256 (both in
+`node:crypto`), the canonical request from
+<https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html>, and the
+existing `S3_*` env vars. The implementation validates against LocalStack (which enforces
+SigV4) and against real S3; no third-party SDK was needed.
+
+Rule: when a feature needs an SDK helper, check first whether `node:crypto` (or another
+already-loaded module) is enough. Adding a direct dep requires explicit human approval per
+AGENTS.md rule 5 and also requires committing the regenerated `package-lock.json` per rule
+10. SigV4 presign was implemented in 100 lines without a new dep — the default should be
+"port to the stdlib" unless the use case is materially larger.
+
+## Advisory allowlist is mechanism-only (v0.7.0)
+
+The CI audit gate (`npm audit --omit=dev --audit-level=high`) ships with an empty allowlist
+mechanism: when an advisory must be temporarily accepted, the rule is to record the
+advisory id + reason + intended removal date in `docs/lessons.md`, **not** to seed CI with a
+pre-baked list of allowed ids. Pre-seeding the allowlist invites drift and obscures the
+real risk posture.
+
+Rule: keep `npm audit … --audit-level=high` strict on `main`. If a critical/high advisory
+cannot be fixed in-tree in the same change set, open a follow-up issue, document the
+advisory id here, and accept that CI will go red until the fix lands.

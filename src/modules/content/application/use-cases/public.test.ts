@@ -121,6 +121,10 @@ function memoryPostRepo(seed: Post[] = []): PostRepository {
       rows[idx] = { ...rows[idx]!, ...data };
       return rows[idx]!;
     },
+    async delete(id) {
+      const idx = rows.findIndex((r) => r.id === id);
+      if (idx >= 0) rows.splice(idx, 1);
+    },
     async deleteMany(ids) {
       const target = new Set(ids);
       const before = rows.length;

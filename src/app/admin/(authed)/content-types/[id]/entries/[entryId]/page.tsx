@@ -14,12 +14,12 @@ export default async function EditEntryPage({
   if (!type || !entry || entry.contentTypeId !== id) notFound();
 
   const mediaAssets = type.fields.some((field) => field.type === "media")
-    ? await media.listMedia({ mimePrefix: "image" })
+    ? await media.listMediaWithUrls()
     : [];
   const pickerAssets = mediaAssets.map((asset) => ({
     id: asset.id,
     filename: asset.filename,
-    url: asset.url,
+    url: asset.signedUrl,
     alt: asset.alt,
   }));
 

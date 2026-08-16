@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { z } from "zod";
 import { content, media } from "@/app/_lib/modules";
-import type { MediaAsset } from "@/modules/media/domain/types";
+import type { MediaAssetWithUrl } from "@/modules/media/application/use-cases/attach-signed-url";
 import { formatDate, resolveBaseUrl } from "../../../_lib/format";
 import { ContentEntryFields } from "../../_components/content-entry-view";
 
@@ -36,8 +36,8 @@ export async function generateMetadata({
 async function resolveMediaFields(
   contentType: { fields: { name: string; type: string }[] },
   fields: Record<string, unknown>,
-): Promise<Map<string, MediaAsset | null>> {
-  const map = new Map<string, MediaAsset | null>();
+): Promise<Map<string, MediaAssetWithUrl | null>> {
+  const map = new Map<string, MediaAssetWithUrl | null>();
   for (const field of contentType.fields) {
     if (field.type !== "media") continue;
     const value = fields[field.name];
@@ -45,7 +45,7 @@ async function resolveMediaFields(
       map.set(field.name, null);
       continue;
     }
-    const asset = await media.getMedia(value);
+    const asset = await media.getMediaWithUrl(value);
     map.set(field.name, asset);
   }
   return map;

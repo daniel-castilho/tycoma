@@ -5,6 +5,55 @@ All notable changes to Tycoma will be documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
 project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
 
+## [v0.7.0] — 2026-08-16
+
+Seventh tagged release: **Security Hardening Phase C** — operational excellence and the residual
+A/B debt that is still load-bearing. **No new npm dependencies.** CSP enforcement is deliberately
+deferred (lesson entry in `docs/lessons.md`); 2FA and sliding/remember-me remain skipped.
+See `docs/releases/v0.7.0.md` for the full decision log.
+
+### Added
+
+- **CI security gate.** `.github/workflows/ci.yml` runs `npm audit --omit=dev --audit-level=high`
+  right after `npm ci` and fails on critical/high vulnerabilities. Current tree: zero.
+- **Dependabot weekly** for the `npm` ecosystem (`.github/dependabot.yml`); patch + minor
+  batches, majors stay as individual PRs.
+- **Step-up on destructive deletes.** `createDeletePost`, `createDeletePage`, `createDeleteMedia`
+  and the bulk-delete branch of `createBulkPosts` all call `StepUpStore.has(actorId)` before
+  touching the database. The 10-minute Redis TTL marker from Phase B is reused — no second
+  step-up system. A reusable `<StepUpHint />` admin component surfaces the prompt above the
+  delete form on `/admin/posts`, `/admin/pages/[id]`, and `/admin/media/[id]`.
+- **SigV4 presigned media URLs.** New `MediaAssetWithUrl` shape and `media.listMediaWithUrls()` /
+  `media.getMediaWithUrl(id)` use cases route every read through a single TTL constant
+  (`SIGNED_URL_TTL_SECONDS = 30 min`). Implementation uses `node:crypto` only — no
+  `@aws-sdk/*` direct dependency was added.
+- **Backup manifest + checksum.** New `src/shared/backup/manifest.ts` defines the v1 schema
+  (metadata + object keys; binaries stay in the bucket) with stable JSON canonicalisation.
+  `scripts/backup-roundtrip.mjs` proves the export → SHA-256 → re-import loop without Docker.
+- **`/.well-known/security.txt`** (RFC 9116). Rolling one-year `Expires`, generated at request
+  time. New `SECURITY_CONTACT` env var (default `admin@example.test` — operator must override
+  in production).
+- **COOP on `/admin/:path*`.** `Cross-Origin-Opener-Policy: same-origin` is added in
+  `next.config.ts`. Public site is unaffected.
+- **Documentation.** New `docs/release-runbook.md` (single procedure to follow before tagging);
+  `docs/testing-playbook.md` gained a § Security regression block; `docs/releases/v0.7.0.md`
+  is the new milestone notes file.
+
+### Changed
+
+- `media` application exposes `listMediaWithUrls` and `getMediaWithUrl`. Callers in the admin
+  media library, content-entry editor, and public content-type entry view were updated; raw
+  `MediaAsset.url` is no longer rendered directly.
+- `deletePost` is a new use case; previously the page-only delete path was exposed.
+  Bulk-post delete (the `action: "delete"` branch of `bulkPosts`) now requires step-up too.
+
+### Residual
+
+- **CSP stays Report-Only.** Documented as a Phase C residual in `docs/lessons.md`. Enforcing
+  without a nonce pipeline risked breaking the admin or public site; tracked for the next
+  milestone.
+- **2FA and sliding/remember-me still skipped.** No human approval of a TOTP library yet.
+
 ## [v0.6.0] — 2026-08-16
 
 Sixth tagged release: **Security Hardening Phase B**. Shrinks the session-theft window,

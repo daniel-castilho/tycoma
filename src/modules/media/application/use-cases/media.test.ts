@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AuditEventWrite, AuditEventWriter } from "../../../audit/domain/types.ts";
 import type { MediaAsset, MediaRepository, MediaUsageLookup, ObjectStorage } from "../../domain/types.ts";
+import type { StepUpStore } from "../../../auth/domain/step-up.ts";
 import { createDeleteMedia } from "./delete-media.ts";
 import { createGetMediaStorageStats } from "./media-storage-stats.ts";
 import { createUploadMedia } from "./upload-media.ts";
@@ -53,6 +54,9 @@ function memoryStorage(): { keys: string[]; storage: ObjectStorage } {
         const idx = keys.indexOf(key);
         if (idx >= 0) keys.splice(idx, 1);
       },
+      async getSignedUrl(key) {
+        return `https://signed.test/${key}`;
+      },
     },
   };
 }
@@ -65,6 +69,20 @@ function memoryAudit(): { events: AuditEventWrite[]; writer: AuditEventWriter } 
       async record(event) {
         events.push(event);
       },
+    },
+  };
+}
+
+function memoryStepUp(allowed = true): StepUpStore {
+  return {
+    async has() {
+      return allowed;
+    },
+    async grant() {
+      // no-op for unit tests
+    },
+    async revoke() {
+      // no-op for unit tests
     },
   };
 }
@@ -220,7 +238,7 @@ describe("deleteMedia", () => {
         return [];
       },
     };
-    const deleteMedia = createDeleteMedia(repo, usage, storage, writer);
+    const deleteMedia = createDeleteMedia(repo, usage, storage, writer, memoryStepUp());
     const result = await deleteMedia("m1", "user-1");
     assert.equal(result.ok, true);
     assert.equal(await repo.findById("m1"), null);
@@ -239,8 +257,15 @@ describe("deleteMedia", () => {
     const storage: ObjectStorage = {
       put: async () => ({ url: "" }),
       delete: async () => {},
+      getSignedUrl: async (key) => `https://signed.test/${key}`,
     };
-    const deleteMedia = createDeleteMedia(repo, usage, storage, { record: async () => {} });
+    const deleteMedia = createDeleteMedia(
+      repo,
+      usage,
+      storage,
+      { record: async () => {} },
+      memoryStepUp(),
+    );
     const result = await deleteMedia("m1");
     assert.equal(result.ok, false);
     assert.ok(await repo.findById("m1"));
@@ -256,10 +281,42 @@ describe("deleteMedia", () => {
     const storage: ObjectStorage = {
       put: async () => ({ url: "" }),
       delete: async () => {},
+      getSignedUrl: async (key) => `https://signed.test/${key}`,
     };
-    const deleteMedia = createDeleteMedia(repo, usage, storage, { record: async () => {} });
+    const deleteMedia = createDeleteMedia(
+      repo,
+      usage,
+      storage,
+      { record: async () => {} },
+      memoryStepUp(),
+    );
     const result = await deleteMedia("m1");
     assert.equal(result.ok, false);
+    assert.ok(await repo.findById("m1"));
+  });
+
+  it("refuses when step-up has not been confirmed recently", async () => {
+    const repo = memoryMedia([baseAsset("m1")]);
+    const usage: MediaUsageLookup = {
+      async findUsages(_id) {
+        return [];
+      },
+    };
+    const storage: ObjectStorage = {
+      put: async () => ({ url: "" }),
+      delete: async () => {},
+      getSignedUrl: async (key) => `https://signed.test/${key}`,
+    };
+    const deleteMedia = createDeleteMedia(
+      repo,
+      usage,
+      storage,
+      { record: async () => {} },
+      memoryStepUp(false),
+    );
+    const result = await deleteMedia("m1", "user-1");
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /confirm your current password/i);
     assert.ok(await repo.findById("m1"));
   });
 });

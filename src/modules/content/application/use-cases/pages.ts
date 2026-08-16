@@ -2,6 +2,7 @@ import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
 import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
+import type { StepUpStore } from "@/modules/auth/domain/step-up";
 import type { Page, PageReader, PageWrite, PageWriter } from "../../domain/types";
 import { resolveStatus } from "../status";
 
@@ -11,8 +12,20 @@ export function createListPages(pages: PageReader) {
   };
 }
 
-export function createDeletePage(pages: PageReader & PageWriter, audit: AuditEventWriter) {
-  return async function deletePage(id: string, actorId?: string | null): Promise<Result<{ ok: true }>> {
+export function createDeletePage(
+  pages: PageReader & PageWriter,
+  audit: AuditEventWriter,
+  stepUp: StepUpStore,
+) {
+  return async function deletePage(
+    id: string,
+    actorId?: string | null,
+  ): Promise<Result<{ ok: true }>> {
+    // Phase C: destructive deletes require a recent step-up (Redis TTL 10 min,
+    // time-boxed reuse — see `STEP_UP_TTL_SECONDS`).
+    if (!(await stepUp.has(actorId ?? ""))) {
+      return err("Please confirm your current password before this action.");
+    }
     const page = await pages.findById(id);
     if (!page) return err("Page not found.");
     const children = await pages.list();

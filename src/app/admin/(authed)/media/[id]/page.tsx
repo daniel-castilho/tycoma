@@ -5,6 +5,8 @@ import { content, media } from "@/app/_lib/modules";
 import { deleteMediaAction, saveMediaMetadataAction } from "@/app/admin/_actions/media";
 import { TextArea, TextField } from "@/app/admin/(authed)/_components/form-field";
 import { SubmitButton } from "@/app/admin/(authed)/_components/submit-button";
+import { StepUpHint } from "@/app/admin/(authed)/_components/step-up-hint";
+import { requireSession } from "@/app/admin/_lib/session";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -22,7 +24,8 @@ function isImage(mimeType: string): boolean {
 
 export default async function MediaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const asset = await media.getMedia(id);
+  const session = await requireSession();
+  const asset = await media.getMediaWithUrl(id);
   if (!asset) notFound();
 
   const usages = await media.getMediaUsages(id);
@@ -47,7 +50,7 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
           {isImage(asset.mimeType) ? (
             <div style={{ position: "relative", maxWidth: "28rem", height: "20rem" }}>
               <Image
-                src={asset.url}
+                src={asset.signedUrl}
                 alt={asset.alt ?? asset.filename}
                 fill
                 sizes="448px"
@@ -58,7 +61,7 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
             <div className="empty-state">
               <p style={{ margin: 0, fontWeight: 600 }}>Not a previewable image</p>
               <p style={{ margin: "0.35rem 0 0", fontSize: "0.875rem" }}>
-                <a href={asset.url} target="_blank" rel="noreferrer">
+                <a href={asset.signedUrl} target="_blank" rel="noreferrer">
                   Open the file
                 </a>
               </p>
@@ -68,9 +71,9 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
           <details style={{ marginTop: "1rem" }}>
             <summary style={{ cursor: "pointer", color: "var(--accent)" }}>File details</summary>
             <dl style={{ fontSize: "0.875rem", marginTop: "0.5rem" }}>
-              <dt>URL</dt>
+              <dt>Signed URL (30 min)</dt>
               <dd>
-                <code>{asset.url}</code>
+                <code style={{ wordBreak: "break-all" }}>{asset.signedUrl}</code>
               </dd>
               <dt>Storage key</dt>
               <dd>
@@ -108,6 +111,7 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
       </section>
 
       <section style={{ marginTop: "1.5rem" }}>
+        <StepUpHint userId={session.sub} />
         <form action={deleteMediaAction}>
           <input type="hidden" name="id" value={asset.id} />
           <button type="submit" className="btn-danger">

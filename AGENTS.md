@@ -151,8 +151,10 @@ Result<...>`. Errors as `Result<T, E>` (`@/shared/kernel/result`) or domain exce
 Items that currently violate the rules above. Do **not** silently "fix" them, and do **not** add
 new violations — flag them to the human instead.
 
-- _None at the moment._ The two items carried over from `v0.1.0` (`asStatus` silent degradation
-  and the wide repository interfaces) were resolved:
+- _None at the moment._ Phase C (`v0.7.0`, documented) closed the Phase B residual on
+  destructive deletes, signed media URLs, backup drill, and the CI audit gate. The two items
+  carried over from `v0.1.0` (`asStatus` silent degradation and the wide repository
+  interfaces) were resolved:
   - `asStatus` was replaced by `parseContentStatus` in
     `src/modules/content/domain/content-status.ts`, which throws on unknown values (covered by
     `content-status.test.ts`). The Prisma adapter now calls it from `mapPost`/`mapPage`.
