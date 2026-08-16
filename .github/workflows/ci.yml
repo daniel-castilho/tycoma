@@ -13,9 +13,9 @@ jobs:
       # Required by src/shared/env.ts at module scope during `next build`; test-only value.
       AUTH_SECRET: ci-test-only-secret-0123456789abcdef
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
