@@ -1,6 +1,3 @@
-### 3. `tasks/tycoma-public-site-module-spec.md`
-
-```markdown
 # Public Site — Technical Specification (Target Design)
 
 **Status:** Shipped (v0.2.0) — target design validated as routes shipped. Open questions resolved below.
@@ -173,4 +170,3 @@ Exact folder names for pages vs top-level slugs may be adjusted at implementatio
 ---
 
 _This document describes the target design. Update it when URL conventions or use-case names become concrete during implementation._
-```

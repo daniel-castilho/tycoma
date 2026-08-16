@@ -1,6 +1,3 @@
-### 2. `tasks/tycoma-public-site-implementation-sequence.md`
-
-```markdown
 # Public Site — Implementation Sequence (Planned)
 
 **Companion docs:** `tycoma-public-site-module-spec.md` · `tycoma-public-site-backlog.md` · `tycoma-ai-software-engineer-prompt-public-site.md`
@@ -105,4 +102,3 @@ Deliver in **vertical slices** (route + use case if missing + minimal styling + 
 ---
 
 _This is the planned execution order, written before implementation starts. Once phases ship, keep this file updated (or note deviations) so backlog and sequence stay aligned._
-```

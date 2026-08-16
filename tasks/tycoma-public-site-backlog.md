@@ -1,6 +1,3 @@
-### 1. `tasks/tycoma-public-site-backlog.md`
-
-```markdown
 # Public Site — Backlog Status
 
 **Companion documents:**
@@ -112,4 +109,3 @@ Do **not** build as part of Public Site MVP:
 ---
 
 _This backlog tracks the Public Site MVP. Update story checkboxes as work lands; keep deferred items deferred unless the human expands scope._
-```
