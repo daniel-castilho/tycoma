@@ -144,7 +144,7 @@
 - [x] CSP enforced **or** residual explicit
 - [x] Deletes require step-up
 - [x] 2FA shipped **or** explicitly skipped
-- [ ] Gates green; docs synced (v0.7.0) → pending local gates in this session.
+- [x] Gates green; docs synced (v0.7.0) → `npm test` 142/142, lint, typecheck, build, purity grep all clean; tag `v0.7.0` created by human on 2026-08-16.
 
 ---
 
