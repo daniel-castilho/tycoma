@@ -56,8 +56,24 @@ function memoryPages(seed: Page[] = []): PageReader & PageWriter {
       return [];
     },
     async create(data) {
-      rows.push(data);
-      return data;
+      const page: Page = {
+        id: `page-${rows.length + 1}`,
+        title: data.title,
+        slug: data.slug ?? "",
+        body: data.body,
+        status: data.status,
+        parentId: data.parentId ?? null,
+        publishedAt: data.publishedAt ?? null,
+        scheduledAt: data.scheduledAt ?? null,
+        featuredImageId: data.featuredImageId ?? null,
+        metaTitle: data.metaTitle ?? null,
+        metaDescription: data.metaDescription ?? null,
+        ogImageId: data.ogImageId ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      rows.push(page);
+      return page;
     },
     async update(id, data) {
       const idx = rows.findIndex((p) => p.id === id);

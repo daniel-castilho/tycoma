@@ -59,13 +59,18 @@ in severity order. Fixes must keep the AGENTS.md purity rules intact (zero frame
 
 ## Phase 4 — Domain correctness
 
-- [ ] **4.1** — Move the "media usage" detection rule into the domain (define the reference
-  shape) and implement a recursive scan so nested/referenced media blocks deletion. Files:
-  `src/modules/content/infrastructure/prisma-content-type-repositories.ts:150-160`,
-  `src/modules/content/domain/`.
-- [ ] **4.2** — `PostWriter`/`PageWriter.create` should accept `*Write` types, not the full entity
-  (stops the adapter silently dropping `id` while persisting caller-supplied timestamps). Files:
-  `src/modules/content/domain/types.ts`, `src/modules/content/infrastructure/prisma-content-repositories.ts:85,146`.
+- [x] **4.1** — Media usage detection moved to the domain: pure
+  `containsMediaReference(fields, fieldDefs, mediaId)` in
+  `src/modules/content/domain/media-reference.ts` (schema-aware Option B: only declared media
+  fields, recursive inside the field value; text containing the same hex does not count).
+  `findEntryIdsUsingMedia` now loads content-type field defs and delegates to it. Unit tests:
+  `media-reference.test.ts`.
+- [x] **4.2** — `PostWriter`/`PageWriter.create` now accept `PostWrite`/`PageWrite` instead of
+  the full entity. Use cases pass write models (no `id`, no caller timestamps); the adapter
+  persists only write fields and no longer strips `id` — Prisma owns
+  `id`/`createdAt`/`updatedAt`. Files: `src/modules/content/domain/types.ts`,
+  `src/modules/content/infrastructure/prisma-content-repositories.ts`,
+  `src/modules/content/application/use-cases/posts.ts`, `pages.ts`.
 
 ## Phase 5 — Layer & composition
 

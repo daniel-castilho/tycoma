@@ -133,6 +133,11 @@ excellence + residual A/B debt). **No new npm dependencies.** See
   and `S3_FORCE_PATH_STYLE` is honored with one addressing mode shared by upload, delete and
   presign — fixing signed GETs against LocalStack in dev. Pure builder in
   `src/modules/media/infrastructure/s3-presign.ts`. (Unreleased; see CHANGELOG.)
+- **Post-tag follow-up on `main` (domain correctness):** media-usage detection is now a schema-
+  aware domain rule (`containsMediaReference` in `src/modules/content/domain/media-reference.ts`,
+  recursive inside declared media fields — text values containing the same hex no longer block
+  deletes), and `PostWriter`/`PageWriter.create` accept `*Write` inputs so the adapter persists
+  only write fields instead of silently dropping `id`. (Unreleased; see CHANGELOG.)
 
 - **v0.6.0 (Security Hardening Phase B):**
   - Default session lifetime: **`7d` → `12h`**. JWT `exp` and cookie `maxAge` aligned.

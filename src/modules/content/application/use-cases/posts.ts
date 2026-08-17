@@ -1,6 +1,5 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
-import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { StepUpStore } from "@/modules/auth/domain/step-up";
 import type {
@@ -32,9 +31,7 @@ export function createCreatePost(posts: PostReader & PostWriter, audit: AuditEve
     const existing = await posts.findBySlug(slug);
     if (existing) return err("A post with this slug already exists.");
     const status = resolveStatus(input);
-    const now = new Date();
     const post = await posts.create({
-      id: newObjectId(),
       title: input.title.trim(),
       slug,
       body: input.body,
@@ -44,8 +41,6 @@ export function createCreatePost(posts: PostReader & PostWriter, audit: AuditEve
       metaTitle: input.metaTitle ?? null,
       metaDescription: input.metaDescription ?? null,
       ogImageId: input.ogImageId ?? null,
-      createdAt: now,
-      updatedAt: now,
       ...status,
     });
     await audit.record({

@@ -333,3 +333,30 @@ Rule: the S3 adapter resolves one `{ scheme, host, bucketPrefix }` target
 scheme comes from `S3_ENDPOINT` (https fallback only when the scheme is missing), and the
 addressing mode comes from `S3_FORCE_PATH_STYLE` (path-style for LocalStack, virtual-host
 for real S3). Any future AWS call must reuse `resolveTarget`, never re-derive the host.
+
+## Usage lookups are domain rules, not JSON scans (audit follow-up)
+
+`findEntryIdsUsingMedia` used to scan every `ContentEntry.fields` for a shallow
+`Object.values(...).includes(mediaId)` — the adapter decided what counts as a media
+reference. A `text`/`longtext` value containing the same 24-char hex (accidental or
+malicious) would match and block media deletion forever (false positive).
+
+Rule: "does this entry reference media X" is a domain rule about media references, so it
+lives in the domain as a pure function (`containsMediaReference` in
+`src/modules/content/domain/media-reference.ts`). It is schema-aware (only fields whose
+declared `ContentFieldType` is a media kind are inspected) and recursive inside the media
+field value (string equality, array elements, nested object values), because media fields
+may store structured payloads. When a new media field kind ships, extend the allowlist in
+that helper — never switch to "any string in the tree".
+
+## Repository `create` ports take write models, not full entities (audit follow-up)
+
+`PostWriter.create(data: Post)` and `PageWriter.create(data: Page)` forced the adapter to
+destructure `const { id: _id, ...rest } = data` — silently dropping the caller-supplied `id`
+while persisting caller-owned `createdAt`/`updatedAt`. That is a data-integrity smell: the
+DB silently "ignores" part of what the caller asked to persist.
+
+Rule: create ports take `*Write` models (`PostWrite`/`PageWrite`); use cases build them
+without `id` or timestamps; the adapter persists only write fields and Prisma owns
+`id`/`createdAt`/`updatedAt` defaults. If a repository's `create` would need to ignore a
+field, that is a signal the port type is too wide — narrow it instead of stripping.

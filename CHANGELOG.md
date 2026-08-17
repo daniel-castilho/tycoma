@@ -38,6 +38,16 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
   finally honored — so signed GETs work against LocalStack in dev and stay correct for
   real S3. Unit tests pin scheme, addressing, TTL and `X-Amz-Signature`
   (audit findings 3.1, 3.2).
+- **Media usage detection is schema-aware and recursive.** The domain now owns the rule in
+  `src/modules/content/domain/media-reference.ts` (`containsMediaReference`): only fields
+  whose declared type is a media kind are inspected, and inside a media field the value is
+  walked recursively (string, array elements, nested object values). A `text`/`longtext`
+  value containing the same 24-char hex no longer blocks media deletion (Option B, audit
+  finding 4.1).
+- **`PostWriter`/`PageWriter.create` accept `*Write`, not the full entity.** The ports now
+  take `PostWrite`/`PageWrite`, so the adapter no longer silently strips `id` while persisting
+  caller-supplied timestamps; create persists only write fields and lets the DB own
+  `id`/`createdAt`/`updatedAt` (audit finding 4.2).
 
 ## [v0.7.0] — 2026-08-16
 

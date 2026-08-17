@@ -9,8 +9,10 @@ import type {
   MenuRepository,
   Page,
   PageRepository,
+  PageWrite,
   Post,
   PostRepository,
+  PostWrite,
   SettingsRepository,
   Tag,
   TagRepository,
@@ -81,9 +83,25 @@ export const prismaPostRepository: PostRepository = {
     const row = await prisma.post.findUnique({ where: { slug } });
     return row ? mapPost(row) : null;
   },
-  async create(data) {
-    const { id: _id, ...rest } = data;
-    return mapPost(await prisma.post.create({ data: rest }));
+  async create(data: PostWrite) {
+    return mapPost(
+      await prisma.post.create({
+        data: {
+          title: data.title,
+          slug: data.slug ?? "",
+          body: data.body,
+          status: data.status,
+          publishedAt: data.publishedAt ?? null,
+          scheduledAt: data.scheduledAt ?? null,
+          featuredImageId: data.featuredImageId ?? null,
+          categoryIds: data.categoryIds ?? [],
+          tagIds: data.tagIds ?? [],
+          metaTitle: data.metaTitle ?? null,
+          metaDescription: data.metaDescription ?? null,
+          ogImageId: data.ogImageId ?? null,
+        },
+      }),
+    );
   },
   async update(id, data) {
     return mapPost(await prisma.post.update({ where: { id }, data }));
@@ -142,9 +160,24 @@ export const prismaPageRepository: PageRepository = {
     const row = await prisma.page.findUnique({ where: { slug } });
     return row ? mapPage(row) : null;
   },
-  async create(data) {
-    const { id: _id, ...rest } = data;
-    return mapPage(await prisma.page.create({ data: rest }));
+  async create(data: PageWrite) {
+    return mapPage(
+      await prisma.page.create({
+        data: {
+          title: data.title,
+          slug: data.slug ?? "",
+          body: data.body,
+          status: data.status,
+          parentId: data.parentId ?? null,
+          publishedAt: data.publishedAt ?? null,
+          scheduledAt: data.scheduledAt ?? null,
+          featuredImageId: data.featuredImageId ?? null,
+          metaTitle: data.metaTitle ?? null,
+          metaDescription: data.metaDescription ?? null,
+          ogImageId: data.ogImageId ?? null,
+        },
+      }),
+    );
   },
   async update(id, data) {
     return mapPage(await prisma.page.update({ where: { id }, data }));

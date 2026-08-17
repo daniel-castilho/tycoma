@@ -1,6 +1,7 @@
 import { prisma } from "@/shared/db/prisma";
 import { isObjectId } from "@/shared/db/object-id";
 import { parseContentStatus } from "../domain/content-status";
+import { containsMediaReference } from "../domain/media-reference";
 import type {
   ContentEntry,
   ContentEntryRepository,
@@ -144,17 +145,32 @@ export const prismaContentEntryRepository: ContentEntryRepository = {
 
 /**
  * Scans every ContentEntry for occurrences of `mediaId` inside its JSON `fields`
- * payload and returns the matching entry ids. The `fields` column is stored as a
+ * payload and returns the matching entry ids. Only fields whose declared type is
+ * a media kind are inspected (recursively inside the field value) — a text value
+ * containing the same hex does not count. The `fields` column is stored as a
  * MongoDB Json, so the scan happens in JS — acceptable for a single-tenant CMS.
  */
 export async function findEntryIdsUsingMedia(mediaId: string): Promise<string[]> {
   if (!isObjectId(mediaId)) return [];
-  const rows = await prisma.contentEntry.findMany({ select: { id: true, fields: true } });
+  const [rows, types] = await Promise.all([
+    prisma.contentEntry.findMany({ select: { id: true, contentTypeId: true, fields: true } }),
+    prisma.contentType.findMany({ select: { id: true, fields: true } }),
+  ]);
+  const fieldDefsByType = new Map(
+    types.map((type) => [
+      type.id,
+      (Array.isArray(type.fields) ? type.fields : []) as ContentTypeField[],
+    ]),
+  );
   return rows
     .filter((row) => {
       const fields = row.fields;
       if (!fields || typeof fields !== "object") return false;
-      return Object.values(fields as Record<string, unknown>).includes(mediaId);
+      return containsMediaReference(
+        fields as Record<string, unknown>,
+        fieldDefsByType.get(row.contentTypeId) ?? [],
+        mediaId,
+      );
     })
     .map((row) => row.id);
 }

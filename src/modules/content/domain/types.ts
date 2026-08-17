@@ -142,7 +142,7 @@ export type PostReader = {
 };
 
 export type PostWriter = {
-  create(data: Post): Promise<Post>;
+  create(data: PostWrite): Promise<Post>;
   update(id: string, data: Partial<Post>): Promise<Post>;
   delete(id: string): Promise<void>;
   deleteMany(ids: string[]): Promise<number>;
@@ -159,7 +159,7 @@ export type PageReader = {
 };
 
 export type PageWriter = {
-  create(data: Page): Promise<Page>;
+  create(data: PageWrite): Promise<Page>;
   update(id: string, data: Partial<Page>): Promise<Page>;
   delete(id: string): Promise<void>;
 };

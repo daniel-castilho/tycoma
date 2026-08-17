@@ -1,6 +1,5 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
-import { newObjectId } from "@/shared/db/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { StepUpStore } from "@/modules/auth/domain/step-up";
 import type { Page, PageReader, PageWrite, PageWriter } from "../../domain/types";
@@ -60,9 +59,7 @@ export function createCreatePage(pages: PageWriter & PageReader, audit: AuditEve
       if (!parent) return err("Parent page not found.");
     }
     const status = resolveStatus(input);
-    const now = new Date();
     const page = await pages.create({
-      id: newObjectId(),
       title: input.title.trim(),
       slug,
       body: input.body,
@@ -71,8 +68,6 @@ export function createCreatePage(pages: PageWriter & PageReader, audit: AuditEve
       metaTitle: input.metaTitle ?? null,
       metaDescription: input.metaDescription ?? null,
       ogImageId: input.ogImageId ?? null,
-      createdAt: now,
-      updatedAt: now,
       ...status,
     });
     await audit.record({
