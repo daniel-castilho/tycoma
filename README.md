@@ -138,6 +138,10 @@ excellence + residual A/B debt). **No new npm dependencies.** See
   recursive inside declared media fields — text values containing the same hex no longer block
   deletes), and `PostWriter`/`PageWriter.create` accept `*Write` inputs so the adapter persists
   only write fields instead of silently dropping `id`. (Unreleased; see CHANGELOG.)
+- **Post-tag follow-up on `main` (layer & composition):** the media upload rate limit moved out
+  of the route into a `media` use case (`media.checkUploadRate`) backed by the shared
+  `RateLimiter` port; the budget lives in `media/domain/policies.ts`. The route no longer
+  touches Redis directly. (Unreleased; see CHANGELOG.)
 
 - **v0.6.0 (Security Hardening Phase B):**
   - Default session lifetime: **`7d` → `12h`**. JWT `exp` and cookie `maxAge` aligned.

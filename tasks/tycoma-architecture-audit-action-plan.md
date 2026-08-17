@@ -74,7 +74,7 @@ in severity order. Fixes must keep the AGENTS.md purity rules intact (zero frame
 
 ## Phase 5 — Layer & composition
 
-- [ ] **5.1** — Route the media upload rate limit through a `media` domain port/application
+- [x] **5.1** — Route the media upload rate limit through a `media` domain port/application
   service instead of `getRedis()` + hardcoded constants in the route. File:
   `src/app/api/media/route.ts:3,13-14`.
 

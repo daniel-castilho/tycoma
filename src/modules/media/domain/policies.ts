@@ -1,0 +1,2 @@
+export const UPLOAD_RATE_LIMIT = 30;
+export const UPLOAD_RATE_WINDOW_SECONDS = 60 * 15;

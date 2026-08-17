@@ -1,6 +1,7 @@
 import { createAuditApplication } from "@/modules/audit/application";
 import { prismaAuditRepository } from "@/modules/audit/infrastructure/prisma-audit-repository";
 import { createAuthApplication } from "@/modules/auth/application";
+import { redisRateLimiter } from "@/modules/auth/infrastructure/redis-rate-limiter";
 import { redisStepUpStore } from "@/modules/auth/infrastructure/redis-step-up-store";
 import { createContentApplication } from "@/modules/content/application";
 import { prismaPageRepository, prismaPostRepository } from "@/modules/content/infrastructure/prisma-content-repositories";
@@ -30,7 +31,7 @@ const contentUsageLookup = createContentUsageLookup({
 
 export const auth = createAuthApplication(recordAuditEvent);
 export const content = createContentApplication(recordAuditEvent, stepUp);
-export const media = createMediaApplication({ auditEventWriter: recordAuditEvent, contentUsageLookup, stepUp });
+export const media = createMediaApplication({ auditEventWriter: recordAuditEvent, contentUsageLookup, stepUp, rateLimiter: redisRateLimiter });
 
 export const audit = {
   listAuditEvents: auditApp.listAuditEvents,

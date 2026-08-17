@@ -48,6 +48,11 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
   take `PostWrite`/`PageWrite`, so the adapter no longer silently strips `id` while persisting
   caller-supplied timestamps; create persists only write fields and lets the DB own
   `id`/`createdAt`/`updatedAt` (audit finding 4.2).
+- **Media upload rate limit moved into the `media` module.** The route no longer touches Redis
+  or hardcodes constants: `src/app/api/media/route.ts` now calls `media.checkUploadRate(userId,
+  ip)`, a use case backed by a `RateLimiter` port with the budget in
+  `media/domain/policies.ts` (`UPLOAD_RATE_LIMIT` / `UPLOAD_RATE_WINDOW_SECONDS`). The Redis
+  adapter is injected through the composition root (audit finding 5.1).
 
 ## [v0.7.0] — 2026-08-16
 
