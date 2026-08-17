@@ -293,3 +293,27 @@ must never print a secret query parameter. The `Mailer` port in
 `password-reset.test.ts` pins that the token appears only in the mailer payload and never
 in the use-case result. A real SMTP adapter is tracked in
 `tasks/tycoma-smtp-mailer-backlog.md`.
+
+## Every mutating admin Server Action calls requireSession (audit follow-up)
+
+The proxy guard on `/admin/**` is not defense-in-depth: a Server Action can be invoked
+without a full page navigation. `savePageAction`, `saveCategoryAction` and `saveTagAction`
+were write paths that skipped `requireSession()` and called use cases without an `actorId`,
+so their audit trail recorded no actor. Posts already did this correctly.
+
+Rule: every admin Server Action that writes must (1) call `requireSession()` and (2) pass
+`session.sub` to the use case as `actorId`, and every content mutation use case must record
+an audit event with that actor. Grep for `async function save|delete|publish|bulk.*Action`
+in `src/app/admin/_actions/` when adding a new mutation. Same class for
+`changePassword`: the confirm-password equality check belongs in the use case, not only in
+the action (backlog item 6.2).
+
+## AUTH_SECRET hygiene must be shared, not duplicated (audit follow-up)
+
+`parseEnv` validated `AUTH_SECRET` (placeholders, whitespace, 16/32 min) but the Edge
+verifier read `process.env.AUTH_SECRET` raw, silently accepting a weak secret on every
+`/admin/**` request — the proxy is the front door. Rule: rules that must hold on every path
+(Edge + Node) live once in a pure shared module (`src/shared/kernel/secret.ts`) and every
+consumer calls it; duplicating a rule table invites drift. Edge must stay fail-closed: on
+validation failure the verifier returns `null` (unauthenticated) rather than accepting a
+token signed with a weak secret.

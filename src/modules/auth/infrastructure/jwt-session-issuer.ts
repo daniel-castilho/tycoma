@@ -1,5 +1,6 @@
 import { SignJWT } from "jose";
 import { env } from "@/shared/env-instance";
+import { SESSION_TTL_SECONDS } from "../domain/policies";
 import { jwtSessionVerifier } from "./jwt-session-verifier";
 import type { SessionIssuer } from "../domain/session";
 
@@ -12,7 +13,7 @@ export const jwtSessionIssuer: SessionIssuer = {
     return new SignJWT(payload)
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime("12h")
+      .setExpirationTime(new Date(Date.now() + SESSION_TTL_SECONDS * 1000))
       .sign(secret());
   },
   verify: jwtSessionVerifier.verify,

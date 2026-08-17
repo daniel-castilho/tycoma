@@ -122,6 +122,12 @@ excellence + residual A/B debt). **No new npm dependencies.** See
   port now receives `{ appUrl, token }` and `consoleMailer` prints only the reset page path —
   the raw token never reaches stdout. A real SMTP adapter is tracked in
   `tasks/tycoma-smtp-mailer-backlog.md`. (Unreleased; see CHANGELOG.)
+- **Post-tag follow-up on `main` (auth hardening):** every mutating admin Server Action
+  (`savePage`/`saveCategory`/`saveTag`) asserts the session and records the actor in the audit
+  log; the 12h session lifetime is a single canonical constant (`SESSION_TTL_SECONDS`) shared
+  by the JWT issuer and the session cookie; and the Edge middleware verifier now enforces
+  `AUTH_SECRET` hygiene (≥16/≥32, no placeholders/whitespace) and fails closed. Rules live in
+  `src/shared/kernel/secret.ts`. (Unreleased; see CHANGELOG.)
 
 - **v0.6.0 (Security Hardening Phase B):**
   - Default session lifetime: **`7d` → `12h`**. JWT `exp` and cookie `maxAge` aligned.

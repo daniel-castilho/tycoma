@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { SESSION_TTL_SECONDS } from "@/modules/auth/domain/policies";
 import { SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from "./session-cookie.ts";
-
-const TWELVE_HOURS = 60 * 60 * 12;
 
 describe("SESSION_COOKIE_OPTIONS", () => {
   it("is always httpOnly", () => {
@@ -17,8 +16,9 @@ describe("SESSION_COOKIE_OPTIONS", () => {
     assert.equal(SESSION_COOKIE_OPTIONS.path, "/");
   });
 
-  it("aligns the cookie lifetime with the JWT 12-hour expiry", () => {
-    assert.equal(SESSION_COOKIE_OPTIONS.maxAge, TWELVE_HOURS);
+  it("aligns the cookie lifetime with the canonical SESSION_TTL_SECONDS constant", () => {
+    assert.equal(SESSION_COOKIE_OPTIONS.maxAge, SESSION_TTL_SECONDS);
+    assert.equal(SESSION_TTL_SECONDS, 60 * 60 * 12);
   });
 
   it("uses a stable cookie name (tycoma_session)", () => {

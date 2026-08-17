@@ -21,3 +21,5 @@ export const PASSWORD_RESET_RATE_LIMIT = {
 
 export const PASSWORD_RESET_TTL_MS = ONE_HOUR_MS;
 export const PASSWORD_RESET_TOKEN_BYTES = 32;
+
+export const SESSION_TTL_SECONDS = 12 * 60 * 60;

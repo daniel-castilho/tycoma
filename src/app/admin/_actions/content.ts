@@ -111,12 +111,15 @@ export async function savePageAction(
   _prev: PostActionState,
   formData: FormData,
 ): Promise<PostActionState> {
+  const session = await requireSession();
   const parsed = pageWriteSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
     return { error: "Check the form fields and try again.", message: null };
   }
   const { id, ...write } = parsed.data;
-  const result = id ? await content.updatePage(id, write) : await content.createPage(write);
+  const result = id
+    ? await content.updatePage(id, write, session.sub)
+    : await content.createPage(write, session.sub);
   if (!result.ok) {
     return { error: result.error, message: null };
   }
@@ -143,11 +146,12 @@ export async function previewPageAction(formData: FormData): Promise<void> {
 }
 
 export async function saveCategoryAction(formData: FormData): Promise<void> {
+  const session = await requireSession();
   const parsed = categorySchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
     throw new Error("Check the form fields and try again.");
   }
-  const result = await content.saveCategory(parsed.data);
+  const result = await content.saveCategory(parsed.data, session.sub);
   if (!result.ok) {
     throw new Error(result.error);
   }
@@ -166,11 +170,12 @@ export async function deleteCategoryAction(formData: FormData): Promise<void> {
 }
 
 export async function saveTagAction(formData: FormData): Promise<void> {
+  const session = await requireSession();
   const parsed = tagSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
     throw new Error("Check the form fields and try again.");
   }
-  const result = await content.saveTag(parsed.data);
+  const result = await content.saveTag(parsed.data, session.sub);
   if (!result.ok) {
     throw new Error(result.error);
   }

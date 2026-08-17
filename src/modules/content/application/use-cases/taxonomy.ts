@@ -19,14 +19,17 @@ export function createListCategories(categories: CategoryRepository, posts: Post
   };
 }
 
-export function createSaveCategory(categories: CategoryRepository) {
-  return async function saveCategory(input: {
-    id?: string;
-    name: string;
-    slug?: string;
-    description?: string | null;
-    parentId?: string | null;
-  }): Promise<Result<Category>> {
+export function createSaveCategory(categories: CategoryRepository, audit: AuditEventWriter) {
+  return async function saveCategory(
+    input: {
+      id?: string;
+      name: string;
+      slug?: string;
+      description?: string | null;
+      parentId?: string | null;
+    },
+    actorId?: string | null,
+  ): Promise<Result<Category>> {
     const slug = slugify(input.slug || input.name);
     if (!slug) return err("A slug could not be generated.");
     const clash = await categories.findBySlug(slug);
@@ -52,24 +55,36 @@ export function createSaveCategory(categories: CategoryRepository) {
     }
 
     if (input.id) {
-      return ok(
-        await categories.update(input.id, {
-          name: input.name.trim(),
-          slug,
-          description: input.description ?? null,
-          parentId,
-        }),
-      );
-    }
-    return ok(
-      await categories.create({
-        id: newObjectId(),
+      const updated = await categories.update(input.id, {
         name: input.name.trim(),
         slug,
         description: input.description ?? null,
         parentId,
-      }),
-    );
+      });
+      await audit.record({
+        actorId: actorId ?? null,
+        eventType: "content.category_updated",
+        entityType: "category",
+        entityId: input.id,
+        details: JSON.stringify({ name: updated.name }),
+      });
+      return ok(updated);
+    }
+    const created = await categories.create({
+      id: newObjectId(),
+      name: input.name.trim(),
+      slug,
+      description: input.description ?? null,
+      parentId,
+    });
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.category_created",
+      entityType: "category",
+      entityId: created.id,
+      details: JSON.stringify({ name: created.name }),
+    });
+    return ok(created);
   };
 }
 
@@ -101,34 +116,49 @@ export function createListTags(tags: TagRepository, posts: PostReader) {
   };
 }
 
-export function createSaveTag(tags: TagRepository) {
-  return async function saveTag(input: {
-    id?: string;
-    name: string;
-    slug?: string;
-    description?: string | null;
-  }): Promise<Result<Tag>> {
+export function createSaveTag(tags: TagRepository, audit: AuditEventWriter) {
+  return async function saveTag(
+    input: {
+      id?: string;
+      name: string;
+      slug?: string;
+      description?: string | null;
+    },
+    actorId?: string | null,
+  ): Promise<Result<Tag>> {
     const slug = slugify(input.slug || input.name);
     if (!slug) return err("A slug could not be generated.");
     const clash = await tags.findBySlug(slug);
     if (clash && clash.id !== input.id) return err("A tag with this slug already exists.");
     if (input.id) {
-      return ok(
-        await tags.update(input.id, {
-          name: input.name.trim(),
-          slug,
-          description: input.description ?? null,
-        }),
-      );
-    }
-    return ok(
-      await tags.create({
-        id: newObjectId(),
+      const updated = await tags.update(input.id, {
         name: input.name.trim(),
         slug,
         description: input.description ?? null,
-      }),
-    );
+      });
+      await audit.record({
+        actorId: actorId ?? null,
+        eventType: "content.tag_updated",
+        entityType: "tag",
+        entityId: input.id,
+        details: JSON.stringify({ name: updated.name }),
+      });
+      return ok(updated);
+    }
+    const created = await tags.create({
+      id: newObjectId(),
+      name: input.name.trim(),
+      slug,
+      description: input.description ?? null,
+    });
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.tag_created",
+      entityType: "tag",
+      entityId: created.id,
+      details: JSON.stringify({ name: created.name }),
+    });
+    return ok(created);
   };
 }
 

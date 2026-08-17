@@ -32,13 +32,18 @@ in severity order. Fixes must keep the AGENTS.md purity rules intact (zero frame
 
 ## Phase 2 — Authentication gaps
 
-- [ ] **2.1** — `savePageAction` must call `requireSession()` and forward `session.sub` to the use
-  case (mirror `savePostAction`). File: `src/app/admin/_actions/content.ts:110-124`.
-- [ ] **2.2** — Move the 12h session TTL out of the issuer into `domain/policies.ts` and consume
-  the constant. File: `src/modules/auth/infrastructure/jwt-session-issuer.ts:15`.
-- [ ] **2.3** — Edge verifier must reject weak/placeholder `AUTH_SECRET` (≥16 chars, no known
-  placeholders) even on the raw `process.env` path. File:
-  `src/modules/auth/infrastructure/jwt-session-verifier.ts:4-10`.
+- [x] **2.1** — `savePageAction`/`saveCategoryAction`/`saveTagAction` now call `requireSession()`
+  and forward `session.sub`. Page `createPage`/`updatePage` and taxonomy
+  `saveCategory`/`saveTag` take an `actorId` and record `content.page_created`/`page_updated`,
+  `content.category_created`/`category_updated`, `content.tag_created`/`tag_updated`. New tests:
+  `pages.test.ts`, `taxonomy.test.ts`.
+- [x] **2.2** — `SESSION_TTL_SECONDS` is canonical in `auth/domain/policies.ts`; the JWT issuer
+  and the session cookie both consume it. New `jwt-session-issuer.test.ts` pins the token
+  lifetime; `session-cookie.test.ts` pins `maxAge`.
+- [x] **2.3** — `validateAuthSecret(raw, { isProduction })` in `src/shared/kernel/secret.ts` holds
+  the AUTH_SECRET rules (missing, whitespace, placeholders, 16/32 min). `env.ts` delegates to it;
+  the edge verifier validates through it and fails closed (returns `null` → proxy redirects to
+  login). Tests: `secret.test.ts`, `jwt-session-verifier.test.ts`.
 
 ## Phase 3 — S3 presigned URLs (broken in dev)
 

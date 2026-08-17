@@ -91,15 +91,15 @@ export function createContentApplication(auditEventWriter: AuditEventWriter, ste
 
     listPages: createListPages(prismaPageRepository),
     getPage: createGetPage(prismaPageRepository),
-    createPage: createCreatePage(prismaPageRepository),
-    updatePage: createUpdatePage(prismaPageRepository),
+    createPage: createCreatePage(prismaPageRepository, auditEventWriter),
+    updatePage: createUpdatePage(prismaPageRepository, auditEventWriter),
     deletePage: createDeletePage(prismaPageRepository, auditEventWriter, stepUp),
 
     listCategories: createListCategories(prismaCategoryRepository, prismaPostRepository),
-    saveCategory: createSaveCategory(prismaCategoryRepository),
+    saveCategory: createSaveCategory(prismaCategoryRepository, auditEventWriter),
     deleteCategory: createDeleteCategory(prismaCategoryRepository, prismaPostRepository, auditEventWriter),
     listTags: createListTags(prismaTagRepository, prismaPostRepository),
-    saveTag: createSaveTag(prismaTagRepository),
+    saveTag: createSaveTag(prismaTagRepository, auditEventWriter),
     deleteTag: createDeleteTag(prismaTagRepository, prismaPostRepository, auditEventWriter),
 
     getSettings: createGetSettings(prismaSettingsRepository),

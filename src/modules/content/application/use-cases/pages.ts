@@ -50,8 +50,8 @@ export function createGetPage(pages: PageReader) {
   };
 }
 
-export function createCreatePage(pages: PageWriter & PageReader) {
-  return async function createPage(input: PageWrite): Promise<Result<Page>> {
+export function createCreatePage(pages: PageWriter & PageReader, audit: AuditEventWriter) {
+  return async function createPage(input: PageWrite, actorId?: string | null): Promise<Result<Page>> {
     const slug = slugify(input.slug || input.title);
     if (!slug) return err("A slug could not be generated from the title.");
     if (await pages.findBySlug(slug)) return err("A page with this slug already exists.");
@@ -75,12 +75,23 @@ export function createCreatePage(pages: PageWriter & PageReader) {
       updatedAt: now,
       ...status,
     });
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.page_created",
+      entityType: "page",
+      entityId: page.id,
+      details: JSON.stringify({ title: page.title, status: page.status }),
+    });
     return ok(page);
   };
 }
 
-export function createUpdatePage(pages: PageReader & PageWriter) {
-  return async function updatePage(id: string, input: PageWrite): Promise<Result<Page>> {
+export function createUpdatePage(pages: PageReader & PageWriter, audit: AuditEventWriter) {
+  return async function updatePage(
+    id: string,
+    input: PageWrite,
+    actorId?: string | null,
+  ): Promise<Result<Page>> {
     const current = await pages.findById(id);
     if (!current) return err("Page not found.");
     if (input.parentId === id) return err("A page cannot be its own parent.");
@@ -98,6 +109,13 @@ export function createUpdatePage(pages: PageReader & PageWriter) {
       metaDescription: input.metaDescription ?? null,
       ogImageId: input.ogImageId ?? null,
       ...status,
+    });
+    await audit.record({
+      actorId: actorId ?? null,
+      eventType: "content.page_updated",
+      entityType: "page",
+      entityId: id,
+      details: JSON.stringify({ title: updated.title, status: updated.status }),
     });
     return ok(updated);
   };

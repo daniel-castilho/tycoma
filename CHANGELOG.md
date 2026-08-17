@@ -15,6 +15,20 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
   token never reaches stdout (audit finding 1.1). A regression test pins that the token goes
   only to the mailer and never appears in the use-case result (audit finding 1.2). A real
   env-gated SMTP adapter is tracked in `tasks/tycoma-smtp-mailer-backlog.md` (finding 1.3).
+- **Mutating admin Server Actions now guard session and audit the actor.** `savePageAction`,
+  `saveCategoryAction` and `saveTagAction` call `requireSession()` and pass `session.sub`.
+  `createPage`/`updatePage` and `saveCategory`/`saveTag` take an `actorId` and record
+  `content.page_created`/`page_updated`, `content.category_created`/`category_updated`,
+  `content.tag_created`/`tag_updated` — matching the post/delete paths (audit findings 2.1).
+- **Session lifetime has a single source of truth.** `SESSION_TTL_SECONDS` in
+  `auth/domain/policies.ts` is consumed by both the JWT issuer and the session cookie;
+  a test pins the issued token's lifetime and the cookie `maxAge` to the same constant
+  (audit finding 2.2).
+- **Edge verifier enforces `AUTH_SECRET` hygiene and fails closed.** The placeholder /
+  whitespace / minimum-length rules moved to `src/shared/kernel/secret.ts`
+  (`validateAuthSecret`) and are shared by `env.ts` and the Edge `jwt-session-verifier`;
+  a weak secret now yields unauthenticated requests instead of silently accepted tokens
+  (audit finding 2.3).
 
 ## [v0.7.0] — 2026-08-16
 

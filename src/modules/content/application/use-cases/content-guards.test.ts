@@ -152,7 +152,7 @@ describe("category hierarchy guards", () => {
       categoryRow({ id: "b", name: "B", slug: "b", parentId: "a" }),
       categoryRow({ id: "c", name: "C", slug: "c", parentId: "b" }),
     ]);
-    const save = createSaveCategory(categories);
+    const save = createSaveCategory(categories, noopAudit);
     const result = await save({ id: "a", name: "A", slug: "a", parentId: "c" });
     assert.equal(result.ok, false);
     if (!result.ok) assert.match(result.error, /descendants/i);
@@ -160,14 +160,14 @@ describe("category hierarchy guards", () => {
 
   it("rejects a category that would be its own parent", async () => {
     const categories = memoryCategories([categoryRow({ id: "a", name: "A", slug: "a" })]);
-    const save = createSaveCategory(categories);
+    const save = createSaveCategory(categories, noopAudit);
     const result = await save({ id: "a", name: "A", slug: "a", parentId: "a" });
     assert.equal(result.ok, false);
   });
 
   it("rejects a duplicate slug", async () => {
     const categories = memoryCategories([categoryRow({ id: "a", name: "A", slug: "news" })]);
-    const save = createSaveCategory(categories);
+    const save = createSaveCategory(categories, noopAudit);
     const result = await save({ name: "News", slug: "news" });
     assert.equal(result.ok, false);
     if (!result.ok) assert.match(result.error, /already exists/i);
@@ -266,7 +266,7 @@ describe("page guards", () => {
 
   it("rejects making a page its own parent", async () => {
     const pages = memoryPages([pageRow({ id: "pg1", slug: "page" })]);
-    const upd = createUpdatePage(pages);
+    const upd = createUpdatePage(pages, noopAudit);
     const result = await upd("pg1", {
       title: "Page",
       body: "body",

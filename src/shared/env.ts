@@ -1,16 +1,5 @@
 import { z } from "zod";
-
-/**
- * Known placeholder values that must never be used in production. These come
- * from old tutorials and the project's own `.env.example` — they are
- * convenient in dev but would silently turn HMAC keys into public knowledge.
- */
-const FORBIDDEN_AUTH_SECRETS = [
-  "change-me-to-a-long-random-string",
-  "changeme",
-  "secret",
-  "dev-secret",
-];
+import { validateAuthSecret } from "./kernel/secret";
 
 /**
  * Single validated source of environment configuration. Node-only runtime
@@ -42,7 +31,8 @@ export type EnvInput = Record<string, string | undefined>;
  * Validates a candidate environment object and returns the parsed config.
  * Exported so tests can exercise the production-only rules without mutating
  * `process.env`. Production requires `AUTH_SECRET` ≥ 32 chars and rejects
- * known placeholders; development/test requires ≥ 16.
+ * known placeholders; development/test requires ≥ 16. The `AUTH_SECRET` rules
+ * live in `kernel/secret.ts` so the Edge verifier shares them.
  */
 export function parseEnv(source: EnvInput): z.infer<typeof envSchema> {
   const parsed = envSchema.safeParse(source);
@@ -63,23 +53,13 @@ export function parseEnv(source: EnvInput): z.infer<typeof envSchema> {
   const isProductionBuild = process.env.NEXT_PHASE === "phase-production-build";
   const effectiveNodeEnv = isProductionBuild ? "development" : data.NODE_ENV;
 
-  if (effectiveNodeEnv === "production") {
-    const errors: string[] = [];
-    if (data.AUTH_SECRET.length < 32) {
-      errors.push("AUTH_SECRET must be at least 32 characters in production.");
-    }
-    if (FORBIDDEN_AUTH_SECRETS.includes(data.AUTH_SECRET)) {
-      errors.push(`AUTH_SECRET cannot be the placeholder "${data.AUTH_SECRET}".`);
-    }
-    if (data.AUTH_SECRET.trim() !== data.AUTH_SECRET) {
-      errors.push("AUTH_SECRET must not contain leading or trailing whitespace.");
-    }
-    if (errors.length > 0) {
-      throw new Error(`Invalid environment configuration: ${errors.join(" ")}`);
-    }
-  } else if (data.AUTH_SECRET.length < 16) {
+  try {
+    data.AUTH_SECRET = validateAuthSecret(data.AUTH_SECRET, {
+      isProduction: effectiveNodeEnv === "production",
+    });
+  } catch (error) {
     throw new Error(
-      `Invalid environment configuration: AUTH_SECRET must be at least 16 characters in ${data.NODE_ENV}.`,
+      `Invalid environment configuration: ${(error as Error).message}`,
     );
   }
   return data;

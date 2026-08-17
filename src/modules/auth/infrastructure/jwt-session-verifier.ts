@@ -1,12 +1,12 @@
 import { jwtVerify } from "jose";
+import { validateAuthSecret } from "@/shared/kernel/secret";
 import type { SessionVerifier } from "../domain/session";
 
 function secret() {
-  const raw = process.env.AUTH_SECRET;
-  if (!raw) {
-    throw new Error("AUTH_SECRET is not set");
-  }
-  return new TextEncoder().encode(raw);
+  const validated = validateAuthSecret(process.env.AUTH_SECRET, {
+    isProduction: process.env.NODE_ENV === "production",
+  });
+  return new TextEncoder().encode(validated);
 }
 
 /**
