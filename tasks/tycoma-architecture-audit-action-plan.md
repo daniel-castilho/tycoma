@@ -47,11 +47,15 @@ in severity order. Fixes must keep the AGENTS.md purity rules intact (zero frame
 
 ## Phase 3 — S3 presigned URLs (broken in dev)
 
-- [ ] **3.1** — Derive the URL scheme from `S3_ENDPOINT` (fallback `https`) in `buildSignedUrl`
-  instead of hardcoding `https`. File: `src/modules/media/infrastructure/s3-object-storage.ts:95`.
-- [ ] **3.2** — Honor `S3_FORCE_PATH_STYLE` (currently validated but never read) and use one
-  consistent addressing style across `put`/`delete`/`getSignedUrl` (path-style vs virtual-host).
-  Files: `src/modules/media/infrastructure/s3-object-storage.ts:64,102,115`.
+- [x] **3.1** — `buildSignedUrl` moved to pure `s3-presign.ts` (`parseEndpoint`,
+  `resolveTarget`, `buildSignedUrl`); URL scheme derives from `S3_ENDPOINT` (https fallback
+  only when missing), never hardcoded. Tests in `s3-presign.test.ts`.
+- [x] **3.2** — `S3_FORCE_PATH_STYLE` honored everywhere (put/delete/ensureBucket/presign) via
+  one `resolveTarget`; path-style for LocalStack, virtual-host for real S3; presign signs the
+  same host/path shape the adapter addresses. New unit tests pin scheme, addressing, TTL,
+  `X-Amz-Signature`; no regression in mocked `media.test.ts`.
+  Files: `src/modules/media/infrastructure/s3-presign.ts`,
+  `src/modules/media/infrastructure/s3-object-storage.ts`, `s3-presign.test.ts`.
 
 ## Phase 4 — Domain correctness
 

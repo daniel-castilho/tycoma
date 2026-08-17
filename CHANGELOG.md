@@ -29,6 +29,15 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
   (`validateAuthSecret`) and are shared by `env.ts` and the Edge `jwt-session-verifier`;
   a weak secret now yields unauthenticated requests instead of silently accepted tokens
   (audit finding 2.3).
+- **S3 presigned URLs derive scheme and addressing from config.** `buildSignedUrl` moved
+  to a pure `src/modules/media/infrastructure/s3-presign.ts` (`parseEndpoint`,
+  `resolveTarget`, `buildSignedUrl`) and the adapter now uses one addressing mode for
+  `put`/`delete`/`ensureBucket` and presign. The URL scheme comes from `S3_ENDPOINT`
+  (http for LocalStack, https fallback) instead of a hardcoded `https://`, and
+  `S3_FORCE_PATH_STYLE` (path-style default for LocalStack, virtual-host for real S3) is
+  finally honored — so signed GETs work against LocalStack in dev and stay correct for
+  real S3. Unit tests pin scheme, addressing, TTL and `X-Amz-Signature`
+  (audit findings 3.1, 3.2).
 
 ## [v0.7.0] — 2026-08-16
 

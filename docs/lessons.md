@@ -317,3 +317,19 @@ verifier read `process.env.AUTH_SECRET` raw, silently accepting a weak secret on
 consumer calls it; duplicating a rule table invites drift. Edge must stay fail-closed: on
 validation failure the verifier returns `null` (unauthenticated) rather than accepting a
 token signed with a weak secret.
+
+## S3 SigV4 binds the host header — one addressing mode everywhere (audit follow-up)
+
+The presign builder hardcoded `https://` (so LocalStack, which is plain HTTP at
+`http://localhost:4566`, got `https://localhost:4566/...` URLs that fail to connect), and
+used virtual-host addressing (`{bucket}.{host}`) while `put`/`delete` used path-style
+(`{host}/{bucket}/{key}`). SigV4 signs the `host` header, so a presigned GET could never
+validate against the same bucket addressing used by the upload — dev signed URLs were
+broken out of the box. `S3_FORCE_PATH_STYLE` was defined in `env.ts` but never read.
+
+Rule: the S3 adapter resolves one `{ scheme, host, bucketPrefix }` target
+(`resolveTarget` in `src/modules/media/infrastructure/s3-presign.ts`) and uses it for
+`put`, `delete`, `ensureBucket` and presign; presign signs exactly that `host`. The URL
+scheme comes from `S3_ENDPOINT` (https fallback only when the scheme is missing), and the
+addressing mode comes from `S3_FORCE_PATH_STYLE` (path-style for LocalStack, virtual-host
+for real S3). Any future AWS call must reuse `resolveTarget`, never re-derive the host.

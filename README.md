@@ -128,6 +128,11 @@ excellence + residual A/B debt). **No new npm dependencies.** See
   by the JWT issuer and the session cookie; and the Edge middleware verifier now enforces
   `AUTH_SECRET` hygiene (≥16/≥32, no placeholders/whitespace) and fails closed. Rules live in
   `src/shared/kernel/secret.ts`. (Unreleased; see CHANGELOG.)
+- **Post-tag follow-up on `main` (S3 presign):** signed media URLs now derive their scheme
+  from `S3_ENDPOINT` (http for LocalStack, https fallback) instead of a hardcoded `https://`,
+  and `S3_FORCE_PATH_STYLE` is honored with one addressing mode shared by upload, delete and
+  presign — fixing signed GETs against LocalStack in dev. Pure builder in
+  `src/modules/media/infrastructure/s3-presign.ts`. (Unreleased; see CHANGELOG.)
 
 - **v0.6.0 (Security Hardening Phase B):**
   - Default session lifetime: **`7d` → `12h`**. JWT `exp` and cookie `maxAge` aligned.
