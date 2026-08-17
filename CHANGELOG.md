@@ -15,6 +15,9 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
   the patched `8.0.1` is now forced with a root `overrides` entry so
   `npm audit --omit=dev --audit-level=high` stays green without allow-listing.
   Prisma 7 remains off the table (no MongoDB support).
+- **Lockfile regenerated with npm 11.17.0 (Node 24.19.0).** The optional
+  `@emnapi/*` tree is resolved the way CI's npm expects it; a local-only
+  `npm ci` on npm 11.6.2 was not CI-clean. Durable rule in `docs/lessons.md`.
 
 - **Password-reset token no longer leaks to logs.** The `Mailer` port now receives
   `{ appUrl, token }` instead of a prebuilt `resetUrl`, so each adapter controls URL

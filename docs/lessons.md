@@ -280,6 +280,21 @@ committing. Keep `npm audit` strict — the override removes the finding instead
 of allow-listing it. Drop the override once the upstream releases a version
 that resolves the advisory on its own.
 
+## Lockfile regeneration is npm-version-sensitive (2026-08-17)
+
+Regenerating `package-lock.json` with a different npm than CI's resolves the
+optional-dependency tree differently. Local npm 11.6.2 (Node 24.11.0) nested
+`@emnapi/*` where CI's npm 11.17.0 (Node 24.19.0, the `setup-node@v5` `24.x`
+latest) expected them hoisted — `npm ci` on CI failed with
+`Missing: @emnapi/runtime@1.11.3`/`@emnapi/core@1.11.3` even though the same
+lockfile passed `npm ci` locally.
+
+Rule: regenerate the lockfile with the **exact** npm that CI uses
+(`nvm use` the Node pinned by `.nvmrc`/CI, then `rm -rf node_modules && npm
+install`), and sanity-check with `rm -rf node_modules && npm ci` **on that same
+npm** before pushing. An `npm ci` that passes locally on a different npm is not
+evidence the lockfile is CI-clean.
+
 ## Bind-mount local data; back up before risky operations (v0.7.0 follow-up)
 
 Local development state lives under `./data/` (MongoDB at `./data/mongo`,
