@@ -1,6 +1,6 @@
 # Architecture Audit — Action Plan
 
-**Document status:** Draft — audit findings reviewed; fixes not started.
+**Document status:** Complete — Phases 1–7 shipped on `main` (Unreleased).
 
 **Companion documents:**
 `tycoma-admin-dashboard-module-spec.md` ·
@@ -12,7 +12,7 @@
 in severity order. Fixes must keep the AGENTS.md purity rules intact (zero framework imports in
 `domain/`/`application/`; adapters implement domain ports; `env` singleton; English only).
 
-**Gates before each batch ships:** `npm test` (currently 142 passing), `npm run lint`,
+**Gates before each batch ships:** `npm test` (189 passing), `npm run lint`,
 `npm run typecheck`, `npm run build`. After milestone-sized work, run the doc-sync checklist
 (AGENTS.md rule 9).
 
@@ -97,6 +97,21 @@ in severity order. Fixes must keep the AGENTS.md purity rules intact (zero frame
 
 ## Phase 7 — Close-out (doc sync, AGENTS.md rule 9)
 
-- [ ] **7.1** — Update `README.md` (Current State), `CHANGELOG.md`, relevant `tasks/*` statuses,
-  `AGENTS.md` (Known technical debt), and `docs/lessons.md`.
-- [ ] **7.2** — Full gate pass: `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`.
+- [x] **7.1** — Precept fixes + doc-sync. Beyond the Phase 1–6 scope, this phase also closed the
+  remaining Clean Code / SOLID / Twelve-Factor gaps found during the deep verification:
+  - **ISP:** repository ports split into `*Reader`/`*Writer` pairs across `auth`
+    (`UserRepository`), `content` (`Category`, `Tag`, `ContentType`, `ContentEntry`) and `media`
+    (`MediaRepository`); use cases depend only on the surface they use.
+  - **Hexagonal:** `node:crypto` (SHA-256 for password-reset tokens) now sits behind a
+    `TokenHasher` port with a `sha256TokenHasher` adapter; rate-limit/TTL policy constants moved
+    into `domain/policies.ts`; `STEP_UP_TTL_SECONDS` no longer read by UI — the new
+    `getStepUpStatus` use case flows through the composition root (DIP).
+  - **Fail loud, not silent:** `deleteMenu` returns `Result` (not-found error) instead of
+    succeeding silently; Argon2 "Decoding failed" corruption and the no-mailer-in-production
+    case throw instead of degrading; content-type/entry `fields` and menu-item `type` no longer
+    degrade via silent `as` casts — throwing `map*` mappers replace them.
+  - **Cleanup:** `object-id` moved from `shared/db` to `shared/kernel`; dead code removed
+    (`LOGIN_LOCKOUT_POLICY`, `previewPostAction`/`previewPageAction`, inert hidden form); UI
+    strings are English-only (rule 6).
+- [x] **7.2** — Full gate pass green: `npm test` (189), `npm run lint`, `npm run typecheck`,
+  `npm run build`, purity grep, `npm audit` (0).

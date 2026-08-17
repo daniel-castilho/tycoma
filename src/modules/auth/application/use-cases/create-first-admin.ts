@@ -2,10 +2,10 @@ import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { PasswordHasher } from "../../domain/password-hasher";
 import { MIN_PASSWORD_LENGTH } from "../../domain/policies";
-import type { UserRepository } from "../../domain/user";
+import type { UserReader, UserWriter } from "../../domain/user";
 
 export function createCreateFirstAdmin(
-  users: UserRepository,
+  users: UserReader & UserWriter,
   audit: AuditEventWriter,
   hasher: PasswordHasher,
 ) {

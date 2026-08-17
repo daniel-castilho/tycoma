@@ -114,7 +114,8 @@ infrastructure/  Adapters: Prisma repositories, Redis, JWT, bcrypt, S3, mailers 
 Result<...>`. Errors as `Result<T, E>` (`@/shared/kernel/result`) or domain exceptions — never
   let an invalid entity exist.
 - Port interfaces live in `domain/` next to the types they serve (e.g. `domain/user.ts` exports
-  `User` + `UserRepository`).
+  `User` + `UserReader`/`UserWriter`). Split a repository port into `*Reader`/`*Writer` pairs when
+  use cases only need a subset of the surface — the adapter satisfies the union.
 - Adapters: explicit `toDomain()` / `toPersistence()` mappers in `infrastructure/`.
 - Zod for every external input (forms, query params, API bodies, env); infer types with `z.infer`.
   Keep schemas next to the adapter/action that consumes the data.

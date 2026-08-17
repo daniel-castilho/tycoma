@@ -1,6 +1,6 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
-import { newObjectId } from "@/shared/db/object-id";
+import { newObjectId } from "@/shared/kernel/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type {
   Menu,
@@ -68,16 +68,18 @@ export function createSaveMenu(menus: MenuWriter & MenuReader, audit: AuditEvent
 }
 
 export function createDeleteMenu(menus: MenuReader & MenuWriter, audit: AuditEventWriter) {
-  return async function deleteMenu(id: string, actorId?: string | null): Promise<void> {
+  return async function deleteMenu(id: string, actorId?: string | null): Promise<Result<{ ok: true }>> {
     const menu = await menus.findById(id);
+    if (!menu) return err("Menu not found.");
     await menus.delete(id);
     await audit.record({
       actorId: actorId ?? null,
       eventType: "content.menu_deleted",
       entityType: "menu",
       entityId: id,
-      details: menu ? JSON.stringify({ name: menu.name }) : null,
+      details: JSON.stringify({ name: menu.name }),
     });
+    return ok({ ok: true });
   };
 }
 

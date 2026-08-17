@@ -1,6 +1,6 @@
 import type {
   Category,
-  CategoryRepository,
+  CategoryReader,
   MenuItem,
   MenuItemType,
   MenuReader,
@@ -9,7 +9,7 @@ import type {
   Post,
   PostReader,
   Tag,
-  TagRepository,
+  TagReader,
 } from "../../domain/types";
 
 export type PublicNavLink = {
@@ -65,13 +65,13 @@ export function createGetPageBreadcrumb(pages: PageReader) {
   };
 }
 
-export function createGetCategoryBySlug(categories: CategoryRepository) {
+export function createGetCategoryBySlug(categories: CategoryReader) {
   return async function getCategoryBySlug(slug: string): Promise<Category | null> {
     return categories.findBySlug(slug);
   };
 }
 
-export function createGetTagBySlug(tags: TagRepository) {
+export function createGetTagBySlug(tags: TagReader) {
   return async function getTagBySlug(slug: string): Promise<Tag | null> {
     return tags.findBySlug(slug);
   };
@@ -98,7 +98,7 @@ export function createGetPublicNav(
   menus: MenuReader,
   posts: PostReader,
   pages: PageReader,
-  categories: CategoryRepository,
+  categories: CategoryReader,
 ) {
   return async function getPublicNav(menuSlug?: string): Promise<PublicNavLink[]> {
     const all = await menus.list();

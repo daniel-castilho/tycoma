@@ -1,6 +1,6 @@
-import type { MediaRepository } from "../../domain/types";
+import type { MediaReader } from "../../domain/types";
 
-export function createGetMediaStorageStats(repo: MediaRepository) {
+export function createGetMediaStorageStats(repo: MediaReader) {
   return async function getMediaStorageStats(): Promise<{
     count: number;
     totalBytes: number;

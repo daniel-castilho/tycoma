@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/db/prisma";
-import { isObjectId } from "@/shared/db/object-id";
+import { isObjectId } from "@/shared/kernel/object-id";
 import type { MediaAsset, MediaRepository } from "../domain/types";
 
 type MediaAssetRow = {

@@ -48,7 +48,7 @@ function ContentFieldValue({
   media: MediaAssetWithUrl | null;
 }) {
   if (field.type === "media") {
-    if (!media) return <em className="site-empty site-media-unavailable">Mídia indisponível</em>;
+    if (!media) return <em className="site-empty site-media-unavailable">Media unavailable</em>;
     return (
       <Image
         src={media.signedUrl}

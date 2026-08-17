@@ -2,11 +2,11 @@ import { z } from "zod";
 import { audit } from "@/app/_lib/modules";
 
 const filtersSchema = z.object({
-  eventType: z.string().trim().optional(),
-  entityType: z.string().trim().optional(),
-  search: z.string().trim().optional(),
-  from: z.string().trim().optional(),
-  to: z.string().trim().optional(),
+  eventType: z.string().trim().optional().catch(undefined),
+  entityType: z.string().trim().optional().catch(undefined),
+  search: z.string().trim().optional().catch(undefined),
+  from: z.string().trim().optional().catch(undefined),
+  to: z.string().trim().optional().catch(undefined),
 });
 
 const EVENT_LABELS: Record<string, string> = {

@@ -1,4 +1,4 @@
-import { isObjectId } from "@/shared/db/object-id";
+import { isObjectId } from "@/shared/kernel/object-id";
 import type {
   ContentEntryFieldError,
   ContentFieldType,

@@ -8,8 +8,8 @@ import type { User, UserRepository } from "../../domain/user.ts";
 import {
   CHANGE_PASSWORD_RATE_LIMIT,
   CHANGE_PASSWORD_RATE_WINDOW_SECONDS,
-  createChangePassword,
-} from "./change-password.ts";
+} from "../../domain/policies";
+import { createChangePassword } from "./change-password.ts";
 
 const baseUser = (overrides: Partial<User> = {}): User => ({
   id: "user-1",

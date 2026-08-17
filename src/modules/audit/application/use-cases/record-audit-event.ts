@@ -1,4 +1,4 @@
-import { newObjectId } from "@/shared/db/object-id";
+import { newObjectId } from "@/shared/kernel/object-id";
 import type { AuditEventStore, AuditEventWriter } from "../../domain/types";
 
 export function createAuditEventWriter(store: AuditEventStore): AuditEventWriter {

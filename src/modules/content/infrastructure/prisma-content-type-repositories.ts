@@ -1,17 +1,44 @@
 import { prisma } from "@/shared/db/prisma";
-import { isObjectId } from "@/shared/db/object-id";
+import { isObjectId } from "@/shared/kernel/object-id";
 import { parseContentStatus } from "../domain/content-status";
 import { containsMediaReference } from "../domain/media-reference";
 import type {
   ContentEntry,
   ContentEntryRepository,
   ContentEntryWrite,
+  ContentFieldType,
   ContentType,
   ContentTypeField,
   ContentTypeRepository,
   ContentTypeWrite,
   ListContentEntriesQuery,
 } from "../domain/content-types";
+
+const CONTENT_FIELD_TYPES: readonly string[] = ["text", "longtext", "number", "boolean", "date", "media"];
+
+function parseContentTypeFields(value: unknown): ContentTypeField[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`Unknown content-type fields in persistence: ${JSON.stringify(value)}`);
+  }
+  return value.map((field) => {
+    const f = field as { name?: unknown; label?: unknown; type?: unknown; required?: unknown };
+    if (
+      typeof f?.name !== "string" ||
+      typeof f?.label !== "string" ||
+      typeof f?.type !== "string" ||
+      !CONTENT_FIELD_TYPES.includes(f.type) ||
+      typeof f?.required !== "boolean"
+    ) {
+      throw new Error(`Unknown content-type field in persistence: ${JSON.stringify(field)}`);
+    }
+    return {
+      name: f.name,
+      label: f.label,
+      type: f.type as ContentFieldType,
+      required: f.required,
+    };
+  });
+}
 
 function mapContentType(row: {
   id: string;
@@ -27,7 +54,7 @@ function mapContentType(row: {
     name: row.name,
     slug: row.slug,
     description: row.description,
-    fields: (Array.isArray(row.fields) ? row.fields : []) as ContentTypeField[],
+    fields: parseContentTypeFields(row.fields),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -45,16 +72,16 @@ function mapContentEntry(row: {
   createdAt: Date;
   updatedAt: Date;
 }): ContentEntry {
+  if (!row.fields || typeof row.fields !== "object" || Array.isArray(row.fields)) {
+    throw new Error(`Unknown content-entry fields in persistence: ${JSON.stringify(row.fields)}`);
+  }
   return {
     id: row.id,
     contentTypeId: row.contentTypeId,
     slug: row.slug,
     title: row.title,
     status: parseContentStatus(row.status),
-    fields: (row.fields && typeof row.fields === "object" ? row.fields : {}) as Record<
-      string,
-      unknown
-    >,
+    fields: row.fields as Record<string, unknown>,
     publishedAt: row.publishedAt,
     scheduledAt: row.scheduledAt,
     createdAt: row.createdAt,

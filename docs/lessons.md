@@ -66,9 +66,10 @@ follow:
 
 Rule: pass the documented member values as numeric literals typed against the library's `Options`
 interface (`algorithm: 2 /* Argon2id */`, `version: 1 /* 0x13 */`). Add the values in a comment.
-Use the OWASP-recommended Argon2id baseline (64 MiB memory, 3 passes, 1 lane) and remember that
-`verify()` throws on a malformed encoded hash — wrap it so a corrupt stored hash degrades to a
-failed login instead of a 500.
+Use the OWASP-recommended Argon2id baseline (64 MiB memory, 3 passes, 1 lane). A wrong password
+returns `false`; a **malformed** stored hash makes `verify()` throw (`Decoding failed`) — that is
+data corruption, not a wrong password, so the adapter must rethrow and let it surface as an error
+rather than conflating it with a failed login (see the "fail loud" lesson below).
 
 ## Prisma + MongoDB: a never-set optional field is `isSet: false`, not `null`
 
@@ -392,3 +393,20 @@ Rule: create ports take `*Write` models (`PostWrite`/`PageWrite`); use cases bui
 without `id` or timestamps; the adapter persists only write fields and Prisma owns
 `id`/`createdAt`/`updatedAt` defaults. If a repository's `create` would need to ignore a
 field, that is a signal the port type is too wide — narrow it instead of stripping.
+
+## Fail loud: adapters must not degrade unknown data into a false success (audit follow-up)
+
+Adapters kept several silent-degradation paths: Argon2 corruption was caught and mapped to a
+failed login, `mapCategory`/`mapMenu` let Prisma rows pass through unmapped, content-type and
+content-entry `fields` fell back to `[]`/`{}` on unexpected shapes, menu-item `type` was an
+unvalidated `as` cast, `deleteMenu` returned `ok` even when nothing existed, and `consoleMailer`
+"sent" mail as a no-op in production. Each one turned a corruption/configuration error into a
+seemingly fine result, hiding the real problem from operators.
+
+Rule: persistence/mailer adapters must **throw** when stored data is not what the domain
+contract says (unknown status, unknown field type, non-object entry `fields`, corrupt hash) and
+when a wired adapter cannot fulfil its promise (no real mailer in production). Unknown data is
+data corruption and must surface as a 500/alert, not as `false` or `null`. UI components must
+receive already-validated domain values (`StatusBadge` takes the narrow `ContentStatus` type,
+no `string` union fallback). Distinguish "not found" (a legitimate `null`/`Result` error) from
+"found but corrupt" (a throw) — only the former is a normal control-flow outcome.

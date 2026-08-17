@@ -123,13 +123,19 @@ excellence + residual A/B debt). **No new npm dependencies.** See
   the raw token never reaches stdout. A real SMTP adapter is tracked in
   `tasks/tycoma-smtp-mailer-backlog.md`. (Unreleased; see CHANGELOG.)
 
-- **Architecture audit in progress.** Phases 5–6 shipped on `main` (Unreleased):
-  the media upload rate limit moved into the `media` module behind a `RateLimiter` port
-  (Phase 5); Phase 6 tightened the architecture: strict status validation, password
-  confirmation moved into the `changePassword` use case, live `q`/`type` filters on the media
-  library, `countByStatus` resolving statuses via `parseContentStatus`, explicit `toDomain`
-  mappers, policy defaults lifted into `domain/policies.ts` (incl. Argon2id params), and
-  `SessionIssuer` composing `SessionVerifier`. Statuses are ticked off in
+- **Architecture audit shipped on `main`** (Unreleased): Phases 5–7 complete. Phase 5 moved the
+  media upload rate limit into the `media` module behind a `RateLimiter` port. Phase 6 tightened
+  the architecture: strict status validation, password confirmation moved into the
+  `changePassword` use case, live `q`/`type` filters on the media library, `countByStatus`
+  resolving statuses via `parseContentStatus`, explicit `toDomain` mappers, policy defaults
+  lifted into `domain/policies.ts` (incl. Argon2id params), and `SessionIssuer` composing
+  `SessionVerifier`. Phase 7 closed the remaining precept gaps: repository ports split into
+  `*Reader`/`*Writer` pairs (ISP), `node:crypto` behind a `TokenHasher` port, `deleteMenu`
+  reports a not-found failure instead of silently succeeding, Argon2 corruption and the
+  no-mailer-in-production case throw instead of degrading silently, the step-up TTL/status flows
+  through the composition root (DIP), `object-id` moved into `shared/kernel`, remaining silent
+  `as`-casts in content/media adapters replaced by throwing mappers, dead code removed, and UI
+  strings are English-only. Statuses are ticked off in
   [tasks/tycoma-architecture-audit-action-plan.md](tasks/tycoma-architecture-audit-action-plan.md).
 - **Post-tag follow-up on `main` (auth hardening):** every mutating admin Server Action
   (`savePage`/`saveCategory`/`saveTag`) asserts the session and records the actor in the audit

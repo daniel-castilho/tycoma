@@ -8,10 +8,13 @@ export type User = {
   updatedAt: Date;
 };
 
-export type UserRepository = {
+export type UserReader = {
   count(): Promise<number>;
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
+};
+
+export type UserWriter = {
   create(data: {
     email: string;
     name: string;
@@ -22,3 +25,5 @@ export type UserRepository = {
     data: Partial<Pick<User, "name" | "email" | "passwordHash" | "avatarMediaId">>,
   ): Promise<User>;
 };
+
+export type UserRepository = UserReader & UserWriter;

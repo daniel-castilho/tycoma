@@ -1,11 +1,12 @@
-import { redisStepUpStore } from "@/modules/auth/infrastructure/redis-step-up-store";
-import { STEP_UP_TTL_SECONDS } from "@/modules/auth/application/use-cases/step-up";
+import { auth } from "@/app/_lib/modules";
 import { stepUpAction } from "@/app/admin/_actions/account";
 import { TextField } from "./form-field";
 import { SubmitButton } from "./submit-button";
 
 export async function StepUpHint({ userId }: { userId: string }) {
-  const active = await redisStepUpStore.has(userId);
+  const stepUp = await auth.getStepUpStatus(userId);
+  const active = stepUp.active;
+  const stepUpTtlMinutes = Math.round(stepUp.ttlSeconds / 60);
   return (
     <section
       className="form-stack"
@@ -21,12 +22,12 @@ export async function StepUpHint({ userId }: { userId: string }) {
         {active ? (
           <>
             Step-up confirmed. Destructive actions stay unlocked for the next{" "}
-            {Math.round(STEP_UP_TTL_SECONDS / 60)} minutes.
+            {stepUpTtlMinutes} minutes.
           </>
         ) : (
           <>
             Confirm your current password before destructive actions (delete post / page / media).
-            Confirmation stays valid for {Math.round(STEP_UP_TTL_SECONDS / 60)} minutes.
+            Confirmation stays valid for {stepUpTtlMinutes} minutes.
           </>
         )}
       </p>

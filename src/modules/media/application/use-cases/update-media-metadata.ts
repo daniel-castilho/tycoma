@@ -1,7 +1,7 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
-import type { MediaAsset, MediaRepository } from "../../domain/types";
+import type { MediaAsset, MediaReader, MediaWriter } from "../../domain/types";
 
-export function createUpdateMediaMetadata(repo: MediaRepository) {
+export function createUpdateMediaMetadata(repo: MediaReader & MediaWriter) {
   return async function updateMediaMetadata(
     id: string,
     input: { alt: string | null; caption: string | null },

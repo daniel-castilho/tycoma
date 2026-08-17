@@ -1,19 +1,13 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { PasswordHasher } from "../../domain/password-hasher";
-import { MIN_PASSWORD_LENGTH } from "../../domain/policies";
+import { CHANGE_PASSWORD_RATE_LIMIT, CHANGE_PASSWORD_RATE_WINDOW_SECONDS, MIN_PASSWORD_LENGTH } from "../../domain/policies";
 import type { RateLimiter } from "../../domain/rate-limiter";
 import type { StepUpStore } from "../../domain/step-up";
-import type { UserRepository } from "../../domain/user";
-
-/**
- * Rate limit budget for change-password attempts per user id. Tunable.
- */
-export const CHANGE_PASSWORD_RATE_LIMIT = 5;
-export const CHANGE_PASSWORD_RATE_WINDOW_SECONDS = 60 * 15;
+import type { UserReader, UserWriter } from "../../domain/user";
 
 export function createChangePassword(
-  users: UserRepository,
+  users: UserReader & UserWriter,
   audit: AuditEventWriter,
   hasher: PasswordHasher,
   limiter: RateLimiter,

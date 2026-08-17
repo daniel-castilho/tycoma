@@ -4,34 +4,36 @@ import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import { validateEntryFields } from "../../domain/content-type-fields";
 import type {
   ContentEntry,
-  ContentEntryRepository,
+  ContentEntryReader,
+  ContentEntryWriter,
   ContentEntryWrite,
   ContentType,
-  ContentTypeRepository,
+  ContentTypeReader,
+  ContentTypeWriter,
   ContentTypeWrite,
   ListContentEntriesQuery,
 } from "../../domain/content-types";
 
-export function createListContentTypes(types: ContentTypeRepository) {
+export function createListContentTypes(types: ContentTypeReader) {
   return async function listContentTypes(): Promise<ContentType[]> {
     return types.list();
   };
 }
 
-export function createGetContentType(types: ContentTypeRepository) {
+export function createGetContentType(types: ContentTypeReader) {
   return async function getContentType(id: string): Promise<ContentType | null> {
     return types.findById(id);
   };
 }
 
-export function createGetContentTypeBySlug(types: ContentTypeRepository) {
+export function createGetContentTypeBySlug(types: ContentTypeReader) {
   return async function getContentTypeBySlug(slug: string): Promise<ContentType | null> {
     return types.findBySlug(slug);
   };
 }
 
 export function createSaveContentType(
-  types: ContentTypeRepository,
+  types: ContentTypeReader & ContentTypeWriter,
   audit: AuditEventWriter,
 ) {
   return async function saveContentType(
@@ -74,7 +76,7 @@ export function createSaveContentType(
 }
 
 export function createDeleteContentType(
-  types: ContentTypeRepository,
+  types: ContentTypeReader & ContentTypeWriter,
   audit: AuditEventWriter,
 ) {
   return async function deleteContentType(
@@ -99,21 +101,21 @@ export function createDeleteContentType(
   };
 }
 
-export function createListEntries(entries: ContentEntryRepository) {
+export function createListEntries(entries: ContentEntryReader) {
   return async function listEntries(query: ListContentEntriesQuery): Promise<ContentEntry[]> {
     return entries.list(query);
   };
 }
 
-export function createGetEntry(entries: ContentEntryRepository) {
+export function createGetEntry(entries: ContentEntryReader) {
   return async function getEntry(id: string): Promise<ContentEntry | null> {
     return entries.findById(id);
   };
 }
 
 export function createCreateEntry(
-  entries: ContentEntryRepository,
-  types: ContentTypeRepository,
+  entries: ContentEntryReader & ContentEntryWriter,
+  types: ContentTypeReader,
   audit: AuditEventWriter,
 ) {
   return async function createEntry(
@@ -151,8 +153,8 @@ export function createCreateEntry(
 }
 
 export function createUpdateEntry(
-  entries: ContentEntryRepository,
-  types: ContentTypeRepository,
+  entries: ContentEntryReader & ContentEntryWriter,
+  types: ContentTypeReader,
   audit: AuditEventWriter,
 ) {
   return async function updateEntry(
@@ -193,7 +195,7 @@ export function createUpdateEntry(
 }
 
 export function createPublishEntry(
-  entries: ContentEntryRepository,
+  entries: ContentEntryReader & ContentEntryWriter,
   audit: AuditEventWriter,
 ) {
   return async function publishEntry(
@@ -219,7 +221,7 @@ export function createPublishEntry(
 }
 
 export function createDeleteEntry(
-  entries: ContentEntryRepository,
+  entries: ContentEntryReader & ContentEntryWriter,
   audit: AuditEventWriter,
 ) {
   return async function deleteEntry(
@@ -241,8 +243,8 @@ export function createDeleteEntry(
 }
 
 export function createListPublishedEntriesByTypeSlug(
-  types: ContentTypeRepository,
-  entries: ContentEntryRepository,
+  types: ContentTypeReader,
+  entries: ContentEntryReader,
 ) {
   return async function listPublishedEntriesByTypeSlug(
     typeSlug: string,
@@ -257,8 +259,8 @@ export function createListPublishedEntriesByTypeSlug(
 }
 
 export function createGetPublishedEntryByTypeAndSlug(
-  types: ContentTypeRepository,
-  entries: ContentEntryRepository,
+  types: ContentTypeReader,
+  entries: ContentEntryReader,
 ) {
   return async function getPublishedEntryByTypeAndSlug(
     typeSlug: string,

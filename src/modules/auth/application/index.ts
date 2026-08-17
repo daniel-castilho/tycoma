@@ -7,10 +7,12 @@ import { prismaUserRepository } from "../infrastructure/prisma-user-repository";
 import { redisLockoutStore } from "../infrastructure/redis-lockout-store";
 import { redisRateLimiter } from "../infrastructure/redis-rate-limiter";
 import { redisStepUpStore } from "../infrastructure/redis-step-up-store";
+import { sha256TokenHasher } from "../infrastructure/sha256-token-hasher";
 import { createChangePassword } from "./use-cases/change-password";
 import { createCountUsers } from "./use-cases/count-users";
 import { createCreateFirstAdmin } from "./use-cases/create-first-admin";
 import { createGetProfile } from "./use-cases/get-profile";
+import { createGetStepUpStatus } from "./use-cases/get-step-up-status";
 import { createLogin } from "./use-cases/login";
 import { createRequestPasswordReset } from "./use-cases/request-password-reset";
 import { createResetPassword } from "./use-cases/reset-password";
@@ -38,6 +40,7 @@ export function createAuthApplication(auditEventWriter: AuditEventWriter) {
     requestPasswordReset: createRequestPasswordReset(
       prismaUserRepository,
       prismaPasswordResetTokenRepository,
+      sha256TokenHasher,
       consoleMailer,
       redisRateLimiter,
       auditEventWriter,
@@ -45,6 +48,7 @@ export function createAuthApplication(auditEventWriter: AuditEventWriter) {
     resetPassword: createResetPassword(
       prismaUserRepository,
       prismaPasswordResetTokenRepository,
+      sha256TokenHasher,
       auditEventWriter,
       argon2PasswordHasher,
     ),
@@ -58,6 +62,7 @@ export function createAuthApplication(auditEventWriter: AuditEventWriter) {
       redisStepUpStore,
     ),
     stepUp: createStepUp(prismaUserRepository, argon2PasswordHasher, redisStepUpStore),
+    getStepUpStatus: createGetStepUpStatus(redisStepUpStore),
   };
 }
 

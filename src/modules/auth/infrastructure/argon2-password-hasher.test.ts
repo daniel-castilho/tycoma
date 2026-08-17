@@ -11,7 +11,10 @@ describe("argon2PasswordHasher", () => {
     assert.equal(await argon2PasswordHasher.verify("wrong", hash), false);
   });
 
-  it("treats a malformed stored hash as a mismatch instead of throwing", async () => {
-    assert.equal(await argon2PasswordHasher.verify("anything", "not-an-argon2-hash"), false);
+  it("throws on a malformed stored hash instead of conflating it with a mismatch", async () => {
+    await assert.rejects(
+      argon2PasswordHasher.verify("anything", "not-an-argon2-hash"),
+      /Decoding failed|corrupt|decode/i,
+    );
   });
 });

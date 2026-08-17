@@ -1,6 +1,6 @@
-import type { MediaAsset, MediaRepository } from "../../domain/types";
+import type { MediaAsset, MediaReader } from "../../domain/types";
 
-export function createGetMedia(repo: MediaRepository) {
+export function createGetMedia(repo: MediaReader) {
   return async function getMedia(id: string): Promise<MediaAsset | null> {
     return repo.findById(id);
   };

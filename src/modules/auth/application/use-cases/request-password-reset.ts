@@ -1,4 +1,3 @@
-import { createHash, randomBytes } from "node:crypto";
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type { Mailer } from "../../domain/mailer";
@@ -6,14 +5,15 @@ import type { PasswordResetTokenRepository } from "../../domain/password-reset-t
 import {
   PASSWORD_RESET_RATE_LIMIT,
   PASSWORD_RESET_TTL_MS,
-  PASSWORD_RESET_TOKEN_BYTES,
 } from "../../domain/policies";
 import type { RateLimiter } from "../../domain/rate-limiter";
-import type { UserRepository } from "../../domain/user";
+import type { TokenHasher } from "../../domain/token-hasher";
+import type { UserReader } from "../../domain/user";
 
 export function createRequestPasswordReset(
-  users: UserRepository,
+  users: UserReader,
   tokens: PasswordResetTokenRepository,
+  tokenHasher: TokenHasher,
   mailer: Mailer,
   limiter: RateLimiter,
   audit: AuditEventWriter,
@@ -37,8 +37,8 @@ export function createRequestPasswordReset(
     if (!user) {
       return ok({ sent: true });
     }
-    const raw = randomBytes(PASSWORD_RESET_TOKEN_BYTES).toString("hex");
-    const tokenHash = createHash("sha256").update(raw).digest("hex");
+    const raw = await tokenHasher.generateRaw();
+    const tokenHash = await tokenHasher.hash(raw);
     const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
     await tokens.create({ userId: user.id, tokenHash, expiresAt });
     await mailer.sendPasswordReset(user.email, { appUrl: input.appUrl, token: raw });

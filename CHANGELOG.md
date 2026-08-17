@@ -7,6 +7,22 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
 
 ## [Unreleased]
 
+### Changed
+
+- **Architecture audit Phase 7 — remaining precept gaps closed.** Repository ports split into
+  `*Reader`/`*Writer` pairs in `auth`, `content` and `media` (interface segregation; use cases
+  depend only on the surface they use). `node:crypto` sits behind a new `TokenHasher` port
+  (`sha256TokenHasher` adapter) instead of being called from the password-reset use cases.
+  `deleteMenu` now returns a `Result` and fails with a not-found error instead of succeeding
+  silently; the `getStepUpStatus` use case replaces direct `redisStepUpStore`/policy reads in
+  the UI (dependency inversion). Argon2 corruption ("Decoding failed") and the
+  no-real-mailer-in-production case now throw instead of degrading silently. Content-type
+  `fields`, content-entry `fields` and menu-item `type` persistence mappers validate their
+  shape and throw on unknown values instead of silent `as` casts. `object-id` moved from
+  `shared/db` to `shared/kernel`. Dead code removed (`LOGIN_LOCKOUT_POLICY`,
+  `previewPostAction`/`previewPageAction`, inert hidden form). UI strings are English-only.
+  (Unreleased; audit plan `tasks/tycoma-architecture-audit-action-plan.md` Phase 7.)
+
 ### Fixed
 
 - **`npm audit` gate: `CVE-2026-40345` (deepmerge-ts <8.0.0) cleared via

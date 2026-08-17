@@ -1,7 +1,7 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
-import { newObjectId } from "@/shared/db/object-id";
+import { newObjectId } from "@/shared/kernel/object-id";
 import type { AuditEventWriter } from "../../../audit/domain/types";
-import type { MediaAsset, MediaRepository, ObjectStorage } from "../../domain/types";
+import type { MediaAsset, MediaWriter, ObjectStorage } from "../../domain/types";
 
 /**
  * Phase A upload policy. SVG is blocked (no SVG sanitizer), video/audio/pdf
@@ -67,7 +67,7 @@ export function sniffMimeType(body: Uint8Array): AllowedMimeType | null {
 
 export function createUploadMedia(
   storage: ObjectStorage,
-  repo: MediaRepository,
+  repo: MediaWriter,
   audit: AuditEventWriter,
 ) {
   return async function uploadMedia(

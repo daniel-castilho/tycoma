@@ -33,7 +33,10 @@ export async function deleteMenuAction(formData: FormData): Promise<void> {
   const session = await requireSession();
   const parsed = idSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return;
-  await content.deleteMenu(parsed.data.id, session.sub);
+  const result = await content.deleteMenu(parsed.data.id, session.sub);
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
   redirect("/admin/menus");
 }
 

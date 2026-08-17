@@ -2,8 +2,6 @@ import { notFound } from "next/navigation";
 import { auth } from "@/app/_lib/modules";
 
 export const dynamic = "force-dynamic";
-import { redisStepUpStore } from "@/modules/auth/infrastructure/redis-step-up-store";
-import { STEP_UP_TTL_SECONDS } from "@/modules/auth/application/use-cases/step-up";
 import {
   changePasswordAction,
   saveProfileAction,
@@ -18,7 +16,9 @@ export default async function AccountPage() {
   const profile = await auth.getProfile(session.sub);
   if (!profile.ok) notFound();
 
-  const stepUpActive = await redisStepUpStore.has(session.sub);
+  const stepUp = await auth.getStepUpStatus(session.sub);
+  const stepUpActive = stepUp.active;
+  const stepUpTtlMinutes = Math.round(stepUp.ttlSeconds / 60);
 
   return (
     <>
@@ -45,7 +45,7 @@ export default async function AccountPage() {
           <h2 style={{ fontSize: "1rem" }}>Change password</h2>
           <p className="hint">
             Phase B: confirm your current password before changing it. The confirmation
-            stays valid for {Math.round(STEP_UP_TTL_SECONDS / 60)} minutes.
+            stays valid for {stepUpTtlMinutes} minutes.
           </p>
           <form action={stepUpAction} className="form-stack" style={{ gap: "1rem", marginBottom: "1rem" }}>
             <TextField

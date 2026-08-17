@@ -3,10 +3,30 @@ import type { AuditEvent, AuditRepository } from "../domain/types";
 
 const INSENSITIVE = "insensitive" as const;
 
+function mapAuditEvent(row: {
+  id: string;
+  actorId: string | null;
+  eventType: string;
+  entityType: string;
+  entityId: string | null;
+  details: string | null;
+  createdAt: Date;
+}): AuditEvent {
+  return {
+    id: row.id,
+    actorId: row.actorId,
+    eventType: row.eventType,
+    entityType: row.entityType,
+    entityId: row.entityId,
+    details: row.details,
+    createdAt: row.createdAt,
+  };
+}
+
 export const prismaAuditRepository: AuditRepository = {
   async create(data) {
     const { id: _id, createdAt: _createdAt, ...rest } = data;
-    return prisma.auditEvent.create({ data: rest }) as Promise<AuditEvent>;
+    return mapAuditEvent(await prisma.auditEvent.create({ data: rest }));
   },
   async list(query) {
     const where = {
@@ -21,10 +41,11 @@ export const prismaAuditRepository: AuditRepository = {
           ]
         : undefined,
     };
-    return prisma.auditEvent.findMany({
+    const rows = await prisma.auditEvent.findMany({
       where,
       orderBy: { createdAt: "desc" },
       take: query.limit ?? 200,
-    }) as Promise<AuditEvent[]>;
+    });
+    return rows.map(mapAuditEvent);
   },
 };

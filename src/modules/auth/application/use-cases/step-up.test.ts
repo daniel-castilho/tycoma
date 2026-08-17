@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { STEP_UP_TTL_SECONDS } from "../../domain/policies.ts";
 import type { PasswordHasher } from "../../domain/password-hasher.ts";
 import type { StepUpStore } from "../../domain/step-up.ts";
 import type { User, UserRepository } from "../../domain/user.ts";
-import { STEP_UP_TTL_SECONDS, createStepUp } from "./step-up.ts";
+import { createStepUp } from "./step-up.ts";
 
 const baseUser: User = {
   id: "user-1",

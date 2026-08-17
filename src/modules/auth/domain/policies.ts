@@ -24,6 +24,11 @@ export const PASSWORD_RESET_TOKEN_BYTES = 32;
 
 export const SESSION_TTL_SECONDS = 12 * 60 * 60;
 
+export const CHANGE_PASSWORD_RATE_LIMIT = 5;
+export const CHANGE_PASSWORD_RATE_WINDOW_SECONDS = FIFTEEN_MINUTES_SECONDS;
+
+export const STEP_UP_TTL_SECONDS = 60 * 10;
+
 // @node-rs/argon2 ships Algorithm/Version as ambient const enums with no
 // runtime values (erased at compile time), so the documented member values
 // are used directly: Argon2id = 2, version 0x13 = 1. The parameters follow

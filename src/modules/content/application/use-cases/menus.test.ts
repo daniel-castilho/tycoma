@@ -131,10 +131,21 @@ describe("deleteMenu", () => {
     const { repo, menus } = memoryMenus([menu("menu-1")]);
     const { writer, events } = memoryAudit();
     const deleteMenu = createDeleteMenu(repo, writer);
-    await deleteMenu("menu-1", "user-1");
+    const result = await deleteMenu("menu-1", "user-1");
+    assert.equal(result.ok, true);
     assert.equal(menus.length, 0);
     assert.equal(events[0]!.eventType, "content.menu_deleted");
     assert.equal(events[0]!.entityId, "menu-1");
+  });
+
+  it("returns a Result error for an unknown menu instead of throwing", async () => {
+    const { repo } = memoryMenus();
+    const { writer, events } = memoryAudit();
+    const deleteMenu = createDeleteMenu(repo, writer);
+    const result = await deleteMenu("missing", "user-1");
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /not found/i);
+    assert.equal(events.length, 0);
   });
 });
 

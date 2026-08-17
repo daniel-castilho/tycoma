@@ -10,18 +10,23 @@ export type MediaAsset = {
   createdAt: Date;
 };
 
-export type MediaRepository = {
+export type MediaReader = {
   list(query: { search?: string; mimePrefix?: string }): Promise<MediaAsset[]>;
   findById(id: string): Promise<MediaAsset | null>;
+  count(): Promise<number>;
+  totalBytes(): Promise<number>;
+};
+
+export type MediaWriter = {
   create(data: Omit<MediaAsset, "id" | "createdAt">): Promise<MediaAsset>;
   update(
     id: string,
     data: Partial<Pick<MediaAsset, "alt" | "caption">>,
   ): Promise<MediaAsset>;
   delete(id: string): Promise<void>;
-  count(): Promise<number>;
-  totalBytes(): Promise<number>;
 };
+
+export type MediaRepository = MediaReader & MediaWriter;
 
 export type ObjectStorage = {
   put(key: string, body: Uint8Array, contentType: string): Promise<{ url: string }>;

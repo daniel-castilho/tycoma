@@ -1,6 +1,6 @@
-import type { MediaAsset, MediaRepository } from "../../domain/types";
+import type { MediaAsset, MediaReader } from "../../domain/types";
 
-export function createListMedia(repo: MediaRepository) {
+export function createListMedia(repo: MediaReader) {
   return async function listMedia(query: {
     search?: string;
     mimePrefix?: string;

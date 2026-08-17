@@ -1,16 +1,18 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
 import { slugify } from "@/shared/kernel/slug";
-import { newObjectId } from "@/shared/db/object-id";
+import { newObjectId } from "@/shared/kernel/object-id";
 import type { AuditEventWriter } from "@/modules/audit/domain/types";
 import type {
   Category,
-  CategoryRepository,
+  CategoryReader,
+  CategoryWriter,
   PostReader,
   Tag,
-  TagRepository,
+  TagReader,
+  TagWriter,
 } from "../../domain/types";
 
-export function createListCategories(categories: CategoryRepository, posts: PostReader) {
+export function createListCategories(categories: CategoryReader, posts: PostReader) {
   return async function listCategories(): Promise<(Category & { postCount: number })[]> {
     const list = await categories.list();
     return Promise.all(
@@ -19,7 +21,7 @@ export function createListCategories(categories: CategoryRepository, posts: Post
   };
 }
 
-export function createSaveCategory(categories: CategoryRepository, audit: AuditEventWriter) {
+export function createSaveCategory(categories: CategoryReader & CategoryWriter, audit: AuditEventWriter) {
   return async function saveCategory(
     input: {
       id?: string;
@@ -89,7 +91,7 @@ export function createSaveCategory(categories: CategoryRepository, audit: AuditE
 }
 
 export function createDeleteCategory(
-  categories: CategoryRepository,
+  categories: CategoryReader & CategoryWriter,
   posts: PostReader,
   audit: AuditEventWriter,
 ) {
@@ -109,14 +111,14 @@ export function createDeleteCategory(
   };
 }
 
-export function createListTags(tags: TagRepository, posts: PostReader) {
+export function createListTags(tags: TagReader, posts: PostReader) {
   return async function listTags(): Promise<(Tag & { postCount: number })[]> {
     const list = await tags.list();
     return Promise.all(list.map(async (t) => ({ ...t, postCount: await posts.countByTag(t.id) })));
   };
 }
 
-export function createSaveTag(tags: TagRepository, audit: AuditEventWriter) {
+export function createSaveTag(tags: TagReader & TagWriter, audit: AuditEventWriter) {
   return async function saveTag(
     input: {
       id?: string;
@@ -163,7 +165,7 @@ export function createSaveTag(tags: TagRepository, audit: AuditEventWriter) {
 }
 
 export function createDeleteTag(
-  tags: TagRepository,
+  tags: TagReader & TagWriter,
   posts: PostReader,
   audit: AuditEventWriter,
 ) {

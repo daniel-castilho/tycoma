@@ -109,7 +109,7 @@ function MediaRenderer({ field, defaultValue, mediaAssets }: FieldProps) {
         defaultValue={defaultValue}
         required={field.required}
       >
-        <option value="">— Selecione uma mídia —</option>
+        <option value="">— Select a media item —</option>
         {mediaAssets.map((asset) => (
           <option key={asset.id} value={asset.id}>
             {asset.filename}

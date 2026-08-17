@@ -10,10 +10,10 @@ export const argon2PasswordHasher: PasswordHasher = {
     return argon2.hash(password, options);
   },
   async verify(password: string, encoded: string): Promise<boolean> {
-    try {
-      return await argon2.verify(encoded, password);
-    } catch {
-      return false;
-    }
+    // `argon2.verify` returns `false` for a genuine password mismatch but
+    // throws for a corrupt/unsupported stored hash ("Decoding failed"). A
+    // storage-corruption or algorithm-drift error must surface, not be
+    // silently conflated with "wrong password".
+    return argon2.verify(encoded, password);
   },
 };

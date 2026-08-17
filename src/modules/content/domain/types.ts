@@ -166,23 +166,33 @@ export type PageWriter = {
 
 export type PageRepository = PageReader & PageWriter;
 
-export type CategoryRepository = {
+export type CategoryReader = {
   list(): Promise<Category[]>;
   findById(id: string): Promise<Category | null>;
   findBySlug(slug: string): Promise<Category | null>;
+};
+
+export type CategoryWriter = {
   create(data: Category): Promise<Category>;
   update(id: string, data: Partial<Category>): Promise<Category>;
   delete(id: string): Promise<void>;
 };
 
-export type TagRepository = {
+export type CategoryRepository = CategoryReader & CategoryWriter;
+
+export type TagReader = {
   list(): Promise<Tag[]>;
   findById(id: string): Promise<Tag | null>;
   findBySlug(slug: string): Promise<Tag | null>;
+};
+
+export type TagWriter = {
   create(data: Tag): Promise<Tag>;
   update(id: string, data: Partial<Tag>): Promise<Tag>;
   delete(id: string): Promise<void>;
 };
+
+export type TagRepository = TagReader & TagWriter;
 
 export type MenuReader = {
   list(): Promise<Menu[]>;

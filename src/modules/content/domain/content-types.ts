@@ -53,15 +53,20 @@ export type ListContentEntriesQuery = {
   search?: string;
 };
 
-export type ContentTypeRepository = {
+export type ContentTypeReader = {
   list(): Promise<ContentType[]>;
   findById(id: string): Promise<ContentType | null>;
   findBySlug(slug: string): Promise<ContentType | null>;
+  countEntries(contentTypeId: string): Promise<number>;
+};
+
+export type ContentTypeWriter = {
   create(data: ContentTypeWrite): Promise<ContentType>;
   update(id: string, data: Partial<ContentTypeWrite>): Promise<ContentType>;
   delete(id: string): Promise<void>;
-  countEntries(contentTypeId: string): Promise<number>;
 };
+
+export type ContentTypeRepository = ContentTypeReader & ContentTypeWriter;
 
 export type ContentEntryReader = {
   list(query: ListContentEntriesQuery): Promise<ContentEntry[]>;

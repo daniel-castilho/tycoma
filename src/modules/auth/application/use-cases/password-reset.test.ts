@@ -5,6 +5,7 @@ import type { AuditEventWriter } from "../../../audit/domain/types.ts";
 import type { Mailer } from "../../domain/mailer.ts";
 import type { PasswordHasher } from "../../domain/password-hasher.ts";
 import type { PasswordResetToken, PasswordResetTokenRepository } from "../../domain/password-reset-token.ts";
+import type { TokenHasher } from "../../domain/token-hasher.ts";
 import type { User, UserRepository } from "../../domain/user.ts";
 import { PASSWORD_RESET_TOKEN_BYTES } from "../../domain/policies.ts";
 import { createRequestPasswordReset } from "./request-password-reset.ts";
@@ -18,6 +19,15 @@ const fakeHasher: PasswordHasher = {
   },
   async verify(password, hash) {
     return hash === `hashed:${password}`;
+  },
+};
+
+const fakeTokenHasher: TokenHasher = {
+  async generateRaw() {
+    return "ab".repeat(32);
+  },
+  async hash(raw) {
+    return createHash("sha256").update(raw).digest("hex");
   },
 };
 
@@ -104,7 +114,7 @@ describe("requestPasswordReset", () => {
         sentTo = to;
       },
     };
-    const request = createRequestPasswordReset(users, repo, mailer, { hit: async () => ({ allowed: true, remaining: 4 }) }, noopAudit);
+    const request = createRequestPasswordReset(users, repo, fakeTokenHasher, mailer, { hit: async () => ({ allowed: true, remaining: 4 }) }, noopAudit);
     const result = await request({ email: "Ada@Example.com", ip: "1.2.3.4", appUrl: "https://example.com" });
     assert.equal(result.ok, true);
     assert.equal(sentTo, "ada@example.com");
@@ -122,7 +132,7 @@ describe("requestPasswordReset", () => {
         sent.push(to);
       },
     };
-    const request = createRequestPasswordReset(users, repo, mailer, { hit: async () => ({ allowed: true, remaining: 4 }) }, noopAudit);
+    const request = createRequestPasswordReset(users, repo, fakeTokenHasher, mailer, { hit: async () => ({ allowed: true, remaining: 4 }) }, noopAudit);
     const result = await request({ email: "nobody@example.com", ip: "1.2.3.4", appUrl: "https://example.com" });
     assert.equal(result.ok, true);
     assert.equal(sent.length, 0);
@@ -134,6 +144,7 @@ describe("requestPasswordReset", () => {
     const request = createRequestPasswordReset(
       users,
       repo,
+      fakeTokenHasher,
       { sendPasswordReset: async () => {} },
       { hit: async () => ({ allowed: false, remaining: 0 }) },
       noopAudit,
@@ -154,6 +165,7 @@ describe("requestPasswordReset", () => {
     const request = createRequestPasswordReset(
       users,
       repo,
+      fakeTokenHasher,
       mailer,
       { hit: async () => ({ allowed: true, remaining: 4 }) },
       noopAudit,
@@ -181,7 +193,7 @@ describe("resetPassword", () => {
         events.push(e);
       },
     };
-    const reset = createResetPassword(users, repo, audit, fakeHasher);
+    const reset = createResetPassword(users, repo, fakeTokenHasher, audit, fakeHasher);
     const result = await reset({ token: raw, password: "newlongpassword" });
     assert.equal(result.ok, true);
     const stored = await users.findById("u1");
@@ -195,7 +207,7 @@ describe("resetPassword", () => {
     const users = memoryUsers([seedUser()]);
     const { repo } = memoryTokens();
     await repo.create({ userId: "u1", tokenHash: "thehash", expiresAt: new Date(Date.now() - 60_000) });
-    const reset = createResetPassword(users, repo, noopAudit, fakeHasher);
+    const reset = createResetPassword(users, repo, fakeTokenHasher, noopAudit, fakeHasher);
     const result = await reset({ token: "wrong-token", password: "newlongpassword" });
     assert.equal(result.ok, false);
     if (!result.ok) assert.match(result.error, /invalid or has expired/i);
@@ -204,7 +216,7 @@ describe("resetPassword", () => {
   it("rejects a short new password", async () => {
     const users = memoryUsers([seedUser()]);
     const { repo } = memoryTokens();
-    const reset = createResetPassword(users, repo, noopAudit, fakeHasher);
+    const reset = createResetPassword(users, repo, fakeTokenHasher, noopAudit, fakeHasher);
     const result = await reset({ token: "any-token", password: "short" });
     assert.equal(result.ok, false);
   });

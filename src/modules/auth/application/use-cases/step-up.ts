@@ -1,11 +1,10 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
+import { STEP_UP_TTL_SECONDS } from "../../domain/policies";
 import type { PasswordHasher } from "../../domain/password-hasher";
 import type { StepUpStore } from "../../domain/step-up";
-import type { UserRepository } from "../../domain/user";
+import type { UserReader } from "../../domain/user";
 
-export const STEP_UP_TTL_SECONDS = 60 * 10;
-
-export function createStepUp(users: UserRepository, hasher: PasswordHasher, store: StepUpStore) {
+export function createStepUp(users: UserReader, hasher: PasswordHasher, store: StepUpStore) {
   return async function stepUp(input: {
     userId: string;
     currentPassword: string;

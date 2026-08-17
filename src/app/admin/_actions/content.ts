@@ -96,14 +96,6 @@ export async function bulkPostsAction(formData: FormData): Promise<void> {
   redirect("/admin/posts");
 }
 
-export async function previewPostAction(formData: FormData): Promise<void> {
-  const id = formId(formData);
-  if (!id) return;
-  const post = await content.getPost(id);
-  if (!post) return;
-  redirect(`/admin/posts/${id}/preview`);
-}
-
 export async function savePageAction(
   _prev: PostActionState,
   formData: FormData,
@@ -132,14 +124,6 @@ export async function deletePageAction(formData: FormData): Promise<void> {
     throw new Error(result.error);
   }
   redirect("/admin/pages");
-}
-
-export async function previewPageAction(formData: FormData): Promise<void> {
-  const id = formId(formData);
-  if (!id) return;
-  const page = await content.getPage(id);
-  if (!page) return;
-  redirect(`/admin/pages/${id}/preview`);
 }
 
 export async function saveCategoryAction(formData: FormData): Promise<void> {

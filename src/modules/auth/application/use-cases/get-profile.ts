@@ -1,7 +1,7 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
-import type { UserRepository } from "../../domain/user";
+import type { UserReader } from "../../domain/user";
 
-export function createGetProfile(users: UserRepository) {
+export function createGetProfile(users: UserReader) {
   return async function getProfile(userId: string): Promise<
     Result<{ id: string; email: string; name: string; avatarMediaId: string | null }>
   > {

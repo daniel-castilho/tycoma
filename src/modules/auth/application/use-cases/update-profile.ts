@@ -1,7 +1,7 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
-import type { UserRepository } from "../../domain/user";
+import type { UserReader, UserWriter } from "../../domain/user";
 
-export function createUpdateProfile(users: UserRepository) {
+export function createUpdateProfile(users: UserReader & UserWriter) {
   return async function updateProfile(input: {
     userId: string;
     name: string;

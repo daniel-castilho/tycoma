@@ -29,11 +29,6 @@ export default async function EntriesListPage({
         <Link href="/admin/content-types">All content types</Link>
       </p>
 
-      <form action={publishContentEntryAction} style={{ display: "none" }} aria-hidden="true">
-        <input name="id" />
-        <input name="contentTypeId" />
-      </form>
-
       <DataTable<ContentEntry>
         rows={entries}
         rowKey={(e) => e.id}

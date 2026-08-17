@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/db/prisma";
-import { isObjectId } from "@/shared/db/object-id";
+import { isObjectId } from "@/shared/kernel/object-id";
 import { parseContentStatus } from "../domain/content-status";
 import { POST_LIST_DEFAULT_ORDER, POST_LIST_DEFAULT_SORT } from "../domain/policies";
 import type {
@@ -7,6 +7,7 @@ import type {
   CategoryRepository,
   Menu,
   MenuItem,
+  MenuItemType,
   MenuRepository,
   Page,
   PageRepository,
@@ -202,23 +203,91 @@ export const prismaPageRepository: PageRepository = {
   },
 };
 
+function mapCategory(row: {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  parentId: string | null;
+}): Category {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    parentId: row.parentId,
+  };
+}
+
+function mapTag(row: {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+}): Tag {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+  };
+}
+
+function mapMenu(row: { id: string; name: string; slug: string }): Menu {
+  return { id: row.id, name: row.name, slug: row.slug };
+}
+
+const MENU_ITEM_TYPES: readonly MenuItemType[] = ["post", "page", "category", "custom"];
+
+function parseMenuItemType(value: string): MenuItemType {
+  if ((MENU_ITEM_TYPES as readonly string[]).includes(value)) {
+    return value as MenuItemType;
+  }
+  throw new Error(`Unknown menu item type in persistence: ${JSON.stringify(value)}`);
+}
+
+function mapMenuItem(row: {
+  id: string;
+  menuId: string;
+  parentId: string | null;
+  label: string;
+  type: string;
+  refId: string | null;
+  url: string | null;
+  sortOrder: number;
+}): MenuItem {
+  return {
+    id: row.id,
+    menuId: row.menuId,
+    parentId: row.parentId,
+    label: row.label,
+    type: parseMenuItemType(row.type),
+    refId: row.refId,
+    url: row.url,
+    sortOrder: row.sortOrder,
+  };
+}
+
 export const prismaCategoryRepository: CategoryRepository = {
   async list() {
-    return prisma.category.findMany({ orderBy: { name: "asc" } }) as Promise<Category[]>;
+    const rows = await prisma.category.findMany({ orderBy: { name: "asc" } });
+    return rows.map(mapCategory);
   },
   async findById(id) {
     if (!isObjectId(id)) return null;
-    return prisma.category.findUnique({ where: { id } });
+    const row = await prisma.category.findUnique({ where: { id } });
+    return row ? mapCategory(row) : null;
   },
   async findBySlug(slug) {
-    return prisma.category.findUnique({ where: { slug } });
+    const row = await prisma.category.findUnique({ where: { slug } });
+    return row ? mapCategory(row) : null;
   },
   async create(data) {
     const { id: _id, ...rest } = data;
-    return prisma.category.create({ data: rest });
+    return mapCategory(await prisma.category.create({ data: rest }));
   },
   async update(id, data) {
-    return prisma.category.update({ where: { id }, data });
+    return mapCategory(await prisma.category.update({ where: { id }, data }));
   },
   async delete(id) {
     await prisma.category.delete({ where: { id } });
@@ -227,21 +296,24 @@ export const prismaCategoryRepository: CategoryRepository = {
 
 export const prismaTagRepository: TagRepository = {
   async list() {
-    return prisma.tag.findMany({ orderBy: { name: "asc" } }) as Promise<Tag[]>;
+    const rows = await prisma.tag.findMany({ orderBy: { name: "asc" } });
+    return rows.map(mapTag);
   },
   async findById(id) {
     if (!isObjectId(id)) return null;
-    return prisma.tag.findUnique({ where: { id } });
+    const row = await prisma.tag.findUnique({ where: { id } });
+    return row ? mapTag(row) : null;
   },
   async findBySlug(slug) {
-    return prisma.tag.findUnique({ where: { slug } });
+    const row = await prisma.tag.findUnique({ where: { slug } });
+    return row ? mapTag(row) : null;
   },
   async create(data) {
     const { id: _id, ...rest } = data;
-    return prisma.tag.create({ data: rest });
+    return mapTag(await prisma.tag.create({ data: rest }));
   },
   async update(id, data) {
-    return prisma.tag.update({ where: { id }, data });
+    return mapTag(await prisma.tag.update({ where: { id }, data }));
   },
   async delete(id) {
     await prisma.tag.delete({ where: { id } });
@@ -250,18 +322,20 @@ export const prismaTagRepository: TagRepository = {
 
 export const prismaMenuRepository: MenuRepository = {
   async list() {
-    return prisma.menu.findMany({ orderBy: { name: "asc" } }) as Promise<Menu[]>;
+    const rows = await prisma.menu.findMany({ orderBy: { name: "asc" } });
+    return rows.map(mapMenu);
   },
   async findById(id) {
     if (!isObjectId(id)) return null;
-    return prisma.menu.findUnique({ where: { id } });
+    const row = await prisma.menu.findUnique({ where: { id } });
+    return row ? mapMenu(row) : null;
   },
   async create(data) {
     const { id: _id, ...rest } = data;
-    return prisma.menu.create({ data: rest });
+    return mapMenu(await prisma.menu.create({ data: rest }));
   },
   async update(id, data) {
-    return prisma.menu.update({ where: { id }, data });
+    return mapMenu(await prisma.menu.update({ where: { id }, data }));
   },
   async delete(id) {
     await prisma.menuItem.deleteMany({ where: { menuId: id } });
@@ -272,7 +346,7 @@ export const prismaMenuRepository: MenuRepository = {
       where: { menuId },
       orderBy: { sortOrder: "asc" },
     });
-    return rows as MenuItem[];
+    return rows.map(mapMenuItem);
   },
   async replaceItems(menuId, items) {
     await prisma.menuItem.deleteMany({ where: { menuId } });

@@ -5,7 +5,7 @@ import type { LockoutStore } from "../../domain/lockout";
 import { LOGIN_RATE_LIMIT } from "../../domain/policies";
 import type { RateLimiter } from "../../domain/rate-limiter";
 import type { SessionIssuer } from "../../domain/session";
-import type { UserRepository } from "../../domain/user";
+import type { UserReader } from "../../domain/user";
 import {
   LOCKOUT_BLOCK_SECONDS,
   LOCKOUT_FAILURE_THRESHOLD,
@@ -13,7 +13,7 @@ import {
 } from "./lockout-policy";
 
 export function createLogin(
-  users: UserRepository,
+  users: UserReader,
   sessions: SessionIssuer,
   limiter: RateLimiter,
   audit: AuditEventWriter,

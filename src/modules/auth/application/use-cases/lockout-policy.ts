@@ -12,9 +12,3 @@
 export const LOCKOUT_FAILURE_THRESHOLD = 10;
 export const LOCKOUT_FAILURE_WINDOW_SECONDS = 60 * 60;
 export const LOCKOUT_BLOCK_SECONDS = 60 * 30;
-
-export const LOGIN_LOCKOUT_POLICY = {
-  threshold: LOCKOUT_FAILURE_THRESHOLD,
-  windowSeconds: LOCKOUT_FAILURE_WINDOW_SECONDS,
-  blockSeconds: LOCKOUT_BLOCK_SECONDS,
-} as const;

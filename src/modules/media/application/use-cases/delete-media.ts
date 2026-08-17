@@ -1,10 +1,10 @@
 import { err, ok, type Result } from "@/shared/kernel/result";
 import type { AuditEventWriter } from "../../../audit/domain/types";
 import type { StepUpStore } from "../../../auth/domain/step-up";
-import type { MediaRepository, MediaUsageLookup, ObjectStorage } from "../../domain/types";
+import type { MediaReader, MediaUsageLookup, MediaWriter, ObjectStorage } from "../../domain/types";
 
 export function createDeleteMedia(
-  repo: MediaRepository,
+  repo: MediaReader & MediaWriter,
   usage: MediaUsageLookup,
   storage: ObjectStorage,
   audit: AuditEventWriter,
