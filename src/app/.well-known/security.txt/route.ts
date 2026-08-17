@@ -17,7 +17,7 @@ export function GET(): Response {
     `# https://securitytxt.org/`,
     `Contact: mailto:${env.SECURITY_CONTACT}`,
     `Expires: ${expires.toISOString()}`,
-    `Preferred-Languages: en`,
+    `Preferred-Languages: en, pt-BR`,
     `Canonical: ${env.APP_URL}/.well-known/security.txt`,
     ``,
   ].join("\n");

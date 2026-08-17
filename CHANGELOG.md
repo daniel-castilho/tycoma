@@ -54,6 +54,16 @@ See `docs/releases/v0.7.0.md` for the full decision log.
   milestone.
 - **2FA and sliding/remember-me still skipped.** No human approval of a TOTP library yet.
 
+### Changed (post-tag, dev-local tooling)
+
+- `docker-compose.yml` — Mongo and LocalStack now use bind mounts (`./data/mongo`,
+  `./data/localstack`) instead of Docker-named volumes. The host paths are visible,
+  backup-friendly, and gitignored.
+- New `scripts/mongo-dump.mjs` wraps `mongodump` + `tar` and prints a SHA-256; run before
+  destructive migrations. Documented in `docs/release-runbook.md` § Backup protocol and
+  `docs/lessons.md` (durable rule).
+- **No new npm dependencies.** The tag remains `v0.7.0`; no patch tag created.
+
 ## [v0.6.0] — 2026-08-16
 
 Sixth tagged release: **Security Hardening Phase B**. Shrinks the session-theft window,

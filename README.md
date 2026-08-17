@@ -88,10 +88,10 @@ Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
-**`v0.7.0` is the latest documented release** (Security Hardening Phase C — operational
-excellence + residual A/B debt). **No new npm dependencies.** The tag is created by the human
-after the smoke in [docs/release-runbook.md](docs/release-runbook.md); the previous tag
-remains **`v0.6.0`** until that happens.
+**`v0.7.0` is the latest tagged release** (Security Hardening Phase C — operational
+excellence + residual A/B debt). **No new npm dependencies.** See
+[docs/releases/v0.7.0.md](docs/releases/v0.7.0.md) for the milestone notes and
+[docs/release-runbook.md](docs/release-runbook.md) for the pre-tag procedure.
 
 - **v0.7.0 (Security Hardening Phase C):**
   - **CI security gate.** `npm audit --omit=dev --audit-level=high` runs right after `npm ci`
