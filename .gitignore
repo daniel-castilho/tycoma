@@ -6,3 +6,9 @@ dist/
 *.log
 *.tsbuildinfo
 .DS_Store
+
+# Local service state. Bind-mounted from docker-compose.yml.
+# Do NOT commit the contents of these directories — they hold
+# database files (MongoDB) and LocalStack state (S3 objects).
+data/
+

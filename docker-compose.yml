@@ -4,8 +4,10 @@ services:
     command: ["--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
+    # Bind mount keeps the database in a path humans can see and back up.
+    # The directory is gitignored; do not commit its contents.
     volumes:
-      - mongo_data:/data/db
+      - ./data/mongo:/data/db
     healthcheck:
       test: >
         echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}) }" | mongosh --quiet
@@ -27,8 +29,9 @@ services:
       SERVICES: s3
       DEBUG: "0"
     volumes:
-      - localstack_data:/var/lib/localstack
+      - ./data/localstack:/var/lib/localstack
 
-volumes:
-  mongo_data:
-  localstack_data:
+# Note: there is no top-level `volumes:` block. The bind mounts above write
+# into the host filesystem (paths under `data/`); Docker does not own them.
+# Removing the host directories deletes the database. See
+# `scripts/mongo-dump.mjs` and `docs/release-runbook.md` § Backup.

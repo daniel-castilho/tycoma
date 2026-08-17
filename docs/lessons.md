@@ -262,3 +262,19 @@ real risk posture.
 Rule: keep `npm audit … --audit-level=high` strict on `main`. If a critical/high advisory
 cannot be fixed in-tree in the same change set, open a follow-up issue, document the
 advisory id here, and accept that CI will go red until the fix lands.
+
+## Bind-mount local data; back up before risky operations (v0.7.0 follow-up)
+
+Local development state lives under `./data/` (MongoDB at `./data/mongo`,
+LocalStack at `./data/localstack`). Docker does **not** own these paths —
+deleting the host directory deletes the database. The previous docker
+compose used named Docker volumes (`mongo_data:`, `localstack_data:`); those
+survived reboots but were opaque (no host path) and easy to lose to a
+`docker compose down -v` or a `docker system prune --volumes`.
+
+Rule: bind mounts are the dev default from `v0.7.0` onward. The
+`scripts/mongo-dump.mjs` helper wraps `mongodump` + `tar` and prints a
+SHA-256 for the resulting `.tgz`. Run it before destructive migrations and
+push the artefact to off-host storage. The dump is gitignored. CI does
+**not** run the dump; it is an operator responsibility per the § Backup
+protocol in `docs/release-runbook.md`.
