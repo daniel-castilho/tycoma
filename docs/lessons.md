@@ -263,6 +263,23 @@ Rule: keep `npm audit … --audit-level=high` strict on `main`. If a critical/hi
 cannot be fixed in-tree in the same change set, open a follow-up issue, document the
 advisory id here, and accept that CI will go red until the fix lands.
 
+## Prefer `npm overrides` over an allowlist when upstream has patched (2026-08-17)
+
+`CVE-2026-40345` / `GHSA-ggr8-5vv4-36mx` (deepmerge-ts <8.0.0) hit the tree
+through `@prisma/client` → `prisma` → `@prisma/config`, which pins
+`deepmerge-ts` to `7.1.5`. The patched `deepmerge-ts@8.0.0` shipped the same
+day, but Prisma had not released a fixed `@prisma/config`, so `npm audit
+--omit=dev --audit-level=high` (the Phase C gate) went red with no code
+change. Prisma 7 was not an option (no MongoDB support).
+
+Rule: when a vulnerable **transitive** dependency is pinned by an upstream that
+has not yet patched, force the fixed version with a root `overrides` entry in
+`package.json` (here: `"overrides": { "deepmerge-ts": "8.0.1" }`) and run the
+full gate set (audit, lint, typecheck, tests, build, `prisma generate`) before
+committing. Keep `npm audit` strict — the override removes the finding instead
+of allow-listing it. Drop the override once the upstream releases a version
+that resolves the advisory on its own.
+
 ## Bind-mount local data; back up before risky operations (v0.7.0 follow-up)
 
 Local development state lives under `./data/` (MongoDB at `./data/mongo`,

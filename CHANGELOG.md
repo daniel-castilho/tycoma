@@ -9,6 +9,13 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
 
 ### Fixed
 
+- **`npm audit` gate: `CVE-2026-40345` (deepmerge-ts <8.0.0) cleared via
+  `overrides`.** `GHSA-ggr8-5vv4-36mx` hit the tree through
+  `@prisma/client` → `prisma` → `@prisma/config` (pinned `deepmerge-ts@7.1.5`);
+  the patched `8.0.1` is now forced with a root `overrides` entry so
+  `npm audit --omit=dev --audit-level=high` stays green without allow-listing.
+  Prisma 7 remains off the table (no MongoDB support).
+
 - **Password-reset token no longer leaks to logs.** The `Mailer` port now receives
   `{ appUrl, token }` instead of a prebuilt `resetUrl`, so each adapter controls URL
   construction. `consoleMailer` logs only the recipient and the reset page path — the raw
