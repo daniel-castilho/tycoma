@@ -1,7 +1,7 @@
 import { prisma } from "@/shared/db/prisma";
 import type { User, UserRepository } from "../domain/user";
 
-function mapUser(row: {
+type UserRow = {
   id: string;
   email: string;
   name: string;
@@ -9,8 +9,18 @@ function mapUser(row: {
   avatarMediaId: string | null;
   createdAt: Date;
   updatedAt: Date;
-}): User {
-  return row;
+};
+
+function mapUser(row: UserRow): User {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    passwordHash: row.passwordHash,
+    avatarMediaId: row.avatarMediaId,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
 }
 
 export const prismaUserRepository: UserRepository = {

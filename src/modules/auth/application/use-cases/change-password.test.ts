@@ -123,6 +123,7 @@ describe("createChangePassword (rate limit + step-up + happy path)", () => {
       userId: "user-1",
       currentPassword: "current-password",
       newPassword: "new-password-12345",
+      confirmPassword: "new-password-12345",
     });
     assert.equal(result.ok, false);
     if (!result.ok) assert.match(result.error, /Too many/);
@@ -144,6 +145,7 @@ describe("createChangePassword (rate limit + step-up + happy path)", () => {
       userId: "user-1",
       currentPassword: "current-password",
       newPassword: "new-password-12345",
+      confirmPassword: "new-password-12345",
     });
     assert.equal(result.ok, false);
     if (!result.ok) assert.match(result.error, /confirm/i);
@@ -166,6 +168,7 @@ describe("createChangePassword (rate limit + step-up + happy path)", () => {
       userId: "user-1",
       currentPassword: "current-password",
       newPassword: "new-password-12345",
+      confirmPassword: "new-password-12345",
     });
     assert.equal(result.ok, true);
     const stored = await users.findById("user-1");
@@ -189,9 +192,35 @@ describe("createChangePassword (rate limit + step-up + happy path)", () => {
       userId: "user-1",
       currentPassword: "wrong",
       newPassword: "new-password-12345",
+      confirmPassword: "new-password-12345",
     });
     assert.equal(result.ok, false);
     if (!result.ok) assert.match(result.error, /incorrect/i);
+    assert.equal(events.length, 0);
+  });
+
+  it("rejects when the new password and confirmation do not match", async () => {
+    const { limiter } = memoryLimiter();
+    const hasher = fixedHasher(true);
+    const users = memoryUsers([baseUser()]);
+    const { writer, events } = memoryAudit();
+    const changePassword = createChangePassword(
+      users,
+      writer,
+      hasher,
+      limiter,
+      memoryStepUp(true),
+    );
+    const result = await changePassword({
+      userId: "user-1",
+      currentPassword: "current-password",
+      newPassword: "new-password-12345",
+      confirmPassword: "different-password",
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /do not match/i);
+    const stored = await users.findById("user-1");
+    assert.equal(stored?.passwordHash, "hashed:current-password");
     assert.equal(events.length, 0);
   });
 

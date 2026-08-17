@@ -122,6 +122,15 @@ excellence + residual A/B debt). **No new npm dependencies.** See
   port now receives `{ appUrl, token }` and `consoleMailer` prints only the reset page path —
   the raw token never reaches stdout. A real SMTP adapter is tracked in
   `tasks/tycoma-smtp-mailer-backlog.md`. (Unreleased; see CHANGELOG.)
+
+- **Architecture audit in progress.** Phases 5–6 shipped on `main` (Unreleased):
+  the media upload rate limit moved into the `media` module behind a `RateLimiter` port
+  (Phase 5); Phase 6 tightened the architecture: strict status validation, password
+  confirmation moved into the `changePassword` use case, live `q`/`type` filters on the media
+  library, `countByStatus` resolving statuses via `parseContentStatus`, explicit `toDomain`
+  mappers, policy defaults lifted into `domain/policies.ts` (incl. Argon2id params), and
+  `SessionIssuer` composing `SessionVerifier`. Statuses are ticked off in
+  [tasks/tycoma-architecture-audit-action-plan.md](tasks/tycoma-architecture-audit-action-plan.md).
 - **Post-tag follow-up on `main` (auth hardening):** every mutating admin Server Action
   (`savePage`/`saveCategory`/`saveTag`) asserts the session and records the actor in the audit
   log; the 12h session lifetime is a single canonical constant (`SESSION_TTL_SECONDS`) shared

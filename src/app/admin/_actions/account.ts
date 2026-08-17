@@ -66,13 +66,11 @@ export async function changePasswordAction(formData: FormData): Promise<void> {
   if (!parsed.success) {
     throw new Error("Check the password fields and try again.");
   }
-  if (parsed.data.newPassword !== parsed.data.confirmPassword) {
-    throw new Error("New passwords do not match.");
-  }
   const result = await auth.changePassword({
     userId: session.sub,
     currentPassword: parsed.data.currentPassword,
     newPassword: parsed.data.newPassword,
+    confirmPassword: parsed.data.confirmPassword,
   });
   if (!result.ok) {
     throw new Error(result.error);

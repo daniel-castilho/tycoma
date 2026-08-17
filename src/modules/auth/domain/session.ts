@@ -4,11 +4,6 @@ export type SessionPayload = {
   name: string;
 };
 
-export type SessionIssuer = {
-  issue(payload: SessionPayload): Promise<string>;
-  verify(token: string): Promise<SessionPayload | null>;
-};
-
 /**
  * Narrower port than `SessionIssuer`: only verifies, never issues.
  * Exists so that Edge runtime callers (Next.js `proxy.ts`/middleware) can be wired
@@ -17,4 +12,8 @@ export type SessionIssuer = {
  */
 export type SessionVerifier = {
   verify(token: string): Promise<SessionPayload | null>;
+};
+
+export type SessionIssuer = SessionVerifier & {
+  issue(payload: SessionPayload): Promise<string>;
 };

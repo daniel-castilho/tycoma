@@ -1,6 +1,5 @@
+import { LATEST_POSTS_LIMIT } from "../../domain/policies";
 import type { PageReader, Post, PostReader } from "../../domain/types";
-
-const LATEST_POSTS_LIMIT = 5;
 
 export type DashboardKpis = {
   posts: Record<string, number>;

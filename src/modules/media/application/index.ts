@@ -27,13 +27,14 @@ export function createMediaApplication(deps: {
   rateLimiter: RateLimiter;
 }) {
   const { auditEventWriter, contentUsageLookup, stepUp, rateLimiter } = deps;
+  const listMedia = createListMedia(prismaMediaRepository);
   return {
     uploadMedia: createUploadMedia(s3ObjectStorage, prismaMediaRepository, auditEventWriter),
     checkUploadRate: createCheckUploadRate(rateLimiter),
-    listMedia: createListMedia(prismaMediaRepository),
+    listMedia,
     getMedia: createGetMedia(prismaMediaRepository),
-    listMediaWithUrls: async () =>
-      Promise.all((await prismaMediaRepository.list({})).map((a) => attachSignedUrl(s3ObjectStorage, a))),
+    listMediaWithUrls: async (query?: { search?: string; mimePrefix?: string }) =>
+      Promise.all((await listMedia(query)).map((a) => attachSignedUrl(s3ObjectStorage, a))),
     getMediaWithUrl: async (id: string) => {
       const asset = await prismaMediaRepository.findById(id);
       if (!asset) return null;

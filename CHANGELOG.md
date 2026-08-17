@@ -64,6 +64,31 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
   `media/domain/policies.ts` (`UPLOAD_RATE_LIMIT` / `UPLOAD_RATE_WINDOW_SECONDS`). The Redis
   adapter is injected through the composition root (audit finding 5.1).
 
+### Changed
+
+- **Status validation is strict.** The admin post / content-entry actions replaced the silently
+  degrading `z.preprocess` (anything unknown → `"draft"`) with a plain `z.enum(["draft",
+  "scheduled", "published"])`, so an invalid status now fails the request instead of being
+  hidden behind a default (audit Phase 6.1).
+- **Password confirmation lives in the domain.** `createChangePassword` now compares
+  `newPassword` vs `confirmPassword` itself and returns a `Result` error on mismatch, instead of
+  the Server Action throwing (audit Phase 6.2).
+- **Media library filters actually filter.** The `q`/`type` toolbar on `/admin/media` is now
+  wired to `media.listMediaWithUrls({ search, mimePrefix })`; `listMediaWithUrls` reuses the
+  `listMedia` use case instead of calling the repo directly (audit Phase 6.3).
+- **`countByStatus` resolves statuses via `parseContentStatus`.** Both post and page adapters
+  throw on unknown persisted statuses instead of leaking them into the dashboard KPI map
+  (audit Phase 6.4).
+- **Explicit `toDomain` mappers.** `mapUser`, `mapMediaAsset` and `mapPasswordResetToken` now
+  construct the domain entity field-by-field instead of `return row` / `as` casts (audit
+  Phase 6.5).
+- **Policy defaults centralised.** `content/domain/policies.ts` now owns
+  `LATEST_POSTS_LIMIT` and the post-list default sort/order; the Argon2id parameters moved from
+  the adapter into `auth/domain/policies.ts` (`ARGON2_OPTIONS`) (audit Phase 6.6).
+- **`SessionIssuer` composes `SessionVerifier`.** The issuer port now extends the verifier port
+  (`SessionVerifier & { issue }`) so there is a single `verify` surface in `domain/session.ts`
+  (audit Phase 6.7).
+
 ## [v0.7.0] — 2026-08-16
 
 Seventh tagged release: **Security Hardening Phase C** — operational excellence and the residual

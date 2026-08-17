@@ -37,10 +37,7 @@ const entrySchema = z.object({
   contentTypeId: z.string().min(1),
   title: z.string().trim().min(1, "A title is required."),
   slug: z.string().trim().min(1, "A slug is required."),
-  status: z.preprocess(
-    (value) => (value === "published" || value === "scheduled" ? value : "draft"),
-    z.enum(["draft", "scheduled", "published"]),
-  ),
+  status: z.enum(["draft", "scheduled", "published"]),
   publishedAt: z.preprocess(
     (value) => {
       if (value === undefined || value === null || String(value).trim() === "") return null;

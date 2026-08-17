@@ -23,6 +23,7 @@ export function createChangePassword(
     userId: string;
     currentPassword: string;
     newPassword: string;
+    confirmPassword: string;
   }): Promise<Result<{ ok: true }>> {
     const rateKey = `change_password:${input.userId}`;
     const decision = await limiter.hit(
@@ -32,6 +33,10 @@ export function createChangePassword(
     );
     if (!decision.allowed) {
       return err("Too many change-password attempts. Try again in a few minutes.");
+    }
+
+    if (input.newPassword !== input.confirmPassword) {
+      return err("New passwords do not match.");
     }
 
     // Phase B: require a fresh step-up marker (granted by createStepUp after

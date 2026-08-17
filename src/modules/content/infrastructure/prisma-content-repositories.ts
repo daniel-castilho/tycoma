@@ -1,6 +1,7 @@
 import { prisma } from "@/shared/db/prisma";
 import { isObjectId } from "@/shared/db/object-id";
 import { parseContentStatus } from "../domain/content-status";
+import { POST_LIST_DEFAULT_ORDER, POST_LIST_DEFAULT_SORT } from "../domain/policies";
 import type {
   Category,
   CategoryRepository,
@@ -70,7 +71,7 @@ export const prismaPostRepository: PostRepository = {
             ? { gte: query.from, lte: query.to }
             : undefined,
       },
-      orderBy: { [query.sort ?? "updatedAt"]: query.order ?? "desc" },
+      orderBy: { [query.sort ?? POST_LIST_DEFAULT_SORT]: query.order ?? POST_LIST_DEFAULT_ORDER },
     });
     return rows.map(mapPost);
   },
@@ -117,7 +118,7 @@ export const prismaPostRepository: PostRepository = {
   },
   async countByStatus() {
     const groups = await prisma.post.groupBy({ by: ["status"], _count: true });
-    return Object.fromEntries(groups.map((g) => [g.status, g._count]));
+    return Object.fromEntries(groups.map((g) => [parseContentStatus(g.status), g._count]));
   },
   async countByCategory(categoryId) {
     if (!isObjectId(categoryId)) return 0;
@@ -187,7 +188,7 @@ export const prismaPageRepository: PageRepository = {
   },
   async countByStatus() {
     const groups = await prisma.page.groupBy({ by: ["status"], _count: true });
-    return Object.fromEntries(groups.map((g) => [g.status, g._count]));
+    return Object.fromEntries(groups.map((g) => [parseContentStatus(g.status), g._count]));
   },
   async idsUsingMedia(mediaId) {
     if (!isObjectId(mediaId)) return [];

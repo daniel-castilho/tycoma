@@ -23,3 +23,16 @@ export const PASSWORD_RESET_TTL_MS = ONE_HOUR_MS;
 export const PASSWORD_RESET_TOKEN_BYTES = 32;
 
 export const SESSION_TTL_SECONDS = 12 * 60 * 60;
+
+// @node-rs/argon2 ships Algorithm/Version as ambient const enums with no
+// runtime values (erased at compile time), so the documented member values
+// are used directly: Argon2id = 2, version 0x13 = 1. The parameters follow
+// the OWASP-recommended Argon2id baseline (64 MiB, 3 passes, 1 lane).
+export const ARGON2_OPTIONS = {
+  algorithm: 2,
+  version: 1,
+  memoryCost: 65536,
+  timeCost: 3,
+  parallelism: 1,
+  outputLen: 32,
+} as const;

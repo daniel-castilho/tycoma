@@ -7,10 +7,7 @@ import { formDataToObject } from "../_lib/form";
 import type { PostActionState } from "../_lib/action-state";
 import { requireSession } from "../_lib/session";
 
-const status = z.preprocess(
-  (value) => (value === "published" || value === "scheduled" ? value : "draft"),
-  z.enum(["draft", "scheduled", "published"]),
-);
+const status = z.enum(["draft", "scheduled", "published"]);
 
 const dateOrNull = z.preprocess(
   (value) => {

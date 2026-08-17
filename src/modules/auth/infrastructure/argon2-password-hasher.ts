@@ -1,19 +1,9 @@
 import argon2 from "@node-rs/argon2";
 import type { Options } from "@node-rs/argon2";
+import { ARGON2_OPTIONS } from "../domain/policies";
 import type { PasswordHasher } from "../domain/password-hasher";
 
-// @node-rs/argon2 ships Algorithm/Version as ambient const enums with no
-// runtime values (erased at compile time), so pass the documented member
-// values directly: Argon2id = 2, version 0x13 = 1. Parameters follow the
-// OWASP-recommended Argon2id baseline (64 MiB, 3 passes, 1 lane).
-const options: Options = {
-  algorithm: 2,
-  version: 1,
-  memoryCost: 65536,
-  timeCost: 3,
-  parallelism: 1,
-  outputLen: 32,
-};
+const options: Options = ARGON2_OPTIONS;
 
 export const argon2PasswordHasher: PasswordHasher = {
   async hash(password: string): Promise<string> {

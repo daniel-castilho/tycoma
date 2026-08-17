@@ -25,7 +25,10 @@ export default async function MediaPage({
   searchParams: Promise<{ q?: string; type?: string }>;
 }) {
   const filters = filtersSchema.parse(await searchParams);
-  const assets = await media.listMediaWithUrls();
+  const assets = await media.listMediaWithUrls({
+    search: filters.q,
+    mimePrefix: filters.type ? `${filters.type}/` : undefined,
+  });
 
   return (
     <>

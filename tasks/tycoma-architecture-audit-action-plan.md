@@ -80,20 +80,20 @@ in severity order. Fixes must keep the AGENTS.md purity rules intact (zero frame
 
 ## Phase 6 — Technical debt (backlog)
 
-- [ ] **6.1** — Strict `z.enum` for status (no silently-degrading `preprocess`); domain already
+- [x] **6.1** — Strict `z.enum` for status (no silently-degrading `preprocess`); domain already
   throws. Files: `src/app/admin/_actions/content.ts:10-13`,
   `src/app/admin/_actions/content-types.ts:40-43`.
-- [ ] **6.2** — Move `newPassword === confirmPassword` check into the `changePassword` use case.
+- [x] **6.2** — Move `newPassword === confirmPassword` check into the `changePassword` use case.
   File: `src/app/admin/_actions/account.ts:69-71`.
-- [ ] **6.3** — Apply the dead `q`/`type` filters on the media library page. File:
+- [x] **6.3** — Apply the dead `q`/`type` filters on the media library page. File:
   `src/app/admin/(authed)/media/page.tsx`.
-- [ ] **6.4** — `countByStatus` must resolve statuses via `parseContentStatus`. Files:
+- [x] **6.4** — `countByStatus` must resolve statuses via `parseContentStatus`. Files:
   `src/modules/content/infrastructure/prisma-content-repositories.ts:100-103,155-158`.
-- [ ] **6.5** — Explicit `toDomain` mappers: `mapUser` no-op, `prisma-media-repository`,
+- [x] **6.5** — Explicit `toDomain` mappers: `mapUser` no-op, `prisma-media-repository`,
   `prisma-password-reset-token-repository`.
-- [ ] **6.6** — Lift policy defaults (pagination limit, sort, Argon2 params) into
+- [x] **6.6** — Lift policy defaults (pagination limit, sort, Argon2 params) into
   `domain/policies.ts`.
-- [ ] **6.7** — `SessionIssuer` should not duplicate `SessionVerifier` (single verify surface).
+- [x] **6.7** — `SessionIssuer` should not duplicate `SessionVerifier` (single verify surface).
 
 ## Phase 7 — Close-out (doc sync, AGENTS.md rule 9)
 
