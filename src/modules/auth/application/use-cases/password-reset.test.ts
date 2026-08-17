@@ -6,6 +6,7 @@ import type { Mailer } from "../../domain/mailer.ts";
 import type { PasswordHasher } from "../../domain/password-hasher.ts";
 import type { PasswordResetToken, PasswordResetTokenRepository } from "../../domain/password-reset-token.ts";
 import type { User, UserRepository } from "../../domain/user.ts";
+import { PASSWORD_RESET_TOKEN_BYTES } from "../../domain/policies.ts";
 import { createRequestPasswordReset } from "./request-password-reset.ts";
 import { createResetPassword } from "./reset-password.ts";
 
@@ -139,6 +140,31 @@ describe("requestPasswordReset", () => {
     );
     const result = await request({ email: "ada@example.com", ip: "1.2.3.4", appUrl: "https://example.com" });
     assert.equal(result.ok, false);
+  });
+
+  it("passes the reset token only to the mailer, never in the result", async () => {
+    const users = memoryUsers([seedUser()]);
+    const { repo } = memoryTokens();
+    let deliveredToken: string | null = null;
+    const mailer: Mailer = {
+      sendPasswordReset: async (_to, mail) => {
+        deliveredToken = mail.token;
+      },
+    };
+    const request = createRequestPasswordReset(
+      users,
+      repo,
+      mailer,
+      { hit: async () => ({ allowed: true, remaining: 4 }) },
+      noopAudit,
+    );
+    const result = await request({ email: "ada@example.com", ip: "1.2.3.4", appUrl: "https://example.com" });
+    assert.equal(result.ok, true);
+    assert.ok(deliveredToken !== null, "mailer must receive the token");
+    const token = deliveredToken as string;
+    assert.equal(token.length, PASSWORD_RESET_TOKEN_BYTES * 2);
+    const serializedResult = JSON.stringify(result);
+    assert.ok(!serializedResult.includes(token), "reset token must never appear in the use-case result");
   });
 });
 

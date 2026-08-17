@@ -5,6 +5,17 @@ All notable changes to Tycoma will be documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this
 project intends to follow [Semantic Versioning](https://semver.org/) starting from its first tag.
 
+## [Unreleased]
+
+### Fixed
+
+- **Password-reset token no longer leaks to logs.** The `Mailer` port now receives
+  `{ appUrl, token }` instead of a prebuilt `resetUrl`, so each adapter controls URL
+  construction. `consoleMailer` logs only the recipient and the reset page path — the raw
+  token never reaches stdout (audit finding 1.1). A regression test pins that the token goes
+  only to the mailer and never appears in the use-case result (audit finding 1.2). A real
+  env-gated SMTP adapter is tracked in `tasks/tycoma-smtp-mailer-backlog.md` (finding 1.3).
+
 ## [v0.7.0] — 2026-08-16
 
 Seventh tagged release: **Security Hardening Phase C** — operational excellence and the residual

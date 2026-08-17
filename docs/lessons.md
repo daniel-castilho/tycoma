@@ -278,3 +278,18 @@ SHA-256 for the resulting `.tgz`. Run it before destructive migrations and
 push the artefact to off-host storage. The dump is gitignored. CI does
 **not** run the dump; it is an operator responsibility per the § Backup
 protocol in `docs/release-runbook.md`.
+
+## Mailer ports must not hand adapters a URL that embeds a secret (audit follow-up)
+
+`requestPasswordReset` originally built `resetUrl = …/admin/reset-password?token=<raw>`
+and passed it to the `Mailer` port; `consoleMailer` logged that URL verbatim, writing the
+raw reset token to stdout in production (the console mailer was the only wired mailer).
+Whoever reads the logs could reset the admin password.
+
+Rule: a mailer port should receive the **parts** (`{ appUrl, token }`), never a prebuilt
+URL — the adapter decides how to compose and deliver the link, and a console/debug adapter
+must never print a secret query parameter. The `Mailer` port in
+`src/modules/auth/domain/mailer.ts` now follows this contract, and
+`password-reset.test.ts` pins that the token appears only in the mailer payload and never
+in the use-case result. A real SMTP adapter is tracked in
+`tasks/tycoma-smtp-mailer-backlog.md`.

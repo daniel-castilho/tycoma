@@ -1,0 +1,88 @@
+# Architecture Audit — Action Plan
+
+**Document status:** Draft — audit findings reviewed; fixes not started.
+
+**Companion documents:**
+`tycoma-admin-dashboard-module-spec.md` ·
+`tycoma-content-types-module-spec.md` ·
+`docs/coding-standards.md` ·
+`docs/lessons.md`
+
+**Goal:** Close the architecture-audit findings (Hexagonal, Clean Code, SOLID, Twelve-Factor)
+in severity order. Fixes must keep the AGENTS.md purity rules intact (zero framework imports in
+`domain/`/`application/`; adapters implement domain ports; `env` singleton; English only).
+
+**Gates before each batch ships:** `npm test` (currently 142 passing), `npm run lint`,
+`npm run typecheck`, `npm run build`. After milestone-sized work, run the doc-sync checklist
+(AGENTS.md rule 9).
+
+---
+
+## Phase 1 — Security criticals (do first)
+
+- [x] **1.1** — Never log the raw reset token. `Mailer` port now receives `{ appUrl, token }` and
+  `consoleMailer` logs only `to` plus the reset page path — the token never reaches stdout.
+  Files: `src/modules/auth/domain/mailer.ts`, `src/modules/auth/infrastructure/console-mailer.ts`,
+  `src/modules/auth/application/use-cases/request-password-reset.ts`.
+- [x] **1.2** — Confirmed: the use case returns only `ok({ sent: true })` or a generic error —
+  no token in responses. Added a regression test pinning that the token goes only to the mailer
+  and never appears in the use-case result. File:
+  `src/modules/auth/application/use-cases/password-reset.test.ts`.
+- [x] **1.3** — Logged the env-gated SMTP mailer as `tasks/tycoma-smtp-mailer-backlog.md`.
+
+## Phase 2 — Authentication gaps
+
+- [ ] **2.1** — `savePageAction` must call `requireSession()` and forward `session.sub` to the use
+  case (mirror `savePostAction`). File: `src/app/admin/_actions/content.ts:110-124`.
+- [ ] **2.2** — Move the 12h session TTL out of the issuer into `domain/policies.ts` and consume
+  the constant. File: `src/modules/auth/infrastructure/jwt-session-issuer.ts:15`.
+- [ ] **2.3** — Edge verifier must reject weak/placeholder `AUTH_SECRET` (≥16 chars, no known
+  placeholders) even on the raw `process.env` path. File:
+  `src/modules/auth/infrastructure/jwt-session-verifier.ts:4-10`.
+
+## Phase 3 — S3 presigned URLs (broken in dev)
+
+- [ ] **3.1** — Derive the URL scheme from `S3_ENDPOINT` (fallback `https`) in `buildSignedUrl`
+  instead of hardcoding `https`. File: `src/modules/media/infrastructure/s3-object-storage.ts:95`.
+- [ ] **3.2** — Honor `S3_FORCE_PATH_STYLE` (currently validated but never read) and use one
+  consistent addressing style across `put`/`delete`/`getSignedUrl` (path-style vs virtual-host).
+  Files: `src/modules/media/infrastructure/s3-object-storage.ts:64,102,115`.
+
+## Phase 4 — Domain correctness
+
+- [ ] **4.1** — Move the "media usage" detection rule into the domain (define the reference
+  shape) and implement a recursive scan so nested/referenced media blocks deletion. Files:
+  `src/modules/content/infrastructure/prisma-content-type-repositories.ts:150-160`,
+  `src/modules/content/domain/`.
+- [ ] **4.2** — `PostWriter`/`PageWriter.create` should accept `*Write` types, not the full entity
+  (stops the adapter silently dropping `id` while persisting caller-supplied timestamps). Files:
+  `src/modules/content/domain/types.ts`, `src/modules/content/infrastructure/prisma-content-repositories.ts:85,146`.
+
+## Phase 5 — Layer & composition
+
+- [ ] **5.1** — Route the media upload rate limit through a `media` domain port/application
+  service instead of `getRedis()` + hardcoded constants in the route. File:
+  `src/app/api/media/route.ts:3,13-14`.
+
+## Phase 6 — Technical debt (backlog)
+
+- [ ] **6.1** — Strict `z.enum` for status (no silently-degrading `preprocess`); domain already
+  throws. Files: `src/app/admin/_actions/content.ts:10-13`,
+  `src/app/admin/_actions/content-types.ts:40-43`.
+- [ ] **6.2** — Move `newPassword === confirmPassword` check into the `changePassword` use case.
+  File: `src/app/admin/_actions/account.ts:69-71`.
+- [ ] **6.3** — Apply the dead `q`/`type` filters on the media library page. File:
+  `src/app/admin/(authed)/media/page.tsx`.
+- [ ] **6.4** — `countByStatus` must resolve statuses via `parseContentStatus`. Files:
+  `src/modules/content/infrastructure/prisma-content-repositories.ts:100-103,155-158`.
+- [ ] **6.5** — Explicit `toDomain` mappers: `mapUser` no-op, `prisma-media-repository`,
+  `prisma-password-reset-token-repository`.
+- [ ] **6.6** — Lift policy defaults (pagination limit, sort, Argon2 params) into
+  `domain/policies.ts`.
+- [ ] **6.7** — `SessionIssuer` should not duplicate `SessionVerifier` (single verify surface).
+
+## Phase 7 — Close-out (doc sync, AGENTS.md rule 9)
+
+- [ ] **7.1** — Update `README.md` (Current State), `CHANGELOG.md`, relevant `tasks/*` statuses,
+  `AGENTS.md` (Known technical debt), and `docs/lessons.md`.
+- [ ] **7.2** — Full gate pass: `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`.

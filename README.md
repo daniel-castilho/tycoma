@@ -118,6 +118,11 @@ excellence + residual A/B debt). **No new npm dependencies.** See
   - **Residual.** CSP stays Report-Only — enforcement is a follow-up (lesson entry). 2FA
     and sliding/remember-me remain skipped.
 
+- **Post-tag follow-up on `main`:** password-reset tokens are no longer logged. The `Mailer`
+  port now receives `{ appUrl, token }` and `consoleMailer` prints only the reset page path —
+  the raw token never reaches stdout. A real SMTP adapter is tracked in
+  `tasks/tycoma-smtp-mailer-backlog.md`. (Unreleased; see CHANGELOG.)
+
 - **v0.6.0 (Security Hardening Phase B):**
   - Default session lifetime: **`7d` → `12h`**. JWT `exp` and cookie `maxAge` aligned.
   - **Step-up re-auth** for `change_password`: a Redis-backed `stepup:{userId}` marker

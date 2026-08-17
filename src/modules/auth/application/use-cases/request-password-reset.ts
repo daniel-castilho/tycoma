@@ -41,8 +41,7 @@ export function createRequestPasswordReset(
     const tokenHash = createHash("sha256").update(raw).digest("hex");
     const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
     await tokens.create({ userId: user.id, tokenHash, expiresAt });
-    const resetUrl = `${input.appUrl.replace(/\/$/, "")}/admin/reset-password?token=${raw}`;
-    await mailer.sendPasswordReset(user.email, resetUrl);
+    await mailer.sendPasswordReset(user.email, { appUrl: input.appUrl, token: raw });
     await audit.record({
       actorId: user.id,
       eventType: "auth.password_reset_requested",
