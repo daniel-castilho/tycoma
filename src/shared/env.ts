@@ -10,7 +10,7 @@ import { validateAuthSecret } from "./kernel/secret";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   AUTH_SECRET: z.string().min(1, "AUTH_SECRET must be set."),
-  APP_URL: z.string().url().default("http://localhost:3000"),
+  APP_URL: z.url().default("http://localhost:3000"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required."),
   REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
   S3_ENDPOINT: z.string().min(1).default("http://localhost:4566"),
@@ -22,7 +22,7 @@ const envSchema = z.object({
   S3_PUBLIC_BASE_URL: z.string().min(1).default("http://localhost:4566/tycoma-media"),
   // Phase C: contact shown in /.well-known/security.txt (RFC 9116). Defaults
   // to the admin mailbox so dev installs always expose a valid file.
-  SECURITY_CONTACT: z.string().email().default("admin@example.test"),
+  SECURITY_CONTACT: z.email().default("admin@example.test"),
 });
 
 export type EnvInput = Record<string, string | undefined>;
@@ -37,7 +37,7 @@ export type EnvInput = Record<string, string | undefined>;
 export function parseEnv(source: EnvInput): z.infer<typeof envSchema> {
   const parsed = envSchema.safeParse(source);
   if (!parsed.success) {
-    const flat = parsed.error.flatten();
+    const flat = z.flattenError(parsed.error);
     throw new Error(
       `Invalid environment configuration: ${JSON.stringify(flat.fieldErrors)}`,
     );

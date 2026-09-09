@@ -9,6 +9,12 @@ project intends to follow [Semantic Versioning](https://semver.org/) starting fr
 
 ### Changed
 
+- **Dependencies: `zod` 3.25 → 4.5 and `jose` 5.10 → 6.2 (Dependabot PRs #2/#5).** Both
+  major bumps were validated empirically: full CI suite (audit, lint, typecheck, 189 unit
+  tests, production build) passes. Zod 4 migration in `src/shared/env.ts`: deprecated
+  `z.string().email()` / `z.string().url()` replaced with top-level `z.email()` / `z.url()`,
+  and `parsed.error.flatten()` replaced with `z.flattenError`. `jose` 6 required no code
+  changes (`SignJWT` / `jwtVerify` / `decodeJwt` API unchanged for our usage).
 - **Architecture audit Phase 7 — remaining precept gaps closed.** Repository ports split into
   `*Reader`/`*Writer` pairs in `auth`, `content` and `media` (interface segregation; use cases
   depend only on the surface they use). `node:crypto` sits behind a new `TokenHasher` port
