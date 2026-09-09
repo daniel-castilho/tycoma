@@ -1,8 +1,31 @@
 # Tycoma — Tyny Content Manager
 
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-24-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Single-tenant CMS with a single administrator, built as a **modular monolith** with **hexagonal
 architecture** (ports & adapters). Each business module is self-contained enough to be extracted
 into a service later with minimal impact.
+
+## Table of Contents
+
+- [Tech stack](#tech-stack)
+- [Architecture](#architecture)
+- [Requirements](#requirements)
+- [Getting started](#getting-started)
+- [Commands](#commands)
+- [Testing](#testing)
+- [Current state](#current-state)
+- [Roadmap](#roadmap)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Tech stack
 
@@ -88,170 +111,45 @@ Full testing guidance: [docs/testing-playbook.md](docs/testing-playbook.md).
 
 ## Current state
 
-**`v0.7.0` is the latest tagged release** (Security Hardening Phase C — operational
-excellence + residual A/B debt). **No new npm dependencies.** See
-[docs/releases/v0.7.0.md](docs/releases/v0.7.0.md) for the milestone notes and
-[docs/release-runbook.md](docs/release-runbook.md) for the pre-tag procedure.
+**Latest tagged release: `v0.7.0`** (Security Hardening Phase C, 2026-08-16) · development continues
+on `main` (architecture audit Phases 5–7 shipped post-tag). See [CHANGELOG.md](CHANGELOG.md) and
+[docs/releases/](docs/releases/) for the full per-version history.
 
-- **v0.7.0 (Security Hardening Phase C):**
-  - **CI security gate.** `npm audit --omit=dev --audit-level=high` runs right after `npm ci`
-    and fails on critical/high vulnerabilities. Current tree: zero.
-  - **Dependabot weekly** for the `npm` ecosystem (`.github/dependabot.yml`); patch + minor
-    batches, majors stay as individual PRs.
-  - **Step-up on destructive deletes** (single + bulk posts / single page / single media).
-    Reuses the Phase B `StepUpStore` Redis marker — no second step-up system. The admin UI
-    shows a `<StepUpHint />` above the delete form on `/admin/posts`, `/admin/pages/[id]`,
-    and `/admin/media/[id]`.
-  - **SigV4 presigned media URLs** (30 min TTL, named constant) for both admin preview and
-    the public site. Implementation uses `node:crypto` only — no `@aws-sdk/*` direct
-    dependency was added.
-  - **Backup manifest + checksum.** New `src/shared/backup/manifest.ts` defines the v1 schema
-    (metadata + object keys; binaries stay in the bucket) with stable JSON canonicalisation.
-    `scripts/backup-roundtrip.mjs` proves the export → SHA-256 → re-import loop without
-    Docker.
-  - **`/.well-known/security.txt`** (RFC 9116) with a rolling one-year `Expires`. New
-    `SECURITY_CONTACT` env var — operator must set the real mailbox in production.
-  - **COOP on `/admin/:path*`.** `Cross-Origin-Opener-Policy: same-origin` in `next.config.ts`.
-    Public site is unchanged.
-  - **Documentation.** New [docs/release-runbook.md](docs/release-runbook.md); the testing
-    playbook gained a § Security regression block.
-  - **Residual.** CSP stays Report-Only — enforcement is a follow-up (lesson entry). 2FA
-    and sliding/remember-me remain skipped.
+The product surface is complete end-to-end:
 
-- **Post-tag follow-up on `main`:** password-reset tokens are no longer logged. The `Mailer`
-  port now receives `{ appUrl, token }` and `consoleMailer` prints only the reset page path —
-  the raw token never reaches stdout. A real SMTP adapter is tracked in
-  `tasks/tycoma-smtp-mailer-backlog.md`. (Unreleased; see CHANGELOG.)
+- **Admin Dashboard** (`/admin/**`) — setup/login, session guard, password recovery, rate limiting,
+  profile & change-password; content management (posts, pages, categories, tags, menus, site
+  settings, SEO defaults, dashboard KPIs); media library (S3-compatible upload, metadata, usage
+  guard); audit log with filters.
+- **Public Site** (`/(site)/**`) — layout shell driven by settings + menus, post/page/category/tag
+  listing and detail, published-only reads, SEO metadata (`generateMetadata`, canonical URLs,
+  `ogImage`), `/sitemap.xml`, friendly 404s.
+- **Custom Content Types** — admin-defined types with typed fields; entries with create/edit/
+  publish/delete; public read routes at `/types/[type]` and `/types/[type]/[slug]`.
 
-- **Architecture audit shipped on `main`** (Unreleased): Phases 5–7 complete. Phase 5 moved the
-  media upload rate limit into the `media` module behind a `RateLimiter` port. Phase 6 tightened
-  the architecture: strict status validation, password confirmation moved into the
-  `changePassword` use case, live `q`/`type` filters on the media library, `countByStatus`
-  resolving statuses via `parseContentStatus`, explicit `toDomain` mappers, policy defaults
-  lifted into `domain/policies.ts` (incl. Argon2id params), and `SessionIssuer` composing
-  `SessionVerifier`. Phase 7 closed the remaining precept gaps: repository ports split into
-  `*Reader`/`*Writer` pairs (ISP), `node:crypto` behind a `TokenHasher` port, `deleteMenu`
-  reports a not-found failure instead of silently succeeding, Argon2 corruption and the
-  no-mailer-in-production case throw instead of degrading silently, the step-up TTL/status flows
-  through the composition root (DIP), `object-id` moved into `shared/kernel`, remaining silent
-  `as`-casts in content/media adapters replaced by throwing mappers, dead code removed, and UI
-  strings are English-only. Statuses are ticked off in
-  [tasks/tycoma-architecture-audit-action-plan.md](tasks/tycoma-architecture-audit-action-plan.md).
-- **Post-tag follow-up on `main` (auth hardening):** every mutating admin Server Action
-  (`savePage`/`saveCategory`/`saveTag`) asserts the session and records the actor in the audit
-  log; the 12h session lifetime is a single canonical constant (`SESSION_TTL_SECONDS`) shared
-  by the JWT issuer and the session cookie; and the Edge middleware verifier now enforces
-  `AUTH_SECRET` hygiene (≥16/≥32, no placeholders/whitespace) and fails closed. Rules live in
-  `src/shared/kernel/secret.ts`. (Unreleased; see CHANGELOG.)
-- **Post-tag follow-up on `main` (S3 presign):** signed media URLs now derive their scheme
-  from `S3_ENDPOINT` (http for LocalStack, https fallback) instead of a hardcoded `https://`,
-  and `S3_FORCE_PATH_STYLE` is honored with one addressing mode shared by upload, delete and
-  presign — fixing signed GETs against LocalStack in dev. Pure builder in
-  `src/modules/media/infrastructure/s3-presign.ts`. (Unreleased; see CHANGELOG.)
-- **Post-tag follow-up on `main` (domain correctness):** media-usage detection is now a schema-
-  aware domain rule (`containsMediaReference` in `src/modules/content/domain/media-reference.ts`,
-  recursive inside declared media fields — text values containing the same hex no longer block
-  deletes), and `PostWriter`/`PageWriter.create` accept `*Write` inputs so the adapter persists
-  only write fields instead of silently dropping `id`. (Unreleased; see CHANGELOG.)
-- **Post-tag follow-up on `main` (layer & composition):** the media upload rate limit moved out
-  of the route into a `media` use case (`media.checkUploadRate`) backed by the shared
-  `RateLimiter` port; the budget lives in `media/domain/policies.ts`. The route no longer
-  touches Redis directly. (Unreleased; see CHANGELOG.)
+Security hardening is applied in three shipped phases (A → B → C):
 
-- **v0.6.0 (Security Hardening Phase B):**
-  - Default session lifetime: **`7d` → `12h`**. JWT `exp` and cookie `maxAge` aligned.
-  - **Step-up re-auth** for `change_password`: a Redis-backed `stepup:{userId}` marker
-    with a **10-minute TTL**, time-boxed reuse (not consumed); the admin UI prompts for
-    the current password before the change-password form.
-  - **Rate limit on `POST /api/media`**: 30 / 15 min per `(userId, ip)`; returns `429`
-    on excess.
-  - **Rate limit on `change_password`**: 5 / 15 min per user id.
-  - **Progressive lockout**: 10 failures within 1 hour for an `(ip, email)` pair triggers
-    a **30-minute extended block**; successful login resets the counter and clears any
-    block. Audit events include `failures` and `extended_block` flags.
-  - Sliding session / remember-me / 2FA: **deferred** (Phase B+).
-  - Zero new npm dependencies.
+- **Phase A** — security headers (`nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY`,
+  `Permissions-Policy`, CSP Report-Only), `AUTH_SECRET` policy, explicit session-cookie attributes,
+  media upload hardening (10 MiB, MIME + magic-byte allowlist, SVG blocked), stored-XSS defence.
+- **Phase B** — 12h session lifetime, step-up re-auth for `change_password`, rate limits on media
+  upload and password change, progressive login lockout.
+- **Phase C** — CI security gate (`npm audit` at `high`, zero in the current tree), weekly
+  Dependabot, step-up on destructive deletes, SigV4 presigned media URLs, backup manifest +
+  checksum, `/.well-known/security.txt` (RFC 9116), COOP on `/admin/**`.
 
-- **v0.5.0 (Security Hardening Phase A):**
-  - Security response headers on every response: `X-Content-Type-Options: nosniff`,
-    `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`,
-    `Permissions-Policy` (no camera/mic/geo), and a strict
-    `Content-Security-Policy-Report-Only` baseline (`default-src 'self'`, no `unsafe-eval`,
-    S3 host allowed for images/connect). `Strict-Transport-Security` is sent only in
-    production over HTTPS.
-  - `AUTH_SECRET` production policy: ≥ 32 chars, no documented placeholders, no
-    leading/trailing whitespace. Dev/test keep the 16-char minimum.
-  - Session cookie attributes explicit and tested (`httpOnly`, `secure` in production,
-    `sameSite: lax`, `path: /`, 7-day `maxAge`); logout uses matching attributes.
-  - Media upload hardening: 10 MiB max, MIME allowlist (jpeg/png/webp/gif), magic-byte
-    sniffing that must match the declared type, **SVG blocked by both MIME and
-    extension**, server-generated storage keys.
-  - Stored XSS defence: the public site renders body as plain text; a regression test
-    fails if anyone introduces `dangerouslySetInnerHTML` without a sanitizer.
-
-- **v0.4.0 (media-typed fields):**
-  - Domain: `ContentFieldType` gains `"media"` with an ObjectId-hex coercer (delegates to
-    `isObjectId` in `src/shared/db/object-id.ts`).
-  - `MediaUsageReference` union includes `{ type: "entry"; id: string }`; `deleteMedia`
-    blocks deletes referenced by content entries.
-  - Admin: `content-entry-form.tsx` renders a `<select>` of image media assets for `media`
-    fields, with a `next/image` 50×50 preview next to the selected option.
-  - Public: `/(site)/types/[type]/[slug]/page.tsx` resolves media field values through
-    `media.getMedia`; missing assets render a `<em>Mídia indisponível</em>` placeholder —
-    the entry never 404s for a missing media.
-
-- **v0.3.1 (lockfile + doc-sync rule):** refreshed `package-lock.json` to match the dep
-  graph grown by the `v0.3.0` Prisma models, and codified the rule that every `npm install`
-  which mutates the lockfile must commit it in the same change set (`AGENTS.md` rule 10,
-  `docs/lessons.md`).
-
-- **Admin Dashboard (v0.1.0):**
-  - **Foundation & access control:** setup, login, session guard (`src/proxy.ts`), password
-    recovery, rate limiting, profile/change-password.
-  - **Core content management:** dashboard KPIs (content + media storage), posts, pages, taxonomy
-    (categories/tags with parent cycle guard and descriptions). Settings & menu use cases exist
-    with admin screens.
-  - **Media:** multi-file upload via `POST /api/media`, media grid with search/filter, metadata
-    editing, usage guard on delete.
-  - **Site structure/SEO:** site settings, navigation menus (nested items, post/page/category/
-    custom URL), SEO defaults with Google preview, and `/sitemap.xml`.
-  - **Monitoring:** audit module with `AuditEventWriter` threaded through the
-    `content`/`auth`/`media` use cases; read-only audit log viewer with filters at
-    `/admin/audit-log`.
-- **Public Site (v0.2.0 + post-tag follow-ups on `main`):**
-  - Public layout shell driven by settings + navigation menu, with `SiteHeader` / `SiteFooter` /
-    `PostCard` components and the favicon served from `settings.faviconMediaId`.
-  - Home `/` listing published posts; `/posts` full index (newest first).
-  - Post detail `/posts/[slug]` and page detail `/[slug]` (top-level) — published-only, with
-    `generateMetadata`, canonical URLs, `ogImage`, featured images, and a page-hierarchy
-    breadcrumb for published ancestors.
-  - Category/tag index + detail pages; friendly 404 for missing/unpublished slugs.
-  - New published-only read use cases in the `content` module (see
-    `src/modules/content/application/use-cases/public.ts`); public site stays a pure composition
-    layer.
-- **Custom Content Types (v0.3.0):**
-  - Admin defines content types (`/admin/content-types`) with name, slug, description and a
-    fixed list of fields (text, longtext, number, boolean, date — each with `name`, `label`,
-    `required`).
-  - Per-type entries (`/admin/content-types/[type]/entries`) with create / edit / publish /
-    delete; slug is unique per type; field values validated and coerced by the type's definition.
-  - Public reading at `/types/[type]` (index) and `/types/[type]/[slug]` (detail) with
-    `generateMetadata`, canonical URL, and a generic field renderer; drafts and missing slugs
-    return `notFound()`.
-
-> **Known technical debt:** none. The items recorded at `v0.1.0` (`asStatus` silent degradation and
-> the wide content repository interfaces) were resolved — see `AGENTS.md` for the details.
+An **architecture audit** (Phases 5–7, on `main`) tightened the hexagonal boundaries: repository
+ports split into `*Reader`/`*Writer` pairs (ISP), `node:crypto` behind a `TokenHasher` port,
+throwing mappers replacing silent `as`-casts, policy defaults lifted into `domain/policies.ts`,
+and status validation made strict. Known technical debt is tracked in `AGENTS.md`; remaining
+follow-ups (CSP enforcement, 2FA, sliding/remember-me session) are listed in the Roadmap.
 
 ## Roadmap
 
 The original implementation sequence planned the Admin Dashboard as separate milestones; in
-practice all five phases shipped together as **`v0.1.0`**, followed by the **Public Site MVP** as
-**`v0.2.0`**, then **Custom Content Types** as **`v0.3.0`**. The public-site follow-ups (posts
-index, page breadcrumb, extracted components, favicon from settings) shipped as **`v0.2.1`**;
-the lockfile refresh and doc-sync rule shipped as **`v0.3.1`**; media-typed fields for content
-types shipped as **`v0.4.0`**; the Security Hardening Phase A epic shipped as **`v0.5.0`**; the
-Security Hardening Phase B epic shipped as **`v0.6.0`**; Security Hardening Phase C is
-**`v0.7.0`** (documented, tag pending human action).
+practice all five phases shipped together as **`v0.1.0`**, followed by the Public Site MVP
+(`v0.2.0`), Custom Content Types (`v0.3.0`), and the three Security Hardening phases
+(`v0.5.0` → `v0.7.0`).
 
 Deliberately deferred: block-based editor, Markdown rendering on the public site, public headless
 API, webhooks, comments, 301 redirects, revision history, automated backup/export scheduling,
@@ -263,29 +161,23 @@ redesign**, **CSP enforce pipeline**, **real LocalStack-backed backup drill run 
 | Document                                                                     | Purpose                                                       |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | [AGENTS.md](AGENTS.md)                                                       | Rules for AI agents and human contributors                    |
+| [CHANGELOG.md](CHANGELOG.md)                                                 | High-level release index (Keep a Changelog)                   |
 | [docs/lessons.md](docs/lessons.md)                                           | Durable lessons learned                                       |
 | [docs/coding-standards.md](docs/coding-standards.md)                         | Day-to-day coding standards (TypeScript/Next.js/Prisma)       |
 | [docs/testing-playbook.md](docs/testing-playbook.md)                         | Testing pyramid, patterns, regression checklist & smoke        |
 | [docs/twelve-factor.md](docs/twelve-factor.md)                               | Twelve-Factor App reference & compliance matrix               |
-| [docs/releases/v0.1.0.md](docs/releases/v0.1.0.md)                           | Release notes — admin dashboard                               |
-| [docs/releases/v0.2.0.md](docs/releases/v0.2.0.md)                           | Release notes — public site MVP                               |
-| [docs/releases/v0.2.1.md](docs/releases/v0.2.1.md)                           | Release notes — public-site follow-ups + doc sync rule        |
-| [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md)                           | Release notes — custom content types                          |
-| [docs/releases/v0.3.1.md](docs/releases/v0.3.1.md)                           | Release notes — lockfile refresh & doc-sync rule              |
-| [docs/releases/v0.4.0.md](docs/releases/v0.4.0.md)                           | Release notes — media-typed fields for content types           |
-| [docs/releases/v0.5.0.md](docs/releases/v0.5.0.md)                           | Release notes — security hardening phase A                     |
-| [docs/releases/v0.6.0.md](docs/releases/v0.6.0.md)                           | Release notes — security hardening phase B                     |
-| [docs/releases/v0.7.0.md](docs/releases/v0.7.0.md)                           | Release notes — security hardening phase C                     |
 | [docs/release-runbook.md](docs/release-runbook.md)                           | Pre-tag procedure: gates, smoke, doc sync, human-only tag       |
-| [tasks/tycoma-admin-dashboard-backlog.md](tasks/tycoma-admin-dashboard-backlog.md) | Admin Dashboard epic — stories & scope                 |
-| [tasks/tycoma-admin-dashboard-implementation-sequence.md](tasks/tycoma-admin-dashboard-implementation-sequence.md) | Admin Dashboard epic — delivery order & DoD |
-| [tasks/tycoma-admin-dashboard-module-spec.md](tasks/tycoma-admin-dashboard-module-spec.md) | Admin Dashboard epic — target technical design |
-| [tasks/tycoma-ai-software-engineer-prompt-admin-dashboard.md](tasks/tycoma-ai-software-engineer-prompt-admin-dashboard.md) | AI-engineer prompt used for the Admin Dashboard epic |
-| [tasks/tycoma-public-site-backlog.md](tasks/tycoma-public-site-backlog.md)   | Public Site epic — stories & scope                            |
-| [tasks/tycoma-public-site-implementation-sequence.md](tasks/tycoma-public-site-implementation-sequence.md) | Public Site epic — delivery order & DoD                |
-| [tasks/tycoma-public-site-module-spec.md](tasks/tycoma-public-site-module-spec.md) | Public Site epic — target technical design              |
-| [tasks/tycoma-ai-software-engineer-prompt-public-site.md](tasks/tycoma-ai-software-engineer-prompt-public-site.md) | AI-engineer prompt used for the Public Site epic     |
-| [tasks/tycoma-content-types-backlog.md](tasks/tycoma-content-types-backlog.md) | Content Types epic — stories & scope                        |
-| [tasks/tycoma-content-types-implementation-sequence.md](tasks/tycoma-content-types-implementation-sequence.md) | Content Types epic — delivery order & DoD          |
-| [tasks/tycoma-content-types-module-spec.md](tasks/tycoma-content-types-module-spec.md) | Content Types epic — target technical design            |
-| [CHANGELOG.md](CHANGELOG.md)                                                 | High-level release index                                      |
+| [docs/releases/](docs/releases/)                                             | Per-version release notes (v0.1.0 → v0.7.0)                   |
+| [tasks/](tasks/)                                                             | Epic backlogs, module specs & implementation sequences         |
+
+## Contributing
+
+Tycoma is developed solo/AI-assisted. Before contributing, read [AGENTS.md](AGENTS.md) (binding
+rules — architecture boundaries, English-only, no unapproved dependencies, doc sync) and the
+[coding standards](docs/coding-standards.md). Keep the fast test loop green (`npm test`) and sync
+the five documentation surfaces (`README.md`, `CHANGELOG.md`, `tasks/*`, `AGENTS.md`,
+`docs/lessons.md`) in the same change set (AGENTS.md rule 9).
+
+## License
+
+[MIT](LICENSE) © 2026 Daniel Castilho (https://tyny.ca).
